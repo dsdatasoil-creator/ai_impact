@@ -1,0 +1,1869 @@
+<!-- templates/overview.html -->
+{% extends "base.html" %}
+
+{% block content %}
+<div class="min-h-screen">
+    <!-- Header -->
+    <header class="bg-white shadow-sm border-b">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-2 sm:space-y-0">
+                <div>
+                    <h1 class="text-xl sm:text-2xl font-bold text-gray-900 font-['Inter']">AI Augmentation Analysis</h1>
+                    <p class="text-gray-600 text-sm font-medium">FTE Savings Analysis Dashboard</p>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <form action="/set_schema" method="post" class="flex items-center space-x-2">
+                        <input type="hidden" name="next" value="{{ request.full_path }}">
+                        <label class="text-sm font-medium text-gray-700" for="schemaKey">Data:</label>
+                        <select id="schemaKey" name="schema_key" class="border border-gray-300 rounded-lg px-2 py-1 text-sm" onchange="this.form.submit()">
+                            <option value="strategy" {% if schema_key == 'strategy' %}selected{% endif %}>Strategy</option>
+                            <option value="teamwill" {% if schema_key == 'teamwill' %}selected{% endif %}>Banking</option>
+                            <option value="teamwill_v2" {% if schema_key == 'teamwill_v2' %}selected{% endif %}>Teamwill v2</option>
+                            <option value="teamwill_v3" {% if schema_key == 'teamwill_v3' %}selected{% endif %}>Teamwill v3</option>
+                        </select>
+                    </form>
+                    <a href="/dashboard" class="text-gray-700 hover:text-blue-600 text-sm font-medium px-3 py-1.5 rounded-md hover:bg-gray-100 transition duration-150 border border-gray-200">
+                        <i class="fas fa-tasks mr-1.5"></i>  Task-level AI Analysis
+                    </a>
+                    <a href="/expected_business_case" class="text-gray-700 hover:text-blue-600 text-sm font-medium px-3 py-1.5 rounded-md hover:bg-gray-100 transition duration-150 border border-gray-200">
+                        <i class="fas fa-briefcase mr-1.5"></i>  Expected Business Case
+                    </a>
+                    <a href="/productivity_scenarios" class="text-gray-700 hover:text-blue-600 text-sm font-medium px-3 py-1.5 rounded-md hover:bg-gray-100 transition duration-150 border border-gray-200">
+                        <i class="fas fa-chart-bar mr-1.5"></i>  Productivity Gain Scenarios
+                    </a>
+                    <a href="/update_data" class="text-gray-700 hover:text-blue-600 text-sm font-medium px-3 py-1.5 rounded-md hover:bg-gray-100 transition duration-150 border border-gray-200">
+                        <i class="fas fa-database mr-1.5"></i>  Update Data
+                    </a>
+                    <a href="/ai_tools" class="text-gray-700 hover:text-blue-600 text-sm font-medium px-3 py-1.5 rounded-md hover:bg-gray-100 transition duration-150 border border-gray-200">
+                        <i class="fas fa-wand-magic-sparkles mr-1.5"></i>  AI Tools
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
+        <!-- Filters Section - Horizontal -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-6">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
+                <h2 class="text-lg font-semibold text-gray-900 font-['Inter'] mb-2 sm:mb-0">Filters</h2>
+                <div class="flex items-center gap-2">
+                    <button onclick="applyOverviewFilters()" class="text-sm text-white bg-blue-600 hover:bg-blue-700 transition duration-150 px-3 py-1.5 rounded-lg">
+                        <i class="fas fa-filter mr-1.5 text-xs"></i> Apply
+                    </button>
+                    <button onclick="resetOverviewFilters()" class="text-sm text-gray-600 hover:text-blue-600 transition duration-150 px-3 py-1.5 border border-gray-200 rounded-lg hover:bg-gray-50">
+                        <i class="fas fa-redo-alt mr-1.5 text-xs"></i> Reset All
+                    </button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
+                <div class="relative" data-filter="employee">
+                    <label class="block text-xs font-medium text-gray-700 mb-1.5 font-['Inter']">Employee</label>
+                    <button type="button" onclick="toggleDropdown('employee')" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-left bg-white hover:bg-gray-50 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 font-['Inter']">
+                        <span data-filter-label>All</span>
+                    </button>
+                    <div class="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg hidden max-h-64 overflow-auto" data-filter-menu>
+                        <div class="p-2" data-filter-options>
+                            {% for emp in employees %}
+                            <div class="flex items-center gap-2 px-2 py-1">
+                                <input type="checkbox" id="employee-{{ loop.index0 }}" value="{{ emp }}" class="h-4 w-4" {% if current_employee and (emp in current_employee) %}checked{% endif %}>
+                                <label for="employee-{{ loop.index0 }}" class="text-sm text-gray-700">{{ emp }}</label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="relative" data-filter="role">
+                    <label class="block text-xs font-medium text-gray-700 mb-1.5 font-['Inter']">Role</label>
+                    <button type="button" onclick="toggleDropdown('role')" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-left bg-white hover:bg-gray-50 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 font-['Inter']">
+                        <span data-filter-label>All</span>
+                    </button>
+                    <div class="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg hidden max-h-64 overflow-auto" data-filter-menu>
+                        <div class="p-2" data-filter-options>
+                            {% for role in roles %}
+                            <div class="flex items-center gap-2 px-2 py-1">
+                                <input type="checkbox" id="role-{{ loop.index0 }}" value="{{ role }}" class="h-4 w-4" {% if current_role and (role in current_role) %}checked{% endif %}>
+                                <label for="role-{{ loop.index0 }}" class="text-sm text-gray-700">{{ role }}</label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="relative" data-filter="entity">
+                    <label class="block text-xs font-medium text-gray-700 mb-1.5 font-['Inter']">{% if is_teamwill_like %}Unit{% else %}Entity{% endif %}</label>
+                    <button type="button" onclick="toggleDropdown('entity')" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-left bg-white hover:bg-gray-50 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 font-['Inter']">
+                        <span data-filter-label>All</span>
+                    </button>
+                    <div class="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg hidden max-h-64 overflow-auto" data-filter-menu>
+                        <div class="p-2" data-filter-options>
+                            {% for entity in entities %}
+                            <div class="flex items-center gap-2 px-2 py-1">
+                                <input type="checkbox" id="entity-{{ loop.index0 }}" value="{{ entity }}" class="h-4 w-4" {% if current_entity and (entity in current_entity) %}checked{% endif %}>
+                                <label for="entity-{{ loop.index0 }}" class="text-sm text-gray-700">{{ entity }}</label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="relative" data-filter="team">
+                    <label class="block text-xs font-medium text-gray-700 mb-1.5 font-['Inter']">Team</label>
+                    <button type="button" onclick="toggleDropdown('team')" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-left bg-white hover:bg-gray-50 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 font-['Inter']">
+                        <span data-filter-label>All</span>
+                    </button>
+                    <div class="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg hidden max-h-64 overflow-auto" data-filter-menu>
+                        <div class="p-2" data-filter-options>
+                            {% for team in teams %}
+                            <div class="flex items-center gap-2 px-2 py-1">
+                                <input type="checkbox" id="team-{{ loop.index0 }}" value="{{ team }}" class="h-4 w-4" {% if current_team and (team in current_team) %}checked{% endif %}>
+                                <label for="team-{{ loop.index0 }}" class="text-sm text-gray-700">{{ team }}</label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="relative" data-filter="category">
+                    <label class="block text-xs font-medium text-gray-700 mb-1.5 font-['Inter']">{% if is_teamwill_like %}Country{% else %}Category{% endif %}</label>
+                    <button type="button" onclick="toggleDropdown('category')" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-left bg-white hover:bg-gray-50 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 font-['Inter']">
+                        <span data-filter-label>All</span>
+                    </button>
+                    <div class="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg hidden max-h-64 overflow-auto" data-filter-menu>
+                        <div class="p-2" data-filter-options>
+                            {% for category in categories %}
+                            <div class="flex items-center gap-2 px-2 py-1">
+                                <input type="checkbox" id="category-{{ loop.index0 }}" value="{{ category }}" class="h-4 w-4" {% if current_category and (category in current_category) %}checked{% endif %}>
+                                <label for="category-{{ loop.index0 }}" class="text-sm text-gray-700">{{ category }}</label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="relative" data-filter="sgacogs">
+                    <label class="block text-xs font-medium text-gray-700 mb-1.5 font-['Inter']">{% if is_teamwill_like %}Engagement{% else %}SGACOGS{% endif %}</label>
+                    <button type="button" onclick="toggleDropdown('sgacogs')" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-left bg-white hover:bg-gray-50 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 font-['Inter']">
+                        <span data-filter-label>All</span>
+                    </button>
+                    <div class="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg hidden max-h-64 overflow-auto" data-filter-menu>
+                        <div class="p-2" data-filter-options>
+                            {% for sgacogs in sgacogs_list %}
+                            <div class="flex items-center gap-2 px-2 py-1">
+                                <input type="checkbox" id="sgacogs-{{ loop.index0 }}" value="{{ sgacogs }}" class="h-4 w-4" {% if current_sgacogs and (sgacogs in current_sgacogs) %}checked{% endif %}>
+                                <label for="sgacogs-{{ loop.index0 }}" class="text-sm text-gray-700">{{ sgacogs }}</label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- KPI Cards - Reduced Height -->
+        <div class="grid mobile-kpi-grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 mb-6" id="overview-kpis">
+            <!-- Overall Task Volume -->
+            <div class="kpi-card bg-white rounded-xl shadow-sm p-4 border border-gray-100">
+                <div class="flex items-center justify-between">
+                    <div class="flex-1">
+                        <p class="text-gray-500 text-xs font-medium font-['Inter']">Task Volume</p>
+                        <p class="text-2xl font-bold text-gray-900 mt-1 font-['Inter']">0</p>
+                        <p class="text-xs text-gray-400 mt-0.5">Distinct tasks</p>
+                    </div>
+                    <div class="bg-blue-50 p-2 rounded-lg">
+                        <i class="fas fa-layer-group text-blue-500 text-base"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Current FTE -->
+            <div class="kpi-card bg-white rounded-xl shadow-sm p-4 border border-gray-100">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-500 text-xs font-medium font-['Inter']">Current FTE</p>
+                        <p class="text-2xl font-bold text-gray-900 mt-1 font-['Inter']">0.0</p>
+                    </div>
+                    <div class="bg-green-50 p-2 rounded-lg">
+                        <i class="fas fa-clock text-green-500 text-base"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Total FTE Saving -->
+            <div class="kpi-card bg-white rounded-xl shadow-sm p-4 border border-gray-100">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-500 text-xs font-medium font-['Inter']">FTE Savings</p>
+                        <p class="text-2xl font-bold text-gray-900 mt-1 font-['Inter']">0.0</p>
+                        <p class="text-xs text-gray-400 mt-0.5">New FTE: 0.0</p>
+                    </div>
+                    <div class="bg-yellow-50 p-2 rounded-lg">
+                        <i class="fas fa-chart-line text-yellow-500 text-base"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- FTE Saving % -->
+            <div class="kpi-card bg-white rounded-xl shadow-sm p-4 border border-gray-100">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-500 text-xs font-medium font-['Inter']">FTE Savings %</p>
+                        <p class="text-2xl font-bold text-gray-900 mt-1 font-['Inter']">0.0%</p>
+                    </div>
+                    <div class="bg-purple-50 p-2 rounded-lg">
+                        <i class="fas fa-percentage text-purple-500 text-base"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Productivity Gain Global Card -->
+            <div class="kpi-card bg-white rounded-xl shadow-sm p-4 border border-gray-100">
+                <div class="flex items-center justify-between">
+                    <div class="flex-1">
+                        <p class="text-gray-500 text-xs font-medium font-['Inter']">Productivity Gain</p>
+                        <p class="text-2xl font-bold text-gray-900 mt-1 font-['Inter']" id="overview-prod-gain-global">0.000%</p>
+                        <p class="text-xs text-gray-500 mt-0.5" id="productivity-gain-detail">Local: 0.0%</p>
+                    </div>
+                    <div class="bg-indigo-50 p-2 rounded-lg">
+                        <i class="fas fa-rocket text-indigo-500 text-base"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pie Charts Grid - 3 per row -->
+        <div id="pieChartsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+            <!-- Category Pie Chart -->
+            <div id="categoryChartContainer" class="bg-white rounded-xl shadow-sm p-4 border border-gray-100 chart-container">
+                <div class="flex items-center mb-3">
+                    <div class="bg-purple-50 p-2 rounded-lg mr-3">
+                        <i class="fas fa-tags text-purple-500 text-sm"></i>
+                    </div>
+                    <h3 class="text-sm font-semibold text-gray-900 font-['Inter']">FTE Saving by {% if is_teamwill_like %}Country{% else %}Task Category{% endif %}</h3>
+                </div>
+                <div class="h-56">
+                    <canvas id="categoryPieChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Tasks by Type Pie Chart -->
+            <div id="tasksTypeChartContainer" class="bg-white rounded-xl shadow-sm p-4 border border-gray-100 chart-container">
+                <div class="flex items-center mb-3">
+                    <div class="bg-blue-50 p-2 rounded-lg mr-3">
+                        <i class="fas fa-tasks text-blue-500 text-sm"></i>
+                    </div>
+                    <h3 class="text-sm font-semibold text-gray-900 font-['Inter']">FTE Saving by AI-Task Type</h3>
+                </div>
+                <div class="h-56">
+                    <canvas id="tasksTypePieChart"></canvas>
+                </div>
+            </div>
+            <div id="sgacogsChartContainer" class="bg-white rounded-xl shadow-sm p-4 border border-gray-100 chart-container">
+                <div class="flex items-center mb-3">
+                    <div class="bg-indigo-50 p-2 rounded-lg mr-3">
+                        <i class="fas fa-layer-group text-indigo-500 text-sm"></i>
+                    </div>
+                    <h3 class="text-sm font-semibold text-gray-900 font-['Inter']">FTE Saving by {% if is_teamwill_like %}Engagement{% else %}SGACOGS{% endif %}</h3>
+                </div>
+                <div class="h-56">
+                    <canvas id="sgacogsPieChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Entities Pie Chart -->
+            <div id="entitiesChartContainer" class="bg-white rounded-xl shadow-sm p-4 border border-gray-100 chart-container">
+                <div class="flex items-center mb-3">
+                    <div class="bg-green-50 p-2 rounded-lg mr-3">
+                        <i class="fas fa-building text-green-500 text-sm"></i>
+                    </div>
+                    <h3 class="text-sm font-semibold text-gray-900 font-['Inter']">Top 10 FTE Saving by {% if is_teamwill_like %}Unit{% else %}Entity{% endif %}</h3>
+                </div>
+                <div class="h-56">
+                    <canvas id="entitiesPieChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Teams Pie Chart -->
+            <div id="teamsChartContainer" class="bg-white rounded-xl shadow-sm p-4 border border-gray-100 chart-container">
+                <div class="flex items-center mb-3">
+                    <div class="bg-yellow-50 p-2 rounded-lg mr-3">
+                        <i class="fas fa-users text-yellow-500 text-sm"></i>
+                    </div>
+                    <h3 class="text-sm font-semibold text-gray-900 font-['Inter']">Top 10 FTE Saving by Team</h3>
+                </div>
+                <div class="h-56">
+                    <canvas id="teamsPieChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Roles Pie Chart -->
+            <div id="rolesChartContainer" class="bg-white rounded-xl shadow-sm p-4 border border-gray-100 chart-container">
+                <div class="flex items-center mb-3">
+                    <div class="bg-red-50 p-2 rounded-lg mr-3">
+                        <i class="fas fa-user-tie text-red-500 text-sm"></i>
+                    </div>
+                    <h3 class="text-sm font-semibold text-gray-900 font-['Inter']">Top 10 FTE Saving by Role</h3>
+                </div>
+                <div class="h-56">
+                    <canvas id="rolesPieChart"></canvas>
+                </div>
+            </div>
+
+
+        </div>
+
+        <!-- Tables with Tabs - Wider spacing -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100">
+            <!-- Tabs Navigation -->
+            <div class="border-b border-gray-200 px-6">
+                <nav class="-mb-px flex space-x-6" aria-label="Tabs">
+                    <button id="tasks-tab" onclick="switchTableTab('tasks')"
+                            class="tab-button border-b-2 border-blue-500 py-4 px-2 text-sm font-medium text-blue-600 flex items-center transition duration-150 font-['Inter']">
+                        <i class="fas fa-list-check mr-2.5 text-sm"></i>
+                        Tasks
+                        <span id="tasks-count" class="ml-2 bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded-full">0</span>
+                    </button>
+                    <button id="roles-tab" onclick="switchTableTab('roles')"
+                            class="tab-button border-b-2 border-transparent py-4 px-2 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300 flex items-center transition duration-150 font-['Inter']">
+                        <i class="fas fa-user-tie mr-2.5 text-sm"></i>
+                        Roles
+                        <span id="roles-count" class="ml-2 bg-gray-100 text-gray-800 text-xs font-semibold px-2.5 py-0.5 rounded-full">0</span>
+                    </button>
+                    <button id="entities-tab" onclick="switchTableTab('entities')"
+                            class="tab-button border-b-2 border-transparent py-4 px-2 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300 flex items-center transition duration-150 font-['Inter']">
+                        <i class="fas fa-building mr-2.5 text-sm"></i>
+                        {% if is_teamwill_like %}Units{% else %}Entities{% endif %}
+                        <span id="entities-count" class="ml-2 bg-gray-100 text-gray-800 text-xs font-semibold px-2.5 py-0.5 rounded-full">0</span>
+                    </button>
+                    <button id="teams-tab" onclick="switchTableTab('teams')"
+                            class="tab-button border-b-2 border-transparent py-4 px-2 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300 flex items-center transition duration-150 font-['Inter']">
+                        <i class="fas fa-users-gear mr-2.5 text-sm"></i>
+                        Teams
+                        <span id="teams-count" class="ml-2 bg-gray-100 text-gray-800 text-xs font-semibold px-2.5 py-0.5 rounded-full">0</span>
+                    </button>
+                    <button id="categories-tab" onclick="switchTableTab('categories')"
+                            class="tab-button border-b-2 border-transparent py-4 px-2 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300 flex items-center transition duration-150 font-['Inter']">
+                        <i class="fas fa-tags mr-2.5 text-sm"></i>
+                        {% if is_teamwill_like %}Countries{% else %}Categories{% endif %}
+                        <span id="categories-count" class="ml-2 bg-gray-100 text-gray-800 text-xs font-semibold px-2.5 py-0.5 rounded-full">0</span>
+                    </button>
+                    <button id="sgacogs-tab" onclick="switchTableTab('sgacogs')"
+                            class="tab-button border-b-2 border-transparent py-4 px-2 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300 flex items-center transition duration-150 font-['Inter']">
+                        <i class="fas fa-sitemap mr-2.5 text-sm"></i>
+                        {% if is_teamwill_like %}Engagement{% else %}SGACOGS{% endif %}
+                        <span id="sgacogs-count" class="ml-2 bg-gray-100 text-gray-800 text-xs font-semibold px-2.5 py-0.5 rounded-full">0</span>
+                    </button>
+                </nav>
+            </div>
+
+            <!-- Tab Content -->
+            <div class="p-6">
+                <!-- Tasks Table with subtabs -->
+                <div id="tasks-table-content" class="table-content">
+                    <!-- Subtabs -->
+                    <div class="border-b border-gray-200 mb-4">
+                        <nav class="-mb-px flex space-x-6" aria-label="Task subtabs">
+                            <button id="tasks-ai-tab" onclick="switchTaskSubtab('ai')"
+                                    class="border-b-2 border-blue-500 py-3 px-2 text-sm font-medium text-blue-600 flex items-center transition duration-150 font-['Inter']">
+                                <i class="fas fa-robot mr-2 text-sm"></i>
+                                <span>AI Enhanced</span>
+                                <span id="tasks-ai-count" class="ml-2 bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded-full">0</span>
+                            </button>
+                            <button id="tasks-unchanged-tab" onclick="switchTaskSubtab('unchanged')"
+                                    class="border-b-2 border-transparent py-3 px-2 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300 flex items-center transition duration-150 font-['Inter']">
+                                <i class="fas fa-pause-circle mr-2 text-sm"></i>
+                                <span>Unchanged</span>
+                                <span id="tasks-unchanged-count" class="ml-2 bg-gray-100 text-gray-800 text-xs font-semibold px-2.5 py-0.5 rounded-full">0</span>
+                            </button>
+                            <button id="tasks-ai-forced-unchanged-tab" onclick="switchTaskSubtab('ai-forced-unchanged')"
+                                    class="border-b-2 border-transparent py-3 px-2 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300 flex items-center transition duration-150 font-['Inter']">
+                                <i class="fas fa-user-edit mr-2 text-sm"></i>
+                                <span>Unchanged (Forced)</span>
+                                <span id="tasks-ai-forced-unchanged-count" class="ml-2 bg-gray-100 text-gray-800 text-xs font-semibold px-2.5 py-0.5 rounded-full">0</span>
+                            </button>
+                        </nav>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table id="tasks-table" class="w-full compact-table divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-['Inter']">Rank</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-['Inter']">AI Enhanced</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-['Inter']">Task</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-['Inter']">Employees</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-['Inter']">Roles</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-['Inter']">Current FTE</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-['Inter']">New FTE</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-['Inter']">FTE Savings</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-['Inter']">Prod. Gain</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-['Inter']">Details</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200" id="tasks-table-body-ai">
+                                <tr>
+                                    <td colspan="10" class="px-6 py-8 text-center text-gray-500">
+                                        <i class="fas fa-spinner fa-spin text-xl text-gray-300 mb-2"></i>
+                                        <p class="text-sm font-['Inter']">Loading data...</p>
+                                    </td>
+                                </tr>
+                            </tbody>
+                            <tbody class="bg-white divide-y divide-gray-200 hidden" id="tasks-table-body-unchanged">
+                                <tr>
+                                    <td colspan="10" class="px-6 py-8 text-center text-gray-500">
+                                        <i class="fas fa-spinner fa-spin text-xl text-gray-300 mb-2"></i>
+                                        <p class="text-sm font-['Inter']">Loading data...</p>
+                                    </td>
+                                </tr>
+                            </tbody>
+                            <tbody class="bg-white divide-y divide-gray-200 hidden" id="tasks-table-body-ai-forced-unchanged">
+                                <tr>
+                                    <td colspan="10" class="px-6 py-8 text-center text-gray-500">
+                                        <i class="fas fa-spinner fa-spin text-xl text-gray-300 mb-2"></i>
+                                        <p class="text-sm font-['Inter']">Loading data...</p>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Other tables remain similar with font and spacing adjustments -->
+                <!-- Roles Table -->
+                <div id="roles-table-content" class="table-content hidden">
+                    <div class="flex justify-end mb-3">
+                        <button id="roles-download-csv"
+                                type="button"
+                                class="inline-flex items-center px-3 py-1.5 rounded-md text-xs font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 transition duration-150 font-['Inter']">
+                            <i class="fas fa-file-excel mr-2"></i>
+                            Download Excel
+                        </button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full compact-table divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th data-sort-key="emp_role" class="roles-sort-header px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-['Inter'] cursor-pointer select-none">Role <span class="roles-sort-indicator text-gray-400">↕</span></th>
+                                    <th data-sort-key="employee_id" class="roles-sort-header px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-['Inter'] cursor-pointer select-none">Employees <span class="roles-sort-indicator text-gray-400">↕</span></th>
+                                    <th data-sort-key="full_time_equivalent" class="roles-sort-header px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-['Inter'] cursor-pointer select-none">Current FTE <span class="roles-sort-indicator text-gray-400">↕</span></th>
+                                    <th data-sort-key="new_fte" class="roles-sort-header px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-['Inter'] cursor-pointer select-none">New FTE <span class="roles-sort-indicator text-gray-400">↕</span></th>
+                                    <th data-sort-key="saving" class="roles-sort-header px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-['Inter'] cursor-pointer select-none">FTE Savings <span class="roles-sort-indicator text-gray-400">↕</span></th>
+                                    <th data-sort-key="_local_prod_gain" class="roles-sort-header px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-['Inter'] cursor-pointer select-none">Local Prod. Gain <span class="roles-sort-indicator text-gray-400">↕</span></th>
+                                    <th data-sort-key="_global_prod_gain" class="roles-sort-header px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-['Inter'] cursor-pointer select-none">Prod. Gain <span class="roles-sort-indicator text-gray-400">↕</span></th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200" id="roles-table-body">
+                                <tr>
+                                    <td colspan="7" class="px-6 py-8 text-center text-gray-500">
+                                        <i class="fas fa-spinner fa-spin text-xl text-gray-300 mb-2"></i>
+                                        <p class="text-sm font-['Inter']">Loading data...</p>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Entities Table -->
+                <div id="entities-table-content" class="table-content hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full compact-table divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-['Inter']">{% if is_teamwill_like %}Unit{% else %}Entity{% endif %}</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-['Inter']">Employees</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-['Inter']">Current FTE</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-['Inter']">New FTE</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-['Inter']">FTE Savings</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-['Inter']">Prod. Gain</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200" id="entities-table-body">
+                                <tr>
+                                    <td colspan="6" class="px-6 py-8 text-center text-gray-500">
+                                        <i class="fas fa-spinner fa-spin text-xl text-gray-300 mb-2"></i>
+                                        <p class="text-sm font-['Inter']">Loading data...</p>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Teams Table -->
+                <div id="teams-table-content" class="table-content hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full compact-table divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-['Inter']">Team ID</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-['Inter']">Employees</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-['Inter']">Current FTE</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-['Inter']">New FTE</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-['Inter']">FTE Savings</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-['Inter']">Prod. Gain</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200" id="teams-table-body">
+                                <tr>
+                                    <td colspan="6" class="px-6 py-8 text-center text-gray-500">
+                                        <i class="fas fa-spinner fa-spin text-xl text-gray-300 mb-2"></i>
+                                        <p class="text-sm font-['Inter']">Loading data...</p>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Categories Table -->
+                <div id="categories-table-content" class="table-content hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full compact-table divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-['Inter']">{% if is_teamwill_like %}Country{% else %}Category{% endif %}</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-['Inter']">Employees</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-['Inter']">Current FTE</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-['Inter']">New FTE</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-['Inter']">FTE Savings</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-['Inter']">Prod. Gain</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200" id="categories-table-body">
+                                <tr>
+                                    <td colspan="6" class="px-6 py-8 text-center text-gray-500">
+                                        <i class="fas fa-spinner fa-spin text-xl text-gray-300 mb-2"></i>
+                                        <p class="text-sm font-['Inter']">Loading data...</p>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- SGACOGS Table -->
+                <div id="sgacogs-table-content" class="table-content hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full compact-table divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-['Inter']">{% if is_teamwill_like %}Engagement{% else %}SGACOGS{% endif %}</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-['Inter']">Employees</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-['Inter']">Current FTE</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-['Inter']">New FTE</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-['Inter']">FTE Savings</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-['Inter']">Prod. Gain</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200" id="sgacogs-table-body">
+                                <tr>
+                                    <td colspan="6" class="px-6 py-8 text-center text-gray-500">
+                                        <i class="fas fa-spinner fa-spin text-xl text-gray-300 mb-2"></i>
+                                        <p class="text-sm font-['Inter']">Loading data...</p>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<style>
+    /* Add Inter font family */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+    /* Compact table styles */
+    .compact-table th, .compact-table td {
+        padding: 0.75rem 1rem !important;
+        font-size: 0.8125rem !important;
+        font-family: 'Inter', sans-serif;
+    }
+
+    .compact-table .wrap {
+        white-space: normal !important;
+        word-break: break-word;
+    }
+
+    .compact-table .nowrap {
+        white-space: nowrap;
+    }
+
+    /* Improved KPI card height */
+    .kpi-card {
+        min-height: auto;
+        height: 100%;
+        transition: all 0.2s ease;
+    }
+
+    .kpi-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+
+    /* Chart improvements */
+    .chart-container {
+        min-height: 320px;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .chart-container h3 {
+        margin-bottom: 1rem;
+    }
+
+    /* Tab improvements */
+    .tab-button {
+        padding-left: 1rem;
+        padding-right: 1rem;
+        white-space: nowrap;
+    }
+
+    /* Filter improvements */
+    .filter-input {
+        font-size: 0.875rem;
+        height: 2.5rem;
+    }
+
+    /* Better spacing */
+    .space-x-6 > * + * {
+        margin-left: 1.5rem;
+    }
+
+    /* Improved pie chart container */
+    #pieChartsGrid .chart-container canvas {
+        max-height: 220px;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 1280px) {
+        .tab-button {
+            padding-left: 0.75rem;
+            padding-right: 0.75rem;
+            font-size: 0.8125rem;
+        }
+    }
+
+    @media (max-width: 1024px) {
+        #pieChartsGrid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+    @media (max-width: 768px) {
+        #pieChartsGrid {
+            grid-template-columns: 1fr;
+        }
+
+        .mobile-kpi-grid {
+            grid-template-columns: repeat(2, 1fr) !important;
+            gap: 0.75rem;
+        }
+
+        .kpi-card {
+            padding: 1rem;
+        }
+
+        .kpi-card p.text-2xl {
+            font-size: 1.5rem;
+        }
+    }
+
+    @media (max-width: 640px) {
+        .mobile-kpi-grid {
+            grid-template-columns: 1fr !important;
+        }
+
+        .tab-button span:last-child {
+            display: none;
+        }
+    }
+
+    #tasks-table.hide-ai-enhanced-col thead th:nth-child(2) {
+        display: none;
+    }
+
+    #tasks-table.hide-ai-enhanced-col tbody td:nth-child(2) {
+        display: none;
+    }
+</style>
+
+<!-- JavaScript -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    let rolesPieChart, tasksTypePieChart, entitiesPieChart, teamsPieChart, categoryPieChart, sgacogsPieChart;
+    let filterTimeout;
+
+    function getSelectedValues(filterName) {
+        return Array.from(document.querySelectorAll(`[data-filter="${filterName}"] input[type="checkbox"]:checked`))
+            .map(el => el.value)
+            .filter(v => v);
+    }
+
+    function setFilterLabel(filterName) {
+        const values = getSelectedValues(filterName);
+        const labelEl = document.querySelector(`[data-filter="${filterName}"] [data-filter-label]`);
+        if (!labelEl) return;
+        labelEl.textContent = values.length ? `${values.length} selected` : 'All';
+    }
+
+    function loadOverviewData() {
+        const employee = getSelectedValues('employee');
+        const role = getSelectedValues('role');
+        const entity = getSelectedValues('entity');
+        const team = getSelectedValues('team');
+        const category = getSelectedValues('category');
+        const sgacogs = getSelectedValues('sgacogs');
+
+        let url = '/api/overview_data?';
+        employee.forEach(v => url += `employee=${encodeURIComponent(v)}&`);
+        role.forEach(v => url += `role=${encodeURIComponent(v)}&`);
+        entity.forEach(v => url += `entity=${encodeURIComponent(v)}&`);
+        team.forEach(v => url += `team=${encodeURIComponent(v)}&`);
+        category.forEach(v => url += `category=${encodeURIComponent(v)}&`);
+        sgacogs.forEach(v => url += `sgacogs=${encodeURIComponent(v)}&`);
+
+        url = url.replace(/[&?]$/, '');
+
+        fetch(url)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.error) {
+                    showError('Error loading data: ' + data.error);
+                    return;
+                }
+                updateKPIs(data.stats, data.global_stats, data);
+                updatePieCharts(data);
+                updateTables(data);
+            })
+            .catch(error => {
+                console.error('Error loading overview data:', error);
+                showError(error.message);
+            });
+    }
+
+    function showError(message) {
+        const kpiContainer = document.getElementById('overview-kpis');
+        if (kpiContainer) {
+            kpiContainer.innerHTML = `
+                <div class="col-span-full bg-red-50 border border-red-200 rounded-lg p-4">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-exclamation-triangle text-red-400"></i>
+                        </div>
+                        <div class="ml-3">
+                            <h3 class="text-sm font-medium text-red-800 font-['Inter']">Error loading data</h3>
+                            <p class="text-sm text-red-700 mt-0.5">${message}</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+    }
+
+    function updateKPIs(stats, globalStats, data) {
+        const kpiContainer = document.getElementById('overview-kpis');
+        if (!kpiContainer) return;
+
+        if (!stats || Object.keys(stats).length === 0) {
+            kpiContainer.innerHTML = `
+                <div class="col-span-full text-center py-6">
+                    <i class="fas fa-database text-2xl text-gray-300 mb-2"></i>
+                    <p class="text-gray-500 font-['Inter']">No data available</p>
+                </div>
+            `;
+            return;
+        }
+
+        // Calculate productivity gains
+        const prodGainGlobal = data?.prod_gain_global || 0;
+        const currentFte = stats?.current_fte || 0;
+        const newFte = stats?.new_fte || 0;
+        const productivityGain = newFte > 0 ? parseFloat(Math.abs(100 - (100 * currentFte / newFte)).toFixed(1)) : 0.0;
+
+        // Format global productivity gain
+        let prodGainFormatted;
+        if (prodGainGlobal === 0 || prodGainGlobal >= 1) {
+            prodGainFormatted = prodGainGlobal.toFixed(1) + '%';
+        } else if (prodGainGlobal > 0 && prodGainGlobal < 1) {
+            prodGainFormatted = prodGainGlobal.toFixed(3) + '%';
+        } else {
+            prodGainFormatted = prodGainGlobal.toFixed(1) + '%';
+        }
+
+        // Update KPI cards
+        kpiContainer.innerHTML = `
+            <!-- Task Volume -->
+            <div class="kpi-card bg-white rounded-xl shadow-sm p-4 border border-gray-100">
+                <div class="flex items-center justify-between">
+                    <div class="flex-1">
+                        <p class="text-gray-500 text-xs font-medium font-['Inter']">Task Volume</p>
+                        <p class="text-2xl font-bold text-gray-900 mt-1 font-['Inter']">${stats.total_employees || 0}</p>
+                        <p class="text-xs text-gray-400 mt-0.5">Distinct tasks: ${stats.distinct_tasks || 0}</p>
+                    </div>
+                    <div class="bg-blue-50 p-2 rounded-lg">
+                        <i class="fas fa-layer-group text-blue-500 text-base"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Current FTE -->
+            <div class="kpi-card bg-white rounded-xl shadow-sm p-4 border border-gray-100">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-500 text-xs font-medium font-['Inter']">Current FTE</p>
+                        <p class="text-2xl font-bold text-gray-900 mt-1 font-['Inter']">${(stats.current_fte || 0).toFixed(1)}</p>
+                    </div>
+                    <div class="bg-green-50 p-2 rounded-lg">
+                        <i class="fas fa-clock text-green-500 text-base"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Total FTE Saving -->
+            <div class="kpi-card bg-white rounded-xl shadow-sm p-4 border border-gray-100">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-500 text-xs font-medium font-['Inter']">FTE Savings</p>
+                        <p class="text-2xl font-bold text-gray-900 mt-1 font-['Inter']">${(stats.total_saving || 0).toFixed(1)}</p>
+                        <p class="text-xs text-gray-400 mt-0.5">New FTE: ${(stats.new_fte || 0).toFixed(2)}</p>
+                    </div>
+                    <div class="bg-yellow-50 p-2 rounded-lg">
+                        <i class="fas fa-chart-line text-yellow-500 text-base"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- FTE Saving % -->
+            <div class="kpi-card bg-white rounded-xl shadow-sm p-4 border border-gray-100">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-500 text-xs font-medium font-['Inter']">FTE Savings %</p>
+                        <p class="text-2xl font-bold text-gray-900 mt-1 font-['Inter']">${(stats.saving_percent || 0).toFixed(1)}%</p>
+                    </div>
+                    <div class="bg-purple-50 p-2 rounded-lg">
+                        <i class="fas fa-percentage text-purple-500 text-base"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Productivity Gain Global -->
+            <div class="kpi-card bg-white rounded-xl shadow-sm p-4 border border-gray-100">
+                <div class="flex items-center justify-between">
+                    <div class="flex-1">
+                        <p class="text-gray-500 text-xs font-medium font-['Inter']">Productivity Gain</p>
+                        <p class="text-2xl font-bold text-gray-900 mt-1 font-['Inter']" id="overview-prod-gain-global">
+                            ${prodGainFormatted}
+                        </p>
+                        <p class="text-xs text-gray-500 mt-0.5" id="productivity-gain-detail">Local: ${productivityGain}%</p>
+                    </div>
+                    <div class="bg-indigo-50 p-2 rounded-lg">
+                        <i class="fas fa-rocket text-indigo-500 text-base"></i>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    function createPieChart(canvasId, data, totalSaving, title, globalCurrentFte) {
+        const container = document.getElementById(canvasId).parentNode.parentNode;
+
+        if (data.length === 0 || totalSaving === 0) {
+            container.style.display = 'none';
+            return null;
+        }
+
+        const chartData = data.map(item => {
+            const currentFte = item.current_fte || 0;
+            const newFte = item.new_fte || 0;
+            const saving = item.saving || 0;
+
+            // Global productivity gain for this segment, as if this segment were the only filter
+            let prodGain = 0;
+            if (globalCurrentFte && globalCurrentFte > 0 && saving > 0 && globalCurrentFte > saving) {
+                const newGlobalFte = globalCurrentFte - saving;
+                prodGain = Math.abs(100 - (100 * globalCurrentFte / newGlobalFte));
+            }
+
+            return {
+                label: item.label || 'Unknown',
+                saving: saving,
+                percent: totalSaving > 0 ? (saving / totalSaving * 100) : 0,
+                current_fte: currentFte,
+                new_fte: newFte,
+                prod_gain: prodGain
+            };
+        }).sort((a, b) => b.saving - a.saving).slice(0, 8); // Top 8 only
+
+        // Hide chart if only one unique value
+        if (chartData.length <= 1) {
+            container.style.display = 'none';
+            return null;
+        }
+
+        // Show container if it was hidden
+        container.style.display = 'block';
+
+        const colors = [
+            'rgba(59, 130, 246, 0.85)',   // Blue
+            'rgba(16, 185, 129, 0.85)',   // Green
+            'rgba(245, 158, 11, 0.85)',   // Yellow
+            'rgba(239, 68, 68, 0.85)',    // Red
+            'rgba(139, 92, 246, 0.85)',   // Purple
+            'rgba(236, 72, 153, 0.85)',   // Pink
+            'rgba(14, 165, 233, 0.85)',   // Light Blue
+            'rgba(34, 197, 94, 0.85)',    // Light Green
+            'rgba(251, 146, 60, 0.85)',   // Orange
+            'rgba(168, 85, 247, 0.85)'    // Deep Purple
+        ];
+
+        const ctx = document.getElementById(canvasId).getContext('2d');
+
+        // Destroy existing chart if it exists
+        const existingChart = Chart.getChart(canvasId);
+        if (existingChart) {
+            existingChart.destroy();
+        }
+
+        return new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels: chartData.map(r => `${r.label.substring(0, 20)}${r.label.length > 20 ? '...' : ''}`),
+                datasets: [{
+                    data: chartData.map(r => r.saving),
+                    backgroundColor: colors.slice(0, chartData.length),
+                    borderColor: '#ffffff',
+                    borderWidth: 1.5,
+                    hoverOffset: 8
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            padding: 10,
+                            font: {
+                                family: "'Inter', sans-serif",
+                                size: 10
+                            },
+                            boxWidth: 10,
+                            boxHeight: 10,
+                            color: '#374151'
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(31, 41, 55, 0.95)',
+                        titleFont: {
+                            family: "'Inter', sans-serif",
+                            size: 12
+                        },
+                        bodyFont: {
+                            family: "'Inter', sans-serif",
+                            size: 11
+                        },
+                        padding: 10,
+                        callbacks: {
+                            label: function(context) {
+                                const item = chartData[context.dataIndex];
+
+                                const lines = [];
+                                lines.push(`${item.label}`);
+
+                                // Current FTE
+                                lines.push(`Current FTE: ${item.current_fte.toFixed(2)}`);
+
+                                // FTE saving and share of this FTE
+                                if (item.current_fte > 0 && item.saving > 0) {
+                                    const savingPctOfFte = (item.saving / item.current_fte * 100);
+                                    lines.push(`Saving: ${item.saving.toFixed(2)} FTE (${savingPctOfFte.toFixed(1)}% of FTE)`);
+                                } else {
+                                    lines.push(`Saving: ${item.saving.toFixed(2)} FTE`);
+                                }
+
+                                // Productivity gain for this segment
+                                if (item.prod_gain > 0) {
+                                    lines.push(`Productivity gain: ${item.prod_gain.toFixed(1)}%`);
+                                }
+
+                                // Share of total saving
+                                lines.push(`Share of total saving: ${item.percent.toFixed(1)}%`);
+
+                                return lines;
+                            }
+                        }
+                    }
+                },
+                animation: {
+                    animateScale: true,
+                    animateRotate: true,
+                    duration: 800
+                }
+            }
+        });
+    }
+
+    function repositionPieCharts() {
+        const grid = document.getElementById('pieChartsGrid');
+        if (!grid) return;
+
+        const allContainers = grid.querySelectorAll('.chart-container');
+        const visibleCharts = Array.from(allContainers).filter(
+            container => {
+                const style = window.getComputedStyle(container);
+                return style.display !== 'none' && container.style.display !== 'none';
+            }
+        );
+
+        const visibleCount = visibleCharts.length;
+
+        if (visibleCount === 0) {
+            grid.style.display = 'none';
+            return;
+        }
+
+        grid.style.display = 'grid';
+
+        // Reset styles
+        allContainers.forEach(chart => {
+            chart.style.gridColumn = '';
+            chart.style.maxWidth = '';
+            chart.style.margin = '';
+        });
+
+        // Responsive grid layout
+        if (visibleCount === 1) {
+            grid.className = 'grid grid-cols-1 gap-4 mb-8';
+            if (visibleCharts[0]) {
+                visibleCharts[0].style.maxWidth = '400px';
+                visibleCharts[0].style.margin = '0 auto';
+            }
+        } else if (visibleCount === 2) {
+            grid.className = 'grid grid-cols-1 md:grid-cols-2 gap-4 mb-8';
+        } else {
+            grid.className = 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8';
+        }
+    }
+
+    function updatePieCharts(data) {
+        const totalSaving = data.stats ? data.stats.total_saving : 0;
+        const globalCurrentFte = data.global_current_fte || 0;
+
+        // Destroy existing charts
+        [rolesPieChart, tasksTypePieChart, entitiesPieChart, teamsPieChart, categoryPieChart, sgacogsPieChart].forEach(chart => {
+            if (chart) {
+                chart.destroy();
+            }
+        });
+
+        // Reset container display
+        const containers = [
+            'rolesChartContainer',
+            'tasksTypeChartContainer',
+            'entitiesChartContainer',
+            'teamsChartContainer',
+            'categoryChartContainer',
+            'sgacogsChartContainer'
+        ];
+
+        containers.forEach(id => {
+            const container = document.getElementById(id);
+            if (container) {
+                container.style.display = 'block';
+            }
+        });
+
+        // Roles Pie Chart
+        const roles = (data.role_saving || []).map(r => ({
+            label: r.emp_role || 'Unknown Role',
+            saving: r.saving || 0,
+            current_fte: r.full_time_equivalent || 0,
+            new_fte: r.new_fte || 0
+        }));
+        rolesPieChart = createPieChart('rolesPieChart', roles, totalSaving, 'Roles', globalCurrentFte);
+
+        // Tasks by Type Pie Chart
+        const taskTypes = (data.task_type_saving || []).map(t => ({
+            label: t.task_type || 'Unknown Type',
+            saving: t.saving || 0,
+            current_fte: t.full_time_equivalent || 0,
+            new_fte: t.new_fte || 0
+        }));
+        tasksTypePieChart = createPieChart('tasksTypePieChart', taskTypes, totalSaving, 'Task Types', globalCurrentFte);
+
+        // Entities Pie Chart
+        const entities = (data.entity_saving || []).map(e => ({
+            label: e.entity || 'Unknown Entity',
+            saving: e.saving || 0,
+            current_fte: e.full_time_equivalent || 0,
+            new_fte: e.new_fte || 0
+        }));
+        entitiesPieChart = createPieChart('entitiesPieChart', entities, totalSaving, 'Entities', globalCurrentFte);
+
+        // Teams Pie Chart
+        const teams = (data.team_saving || []).map(t => ({
+            label: t.supervisor_id || 'Unknown Team',
+            saving: t.saving || 0,
+            current_fte: t.full_time_equivalent || 0,
+            new_fte: t.new_fte || 0
+        }));
+        teamsPieChart = createPieChart('teamsPieChart', teams, totalSaving, 'Teams', globalCurrentFte);
+
+        // Category Pie Chart
+        const categories = (data.category_saving || []).map(c => ({
+            label: c.category || 'Unknown Category',
+            saving: c.saving || 0,
+            current_fte: c.full_time_equivalent || 0,
+            new_fte: c.new_fte || 0
+        }));
+        categoryPieChart = createPieChart('categoryPieChart', categories, totalSaving, 'Categories', globalCurrentFte);
+
+        // SGACOGS Pie Chart
+        const sgacogsData = (data.sgacogs_saving || []).map(s => ({
+            label: s.sgacogs || 'Unknown SGACOGS',
+            saving: s.saving || 0,
+            current_fte: s.full_time_equivalent || 0,
+            new_fte: s.new_fte || 0
+        }));
+        sgacogsPieChart = createPieChart('sgacogsPieChart', sgacogsData, totalSaving, 'SGACOGS', globalCurrentFte);
+
+        // Reposition charts after creation
+        setTimeout(repositionPieCharts, 50);
+    }
+
+    function switchTableTab(tabName) {
+        // Hide all table contents
+        document.querySelectorAll('.table-content').forEach(content => {
+            content.classList.add('hidden');
+        });
+
+        // Remove active state from all tabs
+        document.querySelectorAll('.tab-button').forEach(button => {
+            button.classList.remove('border-blue-500', 'text-blue-600');
+            button.classList.add('border-transparent', 'text-gray-500');
+        });
+
+        // Show selected table
+        const selectedContent = document.getElementById(`${tabName}-table-content`);
+        if (selectedContent) {
+            selectedContent.classList.remove('hidden');
+        }
+
+        // Activate selected tab
+        const activeTab = document.getElementById(`${tabName}-tab`);
+        if (activeTab) {
+            activeTab.classList.remove('border-transparent', 'text-gray-500');
+            activeTab.classList.add('border-blue-500', 'text-blue-600');
+        }
+    }
+
+    function switchTaskSubtab(subtab) {
+        const aiTab = document.getElementById('tasks-ai-tab');
+        const unchangedTab = document.getElementById('tasks-unchanged-tab');
+        const aiForcedUnchangedTab = document.getElementById('tasks-ai-forced-unchanged-tab');
+        const aiBody = document.getElementById('tasks-table-body-ai');
+        const unchangedBody = document.getElementById('tasks-table-body-unchanged');
+        const aiForcedUnchangedBody = document.getElementById('tasks-table-body-ai-forced-unchanged');
+        const tasksTable = document.getElementById('tasks-table');
+
+        if (!aiTab || !unchangedTab || !aiBody || !unchangedBody || !aiForcedUnchangedTab || !aiForcedUnchangedBody || !tasksTable) return;
+
+        if (subtab === 'ai') {
+            tasksTable.classList.remove('hide-ai-enhanced-col');
+            aiBody.classList.remove('hidden');
+            unchangedBody.classList.add('hidden');
+            aiForcedUnchangedBody.classList.add('hidden');
+            aiTab.classList.add('border-blue-500', 'text-blue-600');
+            aiTab.classList.remove('border-transparent', 'text-gray-500');
+            unchangedTab.classList.add('border-transparent', 'text-gray-500');
+            unchangedTab.classList.remove('border-blue-500', 'text-blue-600');
+            aiForcedUnchangedTab.classList.add('border-transparent', 'text-gray-500');
+            aiForcedUnchangedTab.classList.remove('border-blue-500', 'text-blue-600');
+        } else {
+            if (subtab === 'ai-forced-unchanged') {
+                tasksTable.classList.remove('hide-ai-enhanced-col');
+                aiForcedUnchangedBody.classList.remove('hidden');
+                aiBody.classList.add('hidden');
+                unchangedBody.classList.add('hidden');
+                aiForcedUnchangedTab.classList.add('border-blue-500', 'text-blue-600');
+                aiForcedUnchangedTab.classList.remove('border-transparent', 'text-gray-500');
+                unchangedTab.classList.add('border-transparent', 'text-gray-500');
+                unchangedTab.classList.remove('border-blue-500', 'text-blue-600');
+                aiTab.classList.add('border-transparent', 'text-gray-500');
+                aiTab.classList.remove('border-blue-500', 'text-blue-600');
+            } else {
+                tasksTable.classList.add('hide-ai-enhanced-col');
+                unchangedBody.classList.remove('hidden');
+                aiBody.classList.add('hidden');
+                aiForcedUnchangedBody.classList.add('hidden');
+                unchangedTab.classList.add('border-blue-500', 'text-blue-600');
+                unchangedTab.classList.remove('border-transparent', 'text-gray-500');
+                aiTab.classList.add('border-transparent', 'text-gray-500');
+                aiTab.classList.remove('border-blue-500', 'text-blue-600');
+                aiForcedUnchangedTab.classList.add('border-transparent', 'text-gray-500');
+                aiForcedUnchangedTab.classList.remove('border-blue-500', 'text-blue-600');
+            }
+        }
+    }
+
+    function updateTables(data) {
+        // Get total current FTE from database (all rows, not just displayed)
+        const totalCurrentFte = data.global_current_fte || 0;
+
+        const escapeHtml = (value) => {
+            const str = value === null || value === undefined ? '' : String(value);
+            return str
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        };
+
+        const downloadExcel = (filename, headerCells, rowCells) => {
+            const thead = `<tr>${headerCells.map(h => `<th>${escapeHtml(h)}</th>`).join('')}</tr>`;
+            const tbody = rowCells
+                .map(r => `<tr>${r.map(c => `<td>${escapeHtml(c)}</td>`).join('')}</tr>`)
+                .join('');
+
+            const html = `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+</head>
+<body>
+<table>${thead}${tbody}</table>
+</body>
+</html>`;
+
+            const blob = new Blob([html], { type: 'application/vnd.ms-excel;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        };
+
+        const tasks = data.task_saving || [];
+        const roles = data.role_saving || [];
+        const entities = data.entity_saving || [];
+        const teams = data.team_saving || [];
+        const categories = data.category_saving || [];
+        const sgacogsRows = data.sgacogs_saving || [];
+
+        // Update tab counts
+        const updateCount = (elementId, count) => {
+            const el = document.getElementById(elementId);
+            if (el) el.textContent = count;
+        };
+
+        updateCount('tasks-count', tasks.length);
+        updateCount('roles-count', roles.length);
+        updateCount('entities-count', entities.length);
+        updateCount('teams-count', teams.length);
+        updateCount('categories-count', categories.length);
+        updateCount('sgacogs-count', sgacogsRows.length);
+
+        const aiForcedUnchangedTasks = tasks.filter(task => task.changed_by_user === true);
+        const aiTasks = tasks.filter(task => (task.changed_by_user !== true) && (task.saving || 0) > 0);
+        const unchangedTasks = tasks
+            .filter(task => (task.changed_by_user !== true) && (task.saving || 0) <= 0)
+            .sort((a, b) => {
+                const aAi = (a.already_include_ai === true) ? 0 : 1;
+                const bAi = (b.already_include_ai === true) ? 0 : 1;
+                if (aAi !== bAi) return aAi - bAi;
+
+                const aSaving = Number(a.saving || 0);
+                const bSaving = Number(b.saving || 0);
+                if (aSaving !== bSaving) return bSaving - aSaving;
+
+                const aLabel = String(a.task_l2 || '');
+                const bLabel = String(b.task_l2 || '');
+                return aLabel.localeCompare(bLabel);
+            });
+
+        updateCount('tasks-ai-count', aiTasks.length);
+        updateCount('tasks-unchanged-count', unchangedTasks.length);
+        updateCount('tasks-ai-forced-unchanged-count', aiForcedUnchangedTasks.length);
+
+        // Helper function to create table rows
+        const createTableRow = (data, type) => {
+            const saving = data.saving || 0;
+            let globalProdGain = 0;
+            if (totalCurrentFte > 0 && (totalCurrentFte - saving) > 0) {
+                globalProdGain = Math.abs(100 - 100 * (totalCurrentFte / (totalCurrentFte - saving)));
+            }
+
+            const newFte = data.new_fte || 0;
+            const localProdGain = newFte > 0 ? (100 * saving / newFte) : 0;
+
+            const savingClass = saving > 0 ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-600';
+            const savingPercent = data.saving_percent || 0;
+
+            switch(type) {
+                case 'task':
+                    const taskLabel = data.task_l2 || `Task ${data.task_id}`;
+                    const alreadyAiBadge = (data.already_include_ai === true)
+                        ? '<span class="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-indigo-100 text-indigo-800 align-middle">Already AI</span>'
+                        : '';
+                    return `
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-3 whitespace-nowrap text-sm font-medium text-gray-900 font-['Inter']">${data.rank || ''}</td>
+                            <td class="px-6 py-3 whitespace-nowrap">
+                                <label class="relative inline-flex items-center cursor-pointer select-none">
+                                    <input type="checkbox" class="sr-only peer overview-ai-toggle" ${data._toggle_checked ? 'checked' : ''} ${data._toggle_disabled ? 'disabled' : ''}
+                                           data-task-id="${data.task_id}">
+                                    <div class="w-10 h-5 bg-gray-300 rounded-full transition-colors peer-checked:bg-green-500 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-green-300"></div>
+                                    <div class="absolute left-0.5 top-0.5 w-4 h-4 bg-white rounded-full shadow transform transition-transform peer-checked:translate-x-5"></div>
+                                    <span class="ml-2 text-xs text-gray-700"></span>
+                                </label>
+                            </td>
+                            <td class="px-6 py-3 text-sm text-gray-900 font-['Inter'] whitespace-normal">
+                                ${taskLabel.length > 50 ? taskLabel.substring(0, 47) + '...' : taskLabel}
+                                ${alreadyAiBadge}
+                            </td>
+                            <td class="px-6 py-3 whitespace-nowrap text-sm text-gray-500 font-['Inter']">${data.employee_id || 0}</td>
+                            <td class="px-6 py-3 whitespace-nowrap text-sm text-gray-500 font-['Inter']">${data.role_count || 0}</td>
+                            <td class="px-6 py-3 whitespace-nowrap text-sm text-gray-500 font-['Inter']">${(data.full_time_equivalent || 0).toFixed(2)}</td>
+                            <td class="px-6 py-3 whitespace-nowrap text-sm text-gray-500 font-['Inter']">${(data.new_fte || 0).toFixed(2)}</td>
+                            <td class="px-6 py-3 whitespace-nowrap">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${savingClass} font-['Inter']">
+                                    ${saving.toFixed(2)} FTE ${saving > 0 ? `(${savingPercent.toFixed(1)}%)` : '(Unchanged)'}
+                                </span>
+                            </td>
+                            <td class="px-6 py-3 whitespace-nowrap">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800 font-['Inter']">
+                                    ${globalProdGain.toFixed(3)}%
+                                </span>
+                            </td>
+                            <td class="px-6 py-3 whitespace-nowrap">
+                                <button type="button"
+                                        class="view-task-btn inline-flex items-center text-blue-600 hover:text-blue-800 transition duration-150 text-xs sm:text-sm font-['Inter']"
+                                        title="View task details"
+                                        onclick="openTaskModal('${data.task_id}')">
+                                    <i class="fas fa-eye mr-1"></i>
+                                    <span class="hidden sm:inline">View</span>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+
+                case 'role':
+                    const roleLabel = data.emp_role || 'Unknown Role';
+                    return `
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-3 text-sm font-medium text-gray-900 font-['Inter'] whitespace-normal">
+                                ${roleLabel.length > 40 ? roleLabel.substring(0, 37) + '...' : roleLabel}
+                            </td>
+                            <td class="px-6 py-3 whitespace-nowrap text-sm text-gray-500 font-['Inter']">${data.employee_id || 0}</td>
+                            <td class="px-6 py-3 whitespace-nowrap text-sm text-gray-500 font-['Inter']">${(data.full_time_equivalent || 0).toFixed(2)}</td>
+                            <td class="px-6 py-3 whitespace-nowrap text-sm text-gray-500 font-['Inter']">${(data.new_fte || 0).toFixed(2)}</td>
+                            <td class="px-6 py-3 whitespace-nowrap">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 font-['Inter']">
+                                    ${saving.toFixed(2)} FTE (${savingPercent.toFixed(1)}%)
+                                </span>
+                            </td>
+                            <td class="px-6 py-3 whitespace-nowrap">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800 font-['Inter']">
+                                    ${localProdGain.toFixed(3)}%
+                                </span>
+                            </td>
+                            <td class="px-6 py-3 whitespace-nowrap">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800 font-['Inter']">
+                                    ${globalProdGain.toFixed(3)}%
+                                </span>
+                            </td>
+                        </tr>
+                    `;
+
+                case 'entity':
+                case 'team':
+                case 'category':
+                case 'sgacogs':
+                    const label = data[type] || data.supervisor_id || data.sgacogs || 'N/A';
+                    const bgColor = type === 'team' ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800';
+
+                    return `
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-3 text-sm font-medium text-gray-900 font-['Inter'] whitespace-normal">
+                                ${label.length > 40 ? label.substring(0, 37) + '...' : label}
+                            </td>
+                            <td class="px-6 py-3 whitespace-nowrap text-sm text-gray-500 font-['Inter']">${data.employee_id || 0}</td>
+                            <td class="px-6 py-3 whitespace-nowrap text-sm text-gray-500 font-['Inter']">${(data.full_time_equivalent || 0).toFixed(2)}</td>
+                            <td class="px-6 py-3 whitespace-nowrap text-sm text-gray-500 font-['Inter']">${(data.new_fte || 0).toFixed(2)}</td>
+                            <td class="px-6 py-3 whitespace-nowrap">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${bgColor} font-['Inter']">
+                                    ${saving.toFixed(2)} FTE (${savingPercent.toFixed(1)}%)
+                                </span>
+                            </td>
+                            <td class="px-6 py-3 whitespace-nowrap">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800 font-['Inter']">
+                                    ${globalProdGain.toFixed(3)}%
+                                </span>
+                            </td>
+                        </tr>
+                    `;
+
+                default:
+                    return '';
+            }
+        };
+
+        const applyToggleFlags = (list, mode) => {
+            return list.map((t, idx) => {
+                const out = { ...t };
+                out.rank = idx + 1;
+                if (mode === 'ai') {
+                    out._toggle_checked = true;
+                    out._toggle_disabled = false;
+                } else if (mode === 'ai-forced-unchanged') {
+                    out._toggle_checked = false;
+                    out._toggle_disabled = false;
+                } else {
+                    out._toggle_checked = false;
+                    out._toggle_disabled = true;
+                }
+                return out;
+            });
+        };
+
+        // Update Tasks Table - AI Enhanced
+        const tasksAiTable = document.getElementById('tasks-table-body-ai');
+        if (tasksAiTable) {
+            if (aiTasks.length > 0) {
+                tasksAiTable.innerHTML = applyToggleFlags(aiTasks, 'ai').map(task => createTableRow(task, 'task')).join('');
+            } else {
+                tasksAiTable.innerHTML = `
+                    <tr>
+                        <td colspan="10" class="px-6 py-6 text-center text-gray-500 font-['Inter']">
+                            <i class="fas fa-robot text-xl text-gray-300 mb-2"></i>
+                            <p class="text-sm">No AI enhanced tasks found</p>
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+
+        // Update Tasks Table - Unchanged
+        const tasksUnchangedTable = document.getElementById('tasks-table-body-unchanged');
+        if (tasksUnchangedTable) {
+            if (unchangedTasks.length > 0) {
+                tasksUnchangedTable.innerHTML = applyToggleFlags(unchangedTasks, 'unchanged').map(task => createTableRow(task, 'task')).join('');
+            } else {
+                tasksUnchangedTable.innerHTML = `
+                    <tr>
+                        <td colspan="10" class="px-6 py-6 text-center text-gray-500 font-['Inter']">
+                            <i class="fas fa-pause-circle text-xl text-gray-300 mb-2"></i>
+                            <p class="text-sm">No unchanged tasks found</p>
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+
+        const tasksAiForcedUnchangedTable = document.getElementById('tasks-table-body-ai-forced-unchanged');
+        if (tasksAiForcedUnchangedTable) {
+            if (aiForcedUnchangedTasks.length > 0) {
+                tasksAiForcedUnchangedTable.innerHTML = applyToggleFlags(aiForcedUnchangedTasks, 'ai-forced-unchanged').map(task => createTableRow(task, 'task')).join('');
+            } else {
+                tasksAiForcedUnchangedTable.innerHTML = `
+                    <tr>
+                        <td colspan="10" class="px-6 py-6 text-center text-gray-500 font-['Inter']">
+                            <i class="fas fa-user-edit text-xl text-gray-300 mb-2"></i>
+                            <p class="text-sm">No forced unchanged tasks found</p>
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+
+        setupOverviewAiToggles();
+
+        // Update Roles Table
+        const rolesTable = document.getElementById('roles-table-body');
+        if (rolesTable) {
+            if (roles.length > 0) {
+                window.__latestOverviewData = data;
+                const rolesWithMetrics = roles.map(r => {
+                    const saving = r.saving || 0;
+                    const newFte = r.new_fte || 0;
+                    let globalProdGain = 0;
+                    if (totalCurrentFte > 0 && (totalCurrentFte - saving) > 0) {
+                        globalProdGain = Math.abs(100 - 100 * (totalCurrentFte / (totalCurrentFte - saving)));
+                    }
+                    const localProdGain = newFte > 0 ? (100 * saving / newFte) : 0;
+                    return { ...r, _global_prod_gain: globalProdGain, _local_prod_gain: localProdGain };
+                });
+
+                if (!window.__rolesSortState) {
+                    window.__rolesSortState = { key: '_global_prod_gain', dir: 'desc' };
+                }
+
+                const sortState = window.__rolesSortState;
+                const sortedRoles = [...rolesWithMetrics].sort((a, b) => {
+                    const key = sortState.key;
+                    const dir = sortState.dir === 'asc' ? 1 : -1;
+
+                    const av = a[key];
+                    const bv = b[key];
+
+                    const aNum = typeof av === 'number' ? av : Number(av);
+                    const bNum = typeof bv === 'number' ? bv : Number(bv);
+                    const bothNumbers = Number.isFinite(aNum) && Number.isFinite(bNum);
+
+                    if (bothNumbers) return (aNum - bNum) * dir;
+                    return String(av ?? '').localeCompare(String(bv ?? '')) * dir;
+                });
+
+                window.__latestRolesRows = sortedRoles;
+
+                rolesTable.innerHTML = sortedRoles.map(role => createTableRow(role, 'role')).join('');
+
+                const downloadBtn = document.getElementById('roles-download-csv');
+                if (downloadBtn && downloadBtn.dataset.bound !== '1') {
+                    downloadBtn.dataset.bound = '1';
+                    downloadBtn.addEventListener('click', () => {
+                        const rows = window.__latestRolesRows || [];
+                        const header = [
+                            'Role',
+                            'Employees',
+                            'Current FTE',
+                            'New FTE',
+                            'FTE Savings',
+                            'FTE Savings (%)',
+                            'Local Prod. Gain (%)',
+                            'Prod. Gain (%)'
+                        ];
+
+                        const excelRows = rows.map(r => {
+                            const currentFte = r.full_time_equivalent || 0;
+                            const saving = r.saving || 0;
+                            const fteSavingPercent = currentFte > 0 ? (saving / currentFte * 100) : 0;
+                            return [
+                                r.emp_role || 'Unknown Role',
+                                String(r.employee_id || 0),
+                                (currentFte).toFixed(2),
+                                (r.new_fte || 0).toFixed(2),
+                                (saving).toFixed(2),
+                                (fteSavingPercent).toFixed(3),
+                                ((r._local_prod_gain || 0)).toFixed(3),
+                                ((r._global_prod_gain || 0)).toFixed(3)
+                            ];
+                        });
+
+                        downloadExcel('roles.xls', header, excelRows);
+                    });
+                }
+
+                const headerEls = document.querySelectorAll('#roles-table-content thead .roles-sort-header');
+                headerEls.forEach(th => {
+                    if (th.dataset.rolesSortBound === '1') return;
+                    th.dataset.rolesSortBound = '1';
+                    th.addEventListener('click', () => {
+                        const key = th.getAttribute('data-sort-key');
+                        if (!key) return;
+
+                        if (!window.__rolesSortState) {
+                            window.__rolesSortState = { key: '_global_prod_gain', dir: 'desc' };
+                        }
+
+                        if (window.__rolesSortState.key === key) {
+                            window.__rolesSortState.dir = window.__rolesSortState.dir === 'asc' ? 'desc' : 'asc';
+                        } else {
+                            window.__rolesSortState.key = key;
+                            window.__rolesSortState.dir = 'asc';
+                        }
+
+                        updateTables(window.__latestOverviewData || data);
+                    });
+                });
+
+                headerEls.forEach(th => {
+                    const key = th.getAttribute('data-sort-key');
+                    const indicator = th.querySelector('.roles-sort-indicator');
+                    if (!indicator) return;
+                    if (key === window.__rolesSortState.key) {
+                        indicator.textContent = window.__rolesSortState.dir === 'asc' ? '▲' : '▼';
+                    } else {
+                        indicator.textContent = '↕';
+                    }
+                });
+            } else {
+                rolesTable.innerHTML = `
+                    <tr>
+                        <td colspan="7" class="px-6 py-6 text-center text-gray-500 font-['Inter']">
+                            <i class="fas fa-user-tie text-xl text-gray-300 mb-2"></i>
+                            <p class="text-sm">No role data available</p>
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+
+        // Update Entities Table
+        const entitiesTable = document.getElementById('entities-table-body');
+        if (entitiesTable) {
+            if (entities.length > 0) {
+                entitiesTable.innerHTML = entities.map(entity => createTableRow(entity, 'entity')).join('');
+            } else {
+                entitiesTable.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="px-6 py-6 text-center text-gray-500 font-['Inter']">
+                            <i class="fas fa-building text-xl text-gray-300 mb-2"></i>
+                            <p class="text-sm">No entity data available</p>
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+
+        // Update Teams Table
+        const teamsTable = document.getElementById('teams-table-body');
+        if (teamsTable) {
+            if (teams.length > 0) {
+                teamsTable.innerHTML = teams.map(team => createTableRow(team, 'team')).join('');
+            } else {
+                teamsTable.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="px-6 py-6 text-center text-gray-500 font-['Inter']">
+                            <i class="fas fa-users-gear text-xl text-gray-300 mb-2"></i>
+                            <p class="text-sm">No team data available</p>
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+
+        // Update Categories Table
+        const categoriesTable = document.getElementById('categories-table-body');
+        if (categoriesTable) {
+            if (categories.length > 0) {
+                categoriesTable.innerHTML = categories.map(category => createTableRow(category, 'category')).join('');
+            } else {
+                categoriesTable.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="px-6 py-6 text-center text-gray-500 font-['Inter']">
+                            <i class="fas fa-tags text-xl text-gray-300 mb-2"></i>
+                            <p class="text-sm">No category data available</p>
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+
+        // Update SGACOGS Table
+        const sgacogsTable = document.getElementById('sgacogs-table-body');
+        if (sgacogsTable) {
+            if (sgacogsRows.length > 0) {
+                sgacogsTable.innerHTML = sgacogsRows.map(row => createTableRow(row, 'sgacogs')).join('');
+            } else {
+                sgacogsTable.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="px-6 py-6 text-center text-gray-500 font-['Inter']">
+                            <i class="fas fa-sitemap text-xl text-gray-300 mb-2"></i>
+                            <p class="text-sm">No SGACOGS data available</p>
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+    }
+
+    function setupOverviewAiToggles() {
+        document.querySelectorAll('.overview-ai-toggle:not(:disabled)').forEach(input => {
+            input.replaceWith(input.cloneNode(true));
+        });
+
+        document.querySelectorAll('.overview-ai-toggle:not(:disabled)').forEach(input => {
+            input.addEventListener('change', async function() {
+                const taskId = this.getAttribute('data-task-id');
+
+                if (!this.checked) {
+                    const confirmed = window.confirm('Move this task from AI Enhanced to AI Forced Unchanged?');
+                    if (!confirmed) {
+                        this.checked = true;
+                        return;
+                    }
+                    try {
+                        const resp = await fetch('/api/ai_task_refined/mark_unchanged', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ task_id: taskId })
+                        });
+                        const data = await resp.json();
+                        if (!resp.ok || !data.success) {
+                            alert('Failed to move task. Please try again.');
+                            this.checked = true;
+                        } else {
+                            loadOverviewData();
+                            switchTaskSubtab('ai-forced-unchanged');
+                        }
+                    } catch (e) {
+                        console.error(e);
+                        alert('Network error. Please try again.');
+                        this.checked = true;
+                    }
+                } else {
+                    const confirmed = window.confirm('Reactivate AI for this task?');
+                    if (!confirmed) {
+                        this.checked = false;
+                        return;
+                    }
+                    try {
+                        const resp = await fetch('/api/ai_task_refined/reactivate_ai', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ task_id: taskId })
+                        });
+                        const data = await resp.json();
+                        if (!resp.ok || !data.success) {
+                            alert('Failed to reactivate AI. Please try again.');
+                            this.checked = false;
+                        } else {
+                            loadOverviewData();
+                            switchTaskSubtab('ai');
+                        }
+                    } catch (e) {
+                        console.error(e);
+                        alert('Network error. Please try again.');
+                        this.checked = false;
+                    }
+                }
+            });
+        });
+    }
+
+    function updateOverviewFilters(applyNow = false, excludeFilter = null) {
+        clearTimeout(filterTimeout);
+        filterTimeout = setTimeout(() => {
+            const employee = getSelectedValues('employee');
+            const role = getSelectedValues('role');
+            const entity = getSelectedValues('entity');
+            const team = getSelectedValues('team');
+            const category = getSelectedValues('category');
+            const sgacogs = getSelectedValues('sgacogs');
+
+            ['employee', 'role', 'entity', 'team', 'category', 'sgacogs'].forEach(setFilterLabel);
+
+            if (applyNow) {
+                updateOverviewFilterOptions(employee, role, entity, team, category, sgacogs, null);
+                let url = '/?';
+                employee.forEach(v => url += `employee=${encodeURIComponent(v)}&`);
+                role.forEach(v => url += `role=${encodeURIComponent(v)}&`);
+                entity.forEach(v => url += `entity=${encodeURIComponent(v)}&`);
+                team.forEach(v => url += `team=${encodeURIComponent(v)}&`);
+                category.forEach(v => url += `category=${encodeURIComponent(v)}&`);
+                sgacogs.forEach(v => url += `sgacogs=${encodeURIComponent(v)}&`);
+
+                url = url.replace(/[&?]$/, '');
+                window.history.replaceState({}, '', url);
+                loadOverviewData();
+            } else {
+                updateOverviewFilterOptions(employee, role, entity, team, category, sgacogs, excludeFilter);
+            }
+        }, 300);
+    }
+
+    function applyOverviewFilters() {
+        updateOverviewFilters(true, null);
+        closeAllDropdowns();
+    }
+
+    function updateOverviewFilterOptions(employee, role, entity, team, category, sgacogs, excludeFilter = null) {
+        const params = new URLSearchParams();
+        if (excludeFilter !== 'employee') (employee || []).forEach(v => params.append('employee', v));
+        if (excludeFilter !== 'role') (role || []).forEach(v => params.append('role', v));
+        if (excludeFilter !== 'entity') (entity || []).forEach(v => params.append('entity', v));
+        if (excludeFilter !== 'team') (team || []).forEach(v => params.append('team', v));
+        if (excludeFilter !== 'category') (category || []).forEach(v => params.append('category', v));
+        if (excludeFilter !== 'sgacogs') (sgacogs || []).forEach(v => params.append('sgacogs', v));
+        fetch(`/get_filter_options?${params.toString()}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    console.error('Error updating filter options:', data.error);
+                    return;
+                }
+
+                function renderFilter(filterName, items) {
+                    if (excludeFilter && filterName === excludeFilter) {
+                        setFilterLabel(filterName);
+                        return;
+                    }
+                    const container = document.querySelector(`[data-filter="${filterName}"] [data-filter-options]`);
+                    if (!container) return;
+                    const selected = new Set(getSelectedValues(filterName));
+                    container.innerHTML = '';
+                    (items || []).forEach((v, idx) => {
+                        const id = `${filterName}-${idx}`;
+                        const wrapper = document.createElement('div');
+                        wrapper.className = 'flex items-center gap-2 px-2 py-1';
+                        wrapper.innerHTML = `
+                            <input type="checkbox" id="${id}" value="${String(v).replace(/"/g, '&quot;')}" class="h-4 w-4" ${selected.has(String(v)) ? 'checked' : ''}>
+                            <label for="${id}" class="text-sm text-gray-700">${v}</label>
+                        `;
+                        wrapper.querySelector('input')?.addEventListener('change', () => updateOverviewFilters(false, filterName));
+                        container.appendChild(wrapper);
+                    });
+                    setFilterLabel(filterName);
+                }
+
+                renderFilter('employee', data.employees || []);
+                renderFilter('role', data.roles || []);
+                renderFilter('entity', data.entities || []);
+                renderFilter('team', data.teams || []);
+                renderFilter('category', data.categories || []);
+                renderFilter('sgacogs', data.sgacogs || []);
+            })
+            .catch(error => {
+                console.error('Error updating filter options:', error);
+            });
+    }
+
+    function resetOverviewFilters() {
+        window.location.href = '/';
+    }
+
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        // Load initial data
+        loadOverviewData();
+
+        ['employee', 'role', 'entity', 'team', 'category', 'sgacogs'].forEach(setFilterLabel);
+        document.querySelectorAll('[data-filter] input[type="checkbox"]').forEach(el => {
+            el.addEventListener('change', () => {
+                const filterName = el.closest('[data-filter]')?.getAttribute('data-filter');
+                updateOverviewFilters(false, filterName || null);
+            });
+        });
+
+        // Initialize first tab as active
+        switchTableTab('tasks');
+        switchTaskSubtab('ai');
+    });
+
+    // Handle window resize for responsive charts
+    let resizeTimer;
+    window.addEventListener('resize', function() {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(() => {
+            repositionPieCharts();
+        }, 250);
+    });
+</script>
+{% endblock %}

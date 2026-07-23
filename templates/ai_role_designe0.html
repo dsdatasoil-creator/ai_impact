@@ -1,0 +1,428 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+    <header class="bg-white shadow-sm border-b">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-2 sm:space-y-0">
+                <div>
+                    <h1 class="text-xl sm:text-2xl font-bold text-gray-900 font-['Inter']">AI Role Design</h1>
+                    <p class="text-gray-600 text-sm font-medium">Traditional Role → AI-Augmented Role</p>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <a href="/" class="text-gray-700 hover:text-blue-600 text-sm font-medium px-3 py-1.5 rounded-md hover:bg-gray-100 transition duration-150 border border-gray-200">
+                        <i class="fas fa-chart-pie mr-1.5"></i> AI Augmentation Analysis
+                    </a>
+                    <a href="/dashboard" class="text-gray-700 hover:text-blue-600 text-sm font-medium px-3 py-1.5 rounded-md hover:bg-gray-100 transition duration-150 border border-gray-200">
+                        <i class="fas fa-layer-group mr-1.5"></i> Task-level AI Analysis
+                    </a>
+                    <a href="/process" class="text-gray-700 hover:text-blue-600 text-sm font-medium px-3 py-1.5 rounded-md hover:bg-gray-100 transition duration-150 border border-gray-200">
+                        <i class="fas fa-diagram-project mr-1.5"></i> Process
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div class="rounded-2xl p-6 bg-gradient-to-r from-orange-50 via-white to-purple-50 border border-gray-100 shadow-sm">
+            <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+                <div>
+                    <div class="text-2xl font-bold text-gray-900 font-['Inter']">Traditional Role → AI-Augmented Role</div>
+                    <div class="text-sm text-gray-600 mt-1 font-['Inter']">Compare the role definition and responsibilities before and after AI adoption.</div>
+                </div>
+
+                <form method="get" action="/ai_role_designe" class="flex items-center gap-2">
+                    <label class="text-xs font-medium text-gray-700 font-['Inter']" for="roleSelect">Role</label>
+                    <select id="roleSelect" name="role_id" class="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:ring-1 focus:ring-blue-500 focus:border-blue-500 font-['Inter']" onchange="this.form.submit()">
+                        {% for r in roles %}
+                        <option value="{{ r.role_definition_id }}" {% if selected_role_id and (selected_role_id|string) == (r.role_definition_id|string) %}selected{% endif %}>
+                            {{ r.role_name or ('Role #' ~ r.role_definition_id) }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </form>
+            </div>
+        </div>
+
+        {% if selected_role %}
+        {% set comp = selected_role.comparaison_obj or {} %}
+
+        <div class="mt-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <aside class="hidden lg:block lg:col-span-3">
+                <div class="sticky top-6 rounded-2xl bg-white border border-gray-100 shadow-sm p-4">
+                    <div class="text-xs font-semibold text-gray-600 font-['Inter']">Navigate</div>
+                    <div class="mt-3 space-y-2 text-sm font-['Inter']">
+                        <a href="#overview" class="block text-gray-700 hover:text-gray-900">Overview</a>
+                        <a href="#role-definition" class="block text-gray-700 hover:text-gray-900">Role Definition</a>
+                        <a href="#responsibilities" class="block text-gray-700 hover:text-gray-900">Responsibilities</a>
+                        {% if comp.day_to_day_changes %}
+                        <a href="#day-to-day" class="block text-gray-700 hover:text-gray-900">Day-to-Day Changes</a>
+                        {% endif %}
+                        {% if comp.adaptation_challenges %}
+                        <a href="#challenges" class="block text-gray-700 hover:text-gray-900">Adaptation Challenges</a>
+                        {% endif %}
+                        {% if comp.transformed_responsibilities %}
+                        <a href="#transformed" class="block text-gray-700 hover:text-gray-900">Transformed Responsibilities</a>
+                        {% endif %}
+                        <a href="#skills" class="block text-gray-700 hover:text-gray-900">Skills & Competencies</a>
+                    </div>
+                </div>
+            </aside>
+
+            <div class="lg:col-span-9 space-y-6">
+
+                <section id="overview" class="scroll-mt-24">
+                    {% if comp.role_evolution_summary or comp.key_skills_shift %}
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                        <div class="rounded-2xl bg-white border border-gray-100 shadow-sm overflow-hidden">
+                            <div class="px-6 py-4 border-b border-gray-100">
+                                <div class="text-sm font-semibold text-gray-900 font-['Inter']">Role Evolution Summary</div>
+                            </div>
+                            <div class="px-6 py-5">
+                                <div class="text-sm text-gray-700 leading-relaxed font-['Inter']">{{ comp.role_evolution_summary or '-' }}</div>
+                            </div>
+                        </div>
+
+                        <div class="rounded-2xl bg-white border border-gray-100 shadow-sm overflow-hidden">
+                            <div class="px-6 py-4 border-b border-gray-100">
+                                <div class="text-sm font-semibold text-gray-900 font-['Inter']">Key Skills Shift</div>
+                            </div>
+                            <div class="px-6 py-5">
+                                <div class="text-sm text-gray-700 leading-relaxed font-['Inter']">{{ comp.key_skills_shift or '-' }}</div>
+                            </div>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="rounded-2xl bg-white border border-gray-100 shadow-sm p-6">
+                        <div class="text-sm font-semibold text-gray-900 font-['Inter']">Overview</div>
+                        <div class="text-sm text-gray-600 mt-2 font-['Inter']">Select a role to see its AI-augmented evolution.</div>
+                    </div>
+                    {% endif %}
+                </section>
+
+        <section id="role-definition" class="scroll-mt-24">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+            <div class="rounded-2xl bg-white border border-orange-100 shadow-sm overflow-hidden">
+                <div class="px-6 py-4 border-b border-orange-100 bg-orange-50">
+                    <div class="flex items-center justify-between">
+                        <div class="text-sm font-semibold text-orange-900 font-['Inter']">Traditional Role</div>
+                        <div class="text-xs font-medium text-orange-700 font-['Inter']">Before AI</div>
+                    </div>
+                </div>
+                <div class="px-6 py-5">
+                    <div class="text-xs font-semibold text-gray-600 font-['Inter']">Role definition</div>
+                    <ul class="mt-3 space-y-2 text-sm text-gray-800 font-['Inter']" id="old-role-definition">
+                        {% set items = selected_role.role_definition_bullets or [] %}
+                        {% for item in items %}
+                        <li class="flex gap-2 {% if loop.index > 8 %}hidden extra-item-old-def{% endif %}">
+                            <span class="mt-1 text-orange-500">•</span>
+                            <span class="break-words">{{ item }}</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% if items|length > 8 %}
+                    <button type="button" class="mt-3 text-xs font-semibold text-orange-800 hover:text-orange-900 font-['Inter']" onclick="toggleExtraItems('extra-item-old-def', this)">
+                        ⯆⯆ Show more
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="rounded-2xl bg-white border border-purple-100 shadow-sm overflow-hidden">
+                <div class="px-6 py-4 border-b border-purple-100 bg-purple-50">
+                    <div class="flex items-center justify-between">
+                        <div class="text-sm font-semibold text-purple-900 font-['Inter']">AI-Augmented Role</div>
+                        <div class="text-xs font-medium text-purple-700 font-['Inter']">With AI</div>
+                    </div>
+                </div>
+                <div class="px-6 py-5">
+                    <div class="text-xs font-semibold text-gray-600 font-['Inter']">Role definition</div>
+                    <ul class="mt-3 space-y-2 text-sm text-gray-800 font-['Inter']" id="new-role-definition">
+                        {% set items = selected_role.ai_role_definition_bullets or [] %}
+                        {% for item in items %}
+                        <li class="flex gap-2 {% if loop.index > 8 %}hidden extra-item-ai-def{% endif %}">
+                            <span class="mt-1 text-purple-500">•</span>
+                            <span class="break-words">{{ item }}</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% if items|length > 8 %}
+                    <button type="button" class="mt-3 text-xs font-semibold text-purple-800 hover:text-purple-900 font-['Inter']" onclick="toggleExtraItems('extra-item-ai-def', this)">
+                        ⯆⯆ Show more
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        </section>
+
+        {% if comp.day_to_day_changes %}
+        <section id="day-to-day" class="scroll-mt-24">
+        <div class="rounded-2xl bg-white border border-gray-100 shadow-sm overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-100">
+                <div class="flex items-center justify-between">
+                    <div class="text-sm font-semibold text-gray-900 font-['Inter']">Day-to-Day Changes</div>
+                    <div class="text-xs text-gray-500 font-['Inter']">{{ (comp.day_to_day_changes or [])|length }} items</div>
+                </div>
+            </div>
+            <div class="px-6 py-5">
+                <ul class="space-y-2 text-sm text-gray-800 font-['Inter']">
+                    {% set items = comp.day_to_day_changes or [] %}
+                    {% for item in items %}
+                    <li class="flex gap-2 {% if loop.index > 8 %}hidden extra-item-day{% endif %}">
+                        <span class="mt-1 text-purple-500">•</span>
+                        <span class="break-words">{{ item }}</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% if items|length > 8 %}
+                <button type="button" class="mt-3 text-xs font-semibold text-purple-800 hover:text-purple-900 font-['Inter']" onclick="toggleExtraItems('extra-item-day', this)">
+                    ⯆⯆ Show more
+                </button>
+                {% endif %}
+            </div>
+        </div>
+        </section>
+        {% endif %}
+
+        <section id="responsibilities" class="scroll-mt-24">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+            <div class="rounded-2xl bg-white border border-gray-100 shadow-sm overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-100 bg-orange-50">
+                    <div class="text-sm font-semibold text-gray-900 font-['Inter']">Former Responsibilities</div>
+                </div>
+                <div class="px-6 py-5">
+                    <ul class="space-y-2 text-sm text-gray-800 font-['Inter']">
+                        {% set items = selected_role.responsabilities_list or [] %}
+                        {% for item in items %}
+                        <li class="flex gap-2 {% if loop.index > 8 %}hidden extra-item-old-resp{% endif %}">
+                            <span class="mt-1 text-orange-500">•</span>
+                            <span class="break-words">{{ item }}</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% if items|length > 8 %}
+                    <button type="button" class="mt-3 text-xs font-semibold text-orange-800 hover:text-orange-900 font-['Inter']" onclick="toggleExtraItems('extra-item-old-resp', this)">
+                        ⯆⯆ Show more
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="rounded-2xl bg-white border border-gray-100 shadow-sm overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-100 bg-purple-50">
+                    <div class="text-sm font-semibold text-gray-900 font-['Inter']">New Responsibilities</div>
+                </div>
+                <div class="px-6 py-5">
+                    <ul class="space-y-2 text-sm text-gray-800 font-['Inter']">
+                        {% set items = selected_role.ai_responsabilities_list or [] %}
+                        {% for item in items %}
+                        <li class="flex gap-2 {% if loop.index > 8 %}hidden extra-item-ai-resp{% endif %}">
+                            <span class="mt-1 text-purple-500">•</span>
+                            <span class="break-words">{{ item }}</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% if items|length > 8 %}
+                    <button type="button" class="mt-3 text-xs font-semibold text-purple-800 hover:text-purple-900 font-['Inter']" onclick="toggleExtraItems('extra-item-ai-resp', this)">
+                        ⯆⯆ Show more
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        </section>
+
+        {% if comp.adaptation_challenges %}
+        <section id="challenges" class="scroll-mt-24">
+        <div class="rounded-2xl bg-white border border-gray-100 shadow-sm overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-100">
+                <div class="flex items-center justify-between">
+                    <div class="text-sm font-semibold text-gray-900 font-['Inter']">Adaptation Challenges</div>
+                    <div class="text-xs text-gray-500 font-['Inter']">{{ (comp.adaptation_challenges or [])|length }} items</div>
+                </div>
+            </div>
+            <div class="px-6 py-5">
+                <ul class="space-y-2 text-sm text-gray-800 font-['Inter']">
+                    {% set items = comp.adaptation_challenges or [] %}
+                    {% for item in items %}
+                    <li class="flex gap-2 {% if loop.index > 8 %}hidden extra-item-chal{% endif %}">
+                        <span class="mt-1 text-gray-500">•</span>
+                        <span class="break-words">{{ item }}</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% if items|length > 8 %}
+                <button type="button" class="mt-3 text-xs font-semibold text-gray-700 hover:text-gray-900 font-['Inter']" onclick="toggleExtraItems('extra-item-chal', this)">
+                    ⯆⯆ Show more
+                </button>
+                {% endif %}
+            </div>
+        </div>
+        </section>
+        {% endif %}
+
+        {% if comp.kept_responsibilities or comp.new_responsibilities %}
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+            <div class="rounded-2xl bg-white border border-gray-100 shadow-sm overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-100 bg-orange-50">
+                    <div class="text-sm font-semibold text-gray-900 font-['Inter']">Kept Responsibilities</div>
+                </div>
+                <div class="px-6 py-5">
+                    <ul class="space-y-2 text-sm text-gray-800 font-['Inter']">
+                        {% set items = comp.kept_responsibilities or [] %}
+                        {% for item in items %}
+                        <li class="flex gap-2 {% if loop.index > 8 %}hidden extra-item-kept{% endif %}">
+                            <span class="mt-1 text-orange-500">•</span>
+                            <span class="break-words">{{ item }}</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% if items|length > 8 %}
+                    <button type="button" class="mt-3 text-xs font-semibold text-orange-800 hover:text-orange-900 font-['Inter']" onclick="toggleExtraItems('extra-item-kept', this)">
+                        ⯆⯆ Show more
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="rounded-2xl bg-white border border-gray-100 shadow-sm overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-100 bg-purple-50">
+                    <div class="text-sm font-semibold text-gray-900 font-['Inter']">New Responsibilities (from comparison)</div>
+                </div>
+                <div class="px-6 py-5">
+                    <ul class="space-y-2 text-sm text-gray-800 font-['Inter']">
+                        {% set items = comp.new_responsibilities or [] %}
+                        {% for item in items %}
+                        <li class="flex gap-2 {% if loop.index > 8 %}hidden extra-item-newresp{% endif %}">
+                            <span class="mt-1 text-purple-500">•</span>
+                            <span class="break-words">{{ item }}</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% if items|length > 8 %}
+                    <button type="button" class="mt-3 text-xs font-semibold text-purple-800 hover:text-purple-900 font-['Inter']" onclick="toggleExtraItems('extra-item-newresp', this)">
+                        ⯆⯆ Show more
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if comp.transformed_responsibilities %}
+        <section id="transformed" class="scroll-mt-24">
+        <div class="rounded-2xl bg-white border border-gray-100 shadow-sm overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-100">
+                <div class="text-sm font-semibold text-gray-900 font-['Inter']">Transformed Responsibilities</div>
+                <div class="text-xs text-gray-500 mt-0.5 font-['Inter']">Before → After, with context on what changed</div>
+            </div>
+            <div class="px-6 py-5 space-y-4">
+                {% set items = comp.transformed_responsibilities or [] %}
+                {% for tr in items %}
+                <div class="rounded-xl border border-gray-100 bg-gray-50 p-4 {% if loop.index > 5 %}hidden extra-item-transformed{% endif %}">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                        <div class="rounded-lg bg-white border border-orange-100 p-3">
+                            <div class="text-xs font-semibold text-orange-800 font-['Inter']">Before</div>
+                            <div class="text-sm text-gray-900 mt-1 font-['Inter']">{{ tr.before or '-' }}</div>
+                        </div>
+                        <div class="rounded-lg bg-white border border-purple-100 p-3">
+                            <div class="text-xs font-semibold text-purple-800 font-['Inter']">After</div>
+                            <div class="text-sm text-gray-900 mt-1 font-['Inter']">{{ tr.after or '-' }}</div>
+                        </div>
+                    </div>
+                    {% if tr.change %}
+                    <div class="mt-3 text-sm text-gray-700 font-['Inter']">{{ tr.change }}</div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+
+                {% if items|length > 5 %}
+                <button type="button" class="text-xs font-semibold text-gray-700 hover:text-gray-900 font-['Inter']" onclick="toggleExtraItems('extra-item-transformed', this)">
+                    ⯆⯆ Show more
+                </button>
+                {% endif %}
+            </div>
+        </div>
+        </section>
+        {% endif %}
+
+        <section id="skills" class="scroll-mt-24">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+            <div class="rounded-2xl bg-white border border-gray-100 shadow-sm overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-100 bg-orange-50">
+                    <div class="text-sm font-semibold text-gray-900 font-['Inter']">New Skills</div>
+                </div>
+                <div class="px-6 py-5">
+                    <ul class="space-y-2 text-sm text-gray-800 font-['Inter']">
+                        {% set items = selected_role.new_skills_list or [] %}
+                        {% for item in items %}
+                        <li class="flex gap-2 {% if loop.index > 8 %}hidden extra-item-skills{% endif %}">
+                            <span class="mt-1 text-orange-500">•</span>
+                            <span class="break-words">{{ item }}</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% if items|length > 8 %}
+                    <button type="button" class="mt-3 text-xs font-semibold text-orange-800 hover:text-orange-900 font-['Inter']" onclick="toggleExtraItems('extra-item-skills', this)">
+                        ⯆⯆ Show more
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="rounded-2xl bg-white border border-gray-100 shadow-sm overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-100 bg-purple-50">
+                    <div class="text-sm font-semibold text-gray-900 font-['Inter']">New Competencies</div>
+                </div>
+                <div class="px-6 py-5">
+                    <ul class="space-y-2 text-sm text-gray-800 font-['Inter']">
+                        {% set items = selected_role.new_competencies_list or [] %}
+                        {% for item in items %}
+                        <li class="flex gap-2 {% if loop.index > 8 %}hidden extra-item-comp{% endif %}">
+                            <span class="mt-1 text-purple-500">•</span>
+                            <span class="break-words">{{ item }}</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% if items|length > 8 %}
+                    <button type="button" class="mt-3 text-xs font-semibold text-purple-800 hover:text-purple-900 font-['Inter']" onclick="toggleExtraItems('extra-item-comp', this)">
+                        ⯆⯆ Show more
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        </section>
+
+            </div>
+        </div>
+        {% else %}
+        <div class="mt-6 bg-white rounded-xl shadow-sm border border-gray-100 p-10 text-center text-gray-500">
+            <i class="fas fa-inbox text-2xl text-gray-300 mb-2"></i>
+            <div class="text-sm font-['Inter']">No roles found</div>
+        </div>
+        {% endif %}
+    </main>
+</div>
+
+<script>
+    function toggleExtraItems(extraClassName, btnEl) {
+        const hiddenEls = document.querySelectorAll('.' + extraClassName);
+        const anyHidden = Array.from(hiddenEls).some(el => el.classList.contains('hidden'));
+
+        hiddenEls.forEach(el => {
+            if (anyHidden) {
+                el.classList.remove('hidden');
+            } else {
+                el.classList.add('hidden');
+            }
+        });
+
+        if (btnEl) {
+            btnEl.textContent = anyHidden ? '⯅⯅ Show less' : '⯆⯆ Show more';
+        }
+    }
+</script>
+{% endblock %}

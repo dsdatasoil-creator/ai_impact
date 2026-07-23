@@ -1,0 +1,214 @@
+{% extends "base.html" %}
+
+{% block title %}Task {{ task.task_id }} - AI Impact{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>
+        <i class="fas {{ 'fa-filter' if is_refined else 'fa-tasks' }} me-2"></i>
+        Task {{ task.task_id }}
+        <span class="badge bg-{{ 'success' if is_refined else 'primary' }} ms-2">
+            {{ 'Refined' if is_refined else 'Original' }}
+        </span>
+    </h2>
+    <a href="{{ '/refined-tasks' if is_refined else '/tasks' }}" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-left"></i> Back to List
+    </a>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5><i class="fas fa-info-circle me-2"></i>Task Information</h5>
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <h6>Role Title</h6>
+                        <p class="lead">{{ task.role_title or 'N/A' }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Task Type</h6>
+                        <span class="badge bg-primary fs-6">{{ task.type or 'N/A' }}</span>
+                    </div>
+                </div>
+                
+                <h6>Enhanced Task Description</h6>
+                <div class="card bg-light p-3 mb-3">
+                    {{ task.enhanced_task or 'No enhanced description available' }}
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-4">
+                        <h6>AI Relevance</h6>
+                        <span class="badge bg-{{ 'success' if task.ai_relevance else 'secondary' }} fs-6">
+                            {{ 'Relevant' if task.ai_relevance else 'Not Relevant' }}
+                        </span>
+                    </div>
+                    <div class="col-md-4">
+                        <h6>AI Relevance Score</h6>
+                        <div class="d-flex align-items-center">
+                            <div class="progress flex-grow-1 me-2">
+                                <div class="progress-bar bg-{{ 'success' if (task.ai_relevance_score or 0) > 5 else 'warning' }}" 
+                                     style="width: {{ (task.ai_relevance_score or 0) * 10 }}%">
+                                    {{ task.ai_relevance_score|default(0, true) }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <h6>Employee ID</h6>
+                        <p>{{ task.employee_id or 'N/A' }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        {% if is_refined and task.decision_analysis %}
+        <div class="relative mb-4">
+            <div class="premium-cta-overlay absolute inset-0 z-50 flex items-center justify-center hidden">
+                <div class="premium-cta-card scale-75">
+                    <div class="premium-badge mb-2">
+                        <i class="fas fa-lock mr-1"></i> Premium
+                    </div>
+                    <p class="text-xs text-gray-600">Unlock strategic analysis</p>
+                </div>
+            </div>
+            <div class="premium-locked-container">
+                <div class="card">
+                    <div class="card-header bg-info text-white">
+                        <h5><i class="fas fa-clipboard-check me-2"></i>Decision Analysis</h5>
+                    </div>
+                    <div class="card-body">
+                        {{ task.decision_analysis }}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        {% if task.concise_strategic_reason %}
+        <div class="card mb-4">
+            <div class="card-header bg-warning text-white">
+                <h5><i class="fas fa-bullseye me-2"></i>Reasoning</h5>
+            </div>
+            <div class="card-body">
+                <p>{{ task.concise_strategic_reason }}</p>
+                {% if task.categorization_strategic_reason %}
+                <hr>
+                <h6>Categorization Reasoning</h6>
+                <p>{{ task.categorization_strategic_reason }}</p>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-header bg-success text-white">
+                <h5><i class="fas fa-chart-pie me-2"></i>FTE Impact</h5>
+            </div>
+            <div class="card-body text-center">
+                {% if task.fte_percentage %}
+                <div class="display-4 mb-3 {{ 'text-danger' if task.fte_percentage > 50 else 'text-warning' if task.fte_percentage > 20 else 'text-success' }}">
+                    {{ task.fte_percentage }}%
+                </div>
+                <p>FTE Impact Percentage</p>
+                
+                {% if task.url_fte %}
+                <a href="{{ task.url_fte }}" target="_blank" class="btn btn-outline-success btn-sm">
+                    <i class="fas fa-external-link-alt"></i> View FTE Source
+                </a>
+                {% endif %}
+                
+                {% if is_refined and task.fte_explanation %}
+                <div class="mt-3">
+                    <h6>FTE Explanation:</h6>
+                    <div class="json-view small">{{ task.fte_explanation|tojson }}</div>
+                </div>
+                {% endif %}
+                {% else %}
+                <p class="text-muted">No FTE data available</p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="relative mb-4">
+            <div class="premium-cta-overlay absolute inset-0 z-50 flex items-center justify-center hidden">
+                <div class="premium-cta-card scale-75">
+                    <div class="premium-badge mb-2">
+                        <i class="fas fa-lock mr-1"></i> Premium
+                    </div>
+                    <p class="text-xs text-gray-600">Unlock AI methodology</p>
+                </div>
+            </div>
+            <div class="premium-locked-container">
+                <div class="card">
+                    <div class="card-header bg-dark text-white">
+                        <h5><i class="fas fa-cogs me-2"></i>AI Approach</h5>
+                    </div>
+                    <div class="card-body">
+                        {% if task.ai_approach %}
+                        <div class="json-view small">{{ task.ai_approach|tojson }}</div>
+                        {% else %}
+                        <p class="text-muted">No AI approach defined</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="relative mb-4">
+            <div class="premium-cta-overlay absolute inset-0 z-50 flex items-center justify-center hidden">
+                <div class="premium-cta-card scale-75">
+                    <div class="premium-badge mb-2">
+                        <i class="fas fa-lock mr-1"></i> Premium
+                    </div>
+                    <p class="text-xs text-gray-600">Unlock requirements</p>
+                </div>
+            </div>
+            <div class="premium-locked-container">
+                <div class="card">
+                    <div class="card-header bg-secondary text-white">
+                        <h5><i class="fas fa-tools me-2"></i>Requirements</h5>
+                    </div>
+                    <div class="card-body">
+                        <h6>New Data Requirements:</h6>
+                        {% if task.new_data_requirements %}
+                        <div class="json-view small mb-3">{{ task.new_data_requirements|tojson }}</div>
+                        {% else %}
+                        <p class="text-muted">None specified</p>
+                        {% endif %}
+                        
+                        <h6>Skillset Requirements:</h6>
+                        {% if task.new_skillset_requirements %}
+                        <div class="json-view small mb-3">{{ task.new_skillset_requirements|tojson }}</div>
+                        {% else %}
+                        <p class="text-muted">None specified</p>
+                        {% endif %}
+                        
+                        <h6>Competency Requirements:</h6>
+                        {% if task.new_competency_requirments %}
+                        <div class="json-view small">{{ task.new_competency_requirments|tojson }}</div>
+                        {% else %}
+                        <p class="text-muted">None specified</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h5><i class="fas fa-history me-2"></i>Timestamps</h5>
+            </div>
+            <div class="card-body">
+                <p><strong>Created:</strong> {{ task.create_date.strftime('%Y-%m-%d %H:%M') if task.create_date else 'N/A' }}</p>
+                <p><strong>Updated:</strong> {{ task.update_date.strftime('%Y-%m-%d %H:%M') if task.update_date else 'N/A' }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

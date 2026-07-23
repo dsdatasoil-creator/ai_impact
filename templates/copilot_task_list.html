@@ -1,0 +1,51 @@
+{% if items and items|length > 0 %}
+<div class="table-container">
+    <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+            <tr>
+                <th scope="col" class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Task ID</th>
+                <th scope="col" class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Enhanced Task</th>
+                <th scope="col" class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Score</th>
+            </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-100">
+            {% for t in items %}
+            <tr>
+                <td class="px-4 py-3 text-sm text-gray-900 whitespace-nowrap">
+                    <div class="tooltip-container">
+                        <span class="font-semibold">{{ t.task_id }}</span>
+                        <div class="tooltip-content">
+                            <div class="text-xs font-semibold mb-1">Copilot usage explanation</div>
+                            <div class="text-sm">{{ t.copilot_usage_explanation or 'N/A' }}</div>
+                        </div>
+                    </div>
+                </td>
+                <td class="px-4 py-3 text-sm text-gray-700">
+                    <div class="tooltip-container">
+                        <span class="line-clamp-2">{{ t.enhanced_task or '' }}</span>
+                        <div class="tooltip-content">
+                            <div class="text-xs font-semibold mb-1">Copilot usage explanation</div>
+                            <div class="text-sm">{{ t.copilot_usage_explanation or 'N/A' }}</div>
+                        </div>
+                    </div>
+                </td>
+                <td class="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
+                    <div class="flex items-center gap-2">
+                        <span class="font-semibold">{{ t.ai_tools_score_label or '0/0' }} ({{t.ai_tools_score}})</span>
+                        <button type="button" onclick="openAiToolsModal('{{ t.task_id }}')" class="text-gray-500 hover:text-blue-600" title="AI tools details">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<div class="text-center py-10">
+    <i class="fas fa-info-circle text-gray-300 text-4xl mb-3"></i>
+    <div class="text-gray-700 font-medium">No tasks found</div>
+    <div class="text-gray-500 text-sm">No AI-relevant tasks with this Copilot usefulness level.</div>
+</div>
+{% endif %}

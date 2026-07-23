@@ -1,0 +1,264 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - AI Impact{% endblock %}
+
+{% block content %}
+<!-- Filter Section -->
+<div class="card mb-4">
+    <div class="card-header bg-dark text-white">
+        <h5><i class="fas fa-filter me-2"></i>Quick Filters</h5>
+    </div>
+    <div class="card-body">
+        <form method="get" action="/tasks" class="row g-3">
+            <div class="col-md-3">
+                <label class="form-label">Employee ID</label>
+                <select name="employee" class="form-select">
+                    <option value="">All Employees</option>
+                    {% for emp_id in employee_ids %}
+                    <option value="{{ emp_id }}">{{ emp_id }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Role Title</label>
+                <select name="role" class="form-select">
+                    <option value="">All Roles</option>
+                    {% for role in roles %}
+                    <option value="{{ role }}">{{ role }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Country</label>
+                <select name="country" class="form-select">
+                    <option value="">All Countries</option>
+                    {% for country in countries %}
+                    <option value="{{ country }}">{{ country }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="fas fa-search me-2"></i>Filter Tasks
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Dashboard Stats -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="stat-card card p-3">
+            <h5><i class="fas fa-tasks text-primary"></i> Total Tasks</h5>
+            <h2 class="mt-2">{{ summary.total_tasks or 0 }}</h2>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card card p-3">
+            <h5><i class="fas fa-users text-success"></i> Employees</h5>
+            <h2 class="mt-2">{{ employee_stats.total_employees or 0 }}</h2>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card card p-3">
+            <h5><i class="fas fa-globe text-warning"></i> Countries</h5>
+            <h2 class="mt-2">{{ employee_stats.countries|length or 0 }}</h2>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card card p-3">
+            <h5><i class="fas fa-briefcase text-info"></i> Roles</h5>
+            <h2 class="mt-2">{{ employee_stats.roles|length or 0 }}</h2>
+        </div>
+    </div>
+</div>
+
+<!-- Tasks Overview -->
+<div class="row">
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <h5><i class="fas fa-tasks me-2"></i>Recent Tasks</h5>
+                <a href="/tasks" class="btn btn-sm btn-light">View All</a>
+            </div>
+            <div class="card-body">
+                {% if tasks %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Task ID</th>
+                                <th>Employee</th>
+                                <th>Role</th>
+                                <th>AI Score</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for task in tasks %}
+                            <tr onclick="window.location='/task/{{ task.ai_task_id }}'" style="cursor: pointer;">
+                                <td><strong>{{ task.task_id }}</strong></td>
+                                <td>
+                                    {% if task.employee_id %}
+                                    <span class="badge bg-info">{{ task.employee_id }}</span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">N/A</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ task.role_title|default('N/A')|truncate(20) }}</td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="progress flex-grow-1 me-2" style="height: 6px;">
+                                            <div class="progress-bar bg-{{ 'success' if (task.ai_relevance_score or 0) > 5 else 'warning' }}"
+                                                 style="width: {{ (task.ai_relevance_score or 0) * 10 }}%"></div>
+                                        </div>
+                                        <small>{{ task.ai_relevance_score|default(0) }}</small>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted">No tasks found in database.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+                <h5><i class="fas fa-filter me-2"></i>Recent Refined Tasks</h5>
+                <a href="/refined-tasks" class="btn btn-sm btn-light">View All</a>
+            </div>
+            <div class="card-body">
+                {% if refined_tasks %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Task ID</th>
+                                <th>Type</th>
+                                <th>Country</th>
+                                <th>FTE Impact</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for task in refined_tasks %}
+                            <tr onclick="window.location='/task/{{ task.ai_task_refined_id }}?refined=true'" style="cursor: pointer;">
+                                <td><strong>{{ task.task_id }}</strong></td>
+                                <td>
+                                    <span class="badge badge-ai">{{ task.type|default('N/A')|truncate(15) }}</span>
+                                </td>
+                                <td>
+                                    {% if task.employee_id %}
+                                    {% set emp = employee_details.get(task.employee_id|string) %}
+                                    {% if emp and emp.country %}
+                                    <span class="badge bg-secondary">{{ emp.country }}</span>
+                                    {% else %}
+                                    <span class="badge bg-light text-dark">Unknown</span>
+                                    {% endif %}
+                                    {% else %}
+                                    <span class="badge bg-secondary">N/A</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if task.fte_percentage %}
+                                    <span class="badge bg-{{ 'danger' if task.fte_percentage > 50 else 'warning' if task.fte_percentage > 20 else 'info' }}">
+                                        {{ task.fte_percentage }}%
+                                    </span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">N/A</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted">No refined tasks found in database.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Employee Statistics -->
+<div class="row mt-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-warning text-white">
+                <h5><i class="fas fa-globe-americas me-2"></i>Employee Distribution by Country</h5>
+            </div>
+            <div class="card-body">
+                {% if employee_stats.countries %}
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Country</th>
+                                <th>Employee Count</th>
+                                <th>Percentage</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for country, count in employee_stats.countries.items() %}
+                            <tr>
+                                <td>{{ country }}</td>
+                                <td>{{ count }}</td>
+                                <td>
+                                    <div class="progress" style="height: 10px;">
+                                        <div class="progress-bar bg-warning"
+                                             style="width: {{ (count / employee_stats.total_employees * 100)|round(1) }}%">
+                                        </div>
+                                    </div>
+                                    <small>{{ (count / employee_stats.total_employees * 100)|round(1) }}%</small>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted">No country data available.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h5><i class="fas fa-briefcase me-2"></i>Quick Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6 mb-2">
+                        <a href="/employees" class="btn btn-outline-primary w-100">
+                            <i class="fas fa-users me-2"></i>Browse Employees
+                        </a>
+                    </div>
+                    <div class="col-md-6 mb-2">
+                        <a href="/refined-tasks" class="btn btn-outline-success w-100">
+                            <i class="fas fa-filter me-2"></i>Refined Tasks
+                        </a>
+                    </div>
+                    <div class="col-md-6 mb-2">
+                        <a href="/tasks?relevance=true" class="btn btn-outline-warning w-100">
+                            <i class="fas fa-check-circle me-2"></i>AI Relevant Tasks
+                        </a>
+                    </div>
+                    <div class="col-md-6 mb-2">
+                        <a href="/api/docs" target="_blank" class="btn btn-outline-dark w-100">
+                            <i class="fas fa-code me-2"></i>API Documentation
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

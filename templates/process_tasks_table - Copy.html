@@ -1,0 +1,129 @@
+<!-- templates/process_tasks_table.html -->
+<div class="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100">
+    <div class="table-container">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-['Inter']">Order</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-['Inter']">Task</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-['Inter']">Role / Department</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-['Inter']">AI Type</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-['Inter']">Inputs</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-['Inter']">Outputs</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-['Inter']">Tools</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-['Inter']">Duration</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-['Inter']">Reduction</th>
+                    <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider font-['Inter']">Details</th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                {% for t in tasks %}
+                <tr class="hover:bg-gray-50">
+                    <td class="px-4 py-3 text-sm text-gray-900 font-['Inter'] whitespace-nowrap">
+                        <div class="font-semibold">{{ t.task_order or '' }}</div>
+                        <div class="text-xs text-gray-500">P{{ t.parallel_order or '' }}</div>
+                    </td>
+                    <td class="px-4 py-3 text-sm text-gray-900 font-['Inter'] whitespace-normal">
+                        <div class="flex items-center gap-2">
+                            <div class="font-medium">{{ t.task_name or '' }}</div>
+                            {% if (t.status or '')|lower == 'enhanced' %}
+                            <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-100 text-blue-800">AI</span>
+                            {% else %}
+                            <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-gray-100 text-gray-700">As-is</span>
+                            {% endif %}
+                        </div>
+                        {% if t.task_description %}
+                        <div class="text-xs text-gray-500 mt-1">{{ t.task_description }}</div>
+                        {% endif %}
+                        {% if t.task_type %}
+                        <div class="text-xs text-gray-400 mt-1">{{ t.task_type }}</div>
+                        {% endif %}
+                    </td>
+                    <td class="px-4 py-3 text-sm text-gray-700 font-['Inter'] whitespace-normal">
+                        <div class="font-medium text-gray-900">{{ t.role_title or '-' }}</div>
+                        <div class="text-xs text-gray-500">{{ t.department_name or '-' }}</div>
+                    </td>
+                    <td class="px-4 py-3 text-sm text-gray-700 font-['Inter'] whitespace-normal">
+                        <div class="font-medium">{{ t.ai_type or '-' }}</div>
+                    </td>
+                    <td class="px-4 py-3 text-sm text-gray-700 font-['Inter'] whitespace-normal">
+                        {% if t.input_names_list %}
+                        <ul class="space-y-1">
+                            {% for n in t.input_names_list %}
+                            <li class="text-xs text-gray-700">
+                                <span class="inline-flex items-center rounded-md px-2 py-1 font-medium bg-blue-50 text-blue-900" title="{% if t.input_descriptions_list and t.input_descriptions_list|length >= loop.index %}{{ t.input_descriptions_list[loop.index0] }}{% endif %}">{{ n }}</span>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                        {% else %}
+                        <div class="text-xs text-gray-400">-</div>
+                        {% endif %}
+                    </td>
+                    <td class="px-4 py-3 text-sm text-gray-700 font-['Inter'] whitespace-normal">
+                        {% if t.output_names_list %}
+                        <ul class="space-y-1">
+                            {% for n in t.output_names_list %}
+                            <li class="text-xs text-gray-700">
+                                <span class="inline-flex items-center rounded-md px-2 py-1 font-medium bg-emerald-50 text-emerald-900" title="{% if t.output_descriptions_list and t.output_descriptions_list|length >= loop.index %}{{ t.output_descriptions_list[loop.index0] }}{% endif %}">{{ n }}</span>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                        {% else %}
+                        <div class="text-xs text-gray-400">-</div>
+                        {% endif %}
+                    </td>
+                    <td class="px-4 py-3 text-sm text-gray-700 font-['Inter'] whitespace-normal">
+                        <div class="font-medium text-gray-900">{{ t.tools_count or 0 }}</div>
+                        {% if t.tools_list %}
+                        <div class="mt-1 flex flex-wrap gap-1">
+                            {% for tool in t.tools_list %}
+                            <span class="inline-flex items-center rounded-md px-2 py-1 font-medium bg-yellow-50 text-yellow-900 text-xs">{{ tool }}</span>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <div class="text-xs text-gray-400 mt-1">-</div>
+                        {% endif %}
+                    </td>
+                    <td class="px-4 py-3 text-sm text-gray-900 font-['Inter'] whitespace-nowrap">
+                        <div class="font-medium">{{ t.estimated_duration_original or '-' }}</div>
+                        <div class="text-xs text-emerald-700 mt-1">{{ t.estimated_duration_after_ai or '-' }}</div>
+                    </td>
+                    <td class="px-4 py-3 text-sm text-gray-900 font-['Inter'] whitespace-nowrap">
+                        {% if t.time_reduction_percent %}
+                        <span class="time-reduction-badge">
+                            {{ t.time_reduction_percent }}%
+                        </span>
+                        {% else %}
+                        <span class="text-xs text-gray-500">0%</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-4 py-3 text-sm text-gray-700 font-['Inter'] whitespace-nowrap text-center">
+                        {% if (t.tools_count or 0) > 0 %}
+                        <button type="button"
+                                class="inline-flex items-center justify-center w-9 h-9 rounded-lg border border-gray-200 hover:bg-gray-100"
+                                data-task-payload='{{ {
+                                    "order": "#" ~ (t.task_order or "") ~ " / P" ~ (t.parallel_order or ""),
+                                    "title": t.task_name or "",
+                                    "tools": t.tools_list or [],
+                                    "subtaskNames": t.subtask_names_list or [],
+                                    "subtasks": t.subtasks_list or [],
+                                    "reasoning": t.tools_reasoning_text or ""
+                                } | tojson }}'
+                                onclick="openTaskDetailsModal(this)">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="10" class="px-6 py-8 text-center text-gray-500">
+                        <i class="fas fa-inbox text-2xl text-gray-300 mb-2"></i>
+                        <p class="text-sm font-['Inter']">No tasks found</p>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>

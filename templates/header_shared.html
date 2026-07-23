@@ -1,0 +1,69 @@
+<!-- templates/header_shared.html -->
+<header class="bg-white shadow-sm border-b py-3">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Row 1: Title and Data Selector -->
+        <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-4">
+            <div class="min-w-0">
+                <h1 class="text-xl font-bold text-gray-900 font-['Inter'] leading-tight">{{ header_title }}</h1>
+                <p class="text-gray-500 text-xs font-medium">{{ header_subtitle }}</p>
+            </div>
+            <div class="flex items-center gap-3">
+                {% if show_data_selector %}
+                <form action="/set_schema" method="post" class="flex items-center space-x-2 bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-200 whitespace-nowrap">
+                    <input type="hidden" name="next" value="{{ request.full_path if request.full_path else request.path }}">
+                    <label class="text-[11px] font-bold text-gray-500 uppercase tracking-wider" for="schemaKey">Data</label>
+                    <select id="schemaKey" name="schema_key" class="border-0 bg-transparent py-0 text-sm focus:ring-0 cursor-pointer font-semibold text-gray-700" onchange="this.form.submit()">
+                        <option value="strategy" {% if schema_key == 'strategy' %}selected{% endif %}>Strategy</option>
+                        <option value="teamwill" {% if schema_key == 'teamwill' %}selected{% endif %}>Banking</option>
+                        <option value="teamwill_v2" {% if schema_key == 'teamwill_v2' %}selected{% endif %}>Insurance</option>
+                        <option value="teamwill_v3" {% if schema_key == 'teamwill_v3' %}selected{% endif %}>Teamwill v3</option>
+                    </select>
+                </form>
+                {% endif %}
+                <button hidden="true" type="button" id="btn-generate-ppt" onclick="generateInsightsPresentation()" class="btn btn-indigo btn-sm px-3 shadow-sm font-bold text-xs whitespace-nowrap">
+                    <i class="fas fa-file-powerpoint me-1.5"></i>PPT
+                </button>
+                <a href="/update_data" class="btn btn-outline-secondary btn-sm px-3 font-bold text-xs shadow-sm whitespace-nowrap">
+                    <i class="fas fa-database me-1.5"></i>Data Management
+                </a>
+                {% if auth_enabled and is_logged_in %}
+                <a href="/logout" class="btn btn-outline-danger btn-sm px-3 font-bold text-xs shadow-sm whitespace-nowrap">
+                    <i class="fas fa-sign-out-alt me-1.5"></i>Logout
+                </a>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Row 2: Navigation Buttons -->
+        <div class="flex flex-wrap items-center gap-2">
+                        {% if show_page_cost %}
+            <a href="/cost_analysis" class="btn {% if active_page == 'cost_analysis' %}btn-primary{% else %}btn-outline-primary{% endif %} btn-sm px-3 font-bold text-xs shadow-sm whitespace-nowrap">
+                <i class="fas fa-dollar-sign me-1.5"></i>Cost & ROI Analysis
+            </a>
+            {% endif %}
+            <a href="/overview_page" class="btn {% if active_page == 'overview' %}btn-primary{% else %}btn-outline-primary{% endif %} btn-sm px-3 font-bold text-xs shadow-sm whitespace-nowrap">
+                <i class="fas fa-chart-pie me-1.5"></i>AI Augmentation Analysis
+            </a>
+            <a href="/dashboard" class="btn {% if active_page == 'dashboard' %}btn-primary{% else %}btn-outline-primary{% endif %} btn-sm px-3 font-bold text-xs shadow-sm whitespace-nowrap">
+                <i class="fas fa-tasks me-1.5"></i>Task-level AI Analysis
+            </a>
+            {% if show_business_case %}
+            <a href="/expected_business_case" class="btn {% if active_page == 'expected_business_case' %}btn-primary{% else %}btn-outline-primary{% endif %} btn-sm px-3 font-bold text-xs shadow-sm whitespace-nowrap">
+                <i class="fas fa-briefcase me-1.5"></i>Potentiel Business Case
+            </a>
+            {% endif %}
+            {% if show_productivity_scenarios %}
+            <a href="/productivity_scenarios" class="btn {% if active_page == 'productivity_scenarios' %}btn-primary{% else %}btn-outline-primary{% endif %} btn-sm px-3 font-bold text-xs shadow-sm whitespace-nowrap">
+                <i class="fas fa-chart-line me-1.5"></i>Productivity Scenarios
+            </a>
+            {% endif %}
+            <a href="/ai_role_designe" class="btn {% if active_page == 'ai_role_designe' %}btn-primary{% else %}btn-outline-primary{% endif %} btn-sm px-3 font-bold text-xs shadow-sm whitespace-nowrap">
+                <i class="fas fa-user-gear me-1.5"></i>AI Role Evolution
+            </a>
+            <a href="/ai_tools" class="btn {% if active_page == 'ai_tools' %}btn-primary{% else %}btn-outline-primary{% endif %} btn-sm px-3 font-bold text-xs shadow-sm whitespace-nowrap">
+                <i class="fas fa-wand-magic-sparkles me-1.5"></i>AI Tools
+            </a>
+
+        </div>
+    </div>
+</header>

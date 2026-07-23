@@ -1,0 +1,935 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap');
+
+  :root {
+    --ink: #0f0e17;
+    --ink-soft: #3d3b4f;
+    --ink-muted: #7c7a8e;
+    --surface: #fafaf8;
+    --surface-raised: #ffffff;
+    --border: #e8e6f0;
+    --before: #ff6b35;
+    --before-bg: #fff4ef;
+    --before-border: #ffd5c2;
+    --after: #6c47ff;
+    --after-bg: #f3efff;
+    --after-border: #d4c8ff;
+    --accent: #00d4aa;
+    --radius: 16px;
+    --radius-sm: 10px;
+  }
+  .hidden { display: none !important; }
+
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--surface);
+    color: var(--ink);
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  h1,h2,h3,h4,.syne { font-family: 'Syne', sans-serif; }
+
+  /* ── HEADER ── */
+  .page-header {
+    background: var(--ink);
+    padding: 0 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 60px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .page-header .brand {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 15px;
+    color: #fff;
+    letter-spacing: -.3px;
+  }
+  .page-header .brand span { color: var(--accent); }
+  .nav-links { display: flex; gap: 4px; }
+  .nav-links a {
+    color: rgba(255,255,255,.55);
+    text-decoration: none;
+    font-size: 12.5px;
+    font-weight: 500;
+    padding: 6px 12px;
+    border-radius: 8px;
+    transition: all .15s;
+  }
+  .nav-links a:hover { color: #fff; background: rgba(255,255,255,.08); }
+
+  /* ── HERO BAND ── */
+  .hero-band {
+    background: var(--ink);
+    padding: 40px 40px 0;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero-band::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse 60% 80% at 80% 50%, rgba(108,71,255,.18) 0%, transparent 70%),
+                radial-gradient(ellipse 40% 60% at 10% 80%, rgba(0,212,170,.1) 0%, transparent 60%);
+  }
+  .hero-inner {
+    position: relative;
+    max-width: 1100px;
+    margin: 0 auto;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 32px;
+    padding-bottom: 32px;
+  }
+  .hero-title {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(26px, 3vw, 36px);
+    font-weight: 800;
+    color: #fff;
+    line-height: 1.15;
+    letter-spacing: -.5px;
+  }
+  .hero-title .pill {
+    display: inline-block;
+    background: linear-gradient(135deg, var(--before) 0%, var(--after) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .hero-sub {
+    color: rgba(255,255,255,.5);
+    font-size: 13px;
+    margin-top: 8px;
+    font-weight: 300;
+  }
+
+  /* Role selector */
+  .role-selector-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 6px;
+  }
+  .role-selector-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: rgba(255,255,255,.4);
+    letter-spacing: .05em;
+    text-transform: uppercase;
+  }
+  .role-selector-wrap select {
+    background: rgba(255,255,255,.07);
+    border: 1px solid rgba(255,255,255,.15);
+    color: #fff;
+    font-family: 'Syne', sans-serif;
+    font-weight: 600;
+    font-size: 13px;
+    padding: 10px 36px 10px 14px;
+    border-radius: 10px;
+    appearance: none;
+    cursor: pointer;
+    min-width: 220px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='rgba(255,255,255,.4)'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    transition: border-color .15s;
+  }
+  .role-selector-wrap select:focus {
+    outline: none;
+    border-color: var(--after);
+  }
+
+  /* Tab bar */
+  .tab-bar {
+    display: flex;
+    gap: 2px;
+    position: relative;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+  .tab-bar a {
+    font-family: 'Syne', sans-serif;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: rgba(255,255,255,.45);
+    text-decoration: none;
+    padding: 10px 18px 12px;
+    border-radius: 10px 10px 0 0;
+    transition: all .15s;
+    border: 1px solid transparent;
+    border-bottom: none;
+    position: relative;
+  }
+  .tab-bar a:hover { color: rgba(255,255,255,.8); }
+  .tab-bar a.active {
+    color: #fff;
+    background: var(--surface);
+    border-color: var(--border);
+  }
+
+  /* ── CONTENT ── */
+  .content-wrap {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 32px 40px 64px;
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    gap: 32px;
+    align-items: start;
+  }
+
+  /* Sidebar nav */
+  .side-nav {
+    position: sticky;
+    top: 80px;
+  }
+  .side-nav-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--ink-muted);
+    margin-bottom: 10px;
+  }
+  .side-nav a {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--ink-muted);
+    text-decoration: none;
+    font-size: 12.5px;
+    font-weight: 500;
+    padding: 7px 10px;
+    border-radius: 8px;
+    transition: all .15s;
+    border-left: 2px solid transparent;
+  }
+  .side-nav a:hover { color: var(--ink); background: var(--border); }
+  .side-nav a.active { color: var(--after); border-left-color: var(--after); background: var(--after-bg); }
+  .side-nav .dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+    flex-shrink: 0;
+    opacity: .5;
+  }
+
+  /* ── SECTIONS ── */
+  .sections { display: flex; flex-direction: column; gap: 28px; }
+
+  .section-label {
+    font-family: 'Syne', sans-serif;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--ink-muted);
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* Card */
+  .card {
+    background: var(--surface-raised);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+  .card-head {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .card-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--ink);
+  }
+  .card-body { padding: 20px; }
+  .card-count {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--ink-muted);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 2px 8px;
+    border-radius: 20px;
+  }
+
+  /* Two-col grid */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+  /* Before / After cards */
+  .card-before .card-head { background: var(--before-bg); border-color: var(--before-border); }
+  .card-before .card-title { color: var(--before); }
+  .card-after .card-head  { background: var(--after-bg);  border-color: var(--after-border);  }
+  .card-after .card-title  { color: var(--after); }
+
+  .tag {
+    font-size: 10.5px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 20px;
+    letter-spacing: .02em;
+  }
+  .tag-before { background: var(--before-bg); color: var(--before); border: 1px solid var(--before-border); }
+  .tag-after  { background: var(--after-bg);  color: var(--after);  border: 1px solid var(--after-border); }
+
+  /* Bullet list */
+  .bullet-list { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+  .bullet-list li {
+    display: flex;
+    gap: 10px;
+    align-items: baseline;
+    font-size: 13px;
+    color: var(--ink-soft);
+    line-height: 1.5;
+  }
+  .bullet-list li .b {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    margin-top: 5px;
+  }
+  .b-before { background: var(--before); }
+  .b-after  { background: var(--after); }
+  .b-neutral { background: var(--ink-muted); }
+  .b-accent  { background: var(--accent); }
+
+  /* Show more */
+  .show-more-btn {
+    margin-top: 12px;
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--ink-muted);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 5px 12px;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all .15s;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .show-more-btn:hover { color: var(--ink); border-color: var(--ink-muted); }
+
+  /* Summary cards */
+  .summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .summary-card {
+    background: var(--surface-raised);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+  }
+  .summary-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+  }
+  .summary-card.evo::before { background: linear-gradient(90deg, var(--before), var(--after)); }
+  .summary-card.skills::before { background: var(--accent); }
+  .summary-card-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--ink-muted);
+    margin-bottom: 10px;
+  }
+  .summary-card-text {
+    font-size: 13px;
+    color: var(--ink-soft);
+    line-height: 1.65;
+  }
+
+  /* Transformed cards */
+  .transform-card {
+    background: var(--surface-raised);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+  }
+  .transform-inner {
+    display: grid;
+    grid-template-columns: 1fr 40px 1fr;
+    align-items: stretch;
+  }
+  .transform-before {
+    padding: 14px 16px;
+    background: var(--before-bg);
+    border-right: 1px solid var(--before-border);
+  }
+  .transform-after {
+    padding: 14px 16px;
+    background: var(--after-bg);
+    border-left: 1px solid var(--after-border);
+  }
+  .transform-arrow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--surface);
+    color: var(--ink-muted);
+    font-size: 16px;
+  }
+  .transform-label {
+    font-size: 9.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    margin-bottom: 5px;
+  }
+  .transform-before .transform-label { color: var(--before); }
+  .transform-after  .transform-label { color: var(--after); }
+  .transform-text {
+    font-size: 12.5px;
+    line-height: 1.5;
+    color: var(--ink-soft);
+  }
+  .transform-change {
+    padding: 10px 16px;
+    border-top: 1px solid var(--border);
+    font-size: 12px;
+    color: var(--ink-muted);
+    background: var(--surface);
+    font-style: italic;
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+  }
+  .transform-change::before { content: '↳'; color: var(--accent); flex-shrink: 0; font-style: normal; }
+
+  /* Skills tags */
+  .tags-wrap { display: flex; flex-wrap: wrap; gap: 8px; }
+  .skill-tag {
+    font-size: 12px;
+    font-weight: 500;
+    padding: 5px 12px;
+    border-radius: 20px;
+    border: 1px solid;
+  }
+  .skill-tag-a { background: var(--before-bg); color: var(--before); border-color: var(--before-border); }
+  .skill-tag-b { background: var(--after-bg);  color: var(--after);  border-color: var(--after-border); }
+
+  /* Training */
+  .training-grid { display: flex; flex-direction: column; gap: 10px; }
+  .training-row {
+    display: grid;
+    grid-template-columns: 1fr 2fr auto;
+    align-items: center;
+    gap: 16px;
+    padding: 12px 16px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+  }
+  .training-module {
+    font-family: 'Syne', sans-serif;
+    font-size: 12.5px;
+    font-weight: 700;
+    color: var(--ink);
+  }
+  .training-obj {
+    font-size: 12.5px;
+    color: var(--ink-muted);
+  }
+  .training-dur {
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--after);
+    background: var(--after-bg);
+    border: 1px solid var(--after-border);
+    padding: 3px 10px;
+    border-radius: 20px;
+    white-space: nowrap;
+  }
+
+  /* Empty state */
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--ink-muted);
+  }
+  .empty-state .icon { font-size: 32px; margin-bottom: 10px; opacity: .3; }
+  .empty-state p { font-size: 13px; }
+
+  /* Responsive */
+  @media (max-width: 900px) {
+    .content-wrap { grid-template-columns: 1fr; padding: 24px 20px; }
+    .side-nav { display: none; }
+    .two-col, .summary-grid { grid-template-columns: 1fr; }
+    .hero-inner { flex-direction: column; align-items: flex-start; }
+    .hero-band, .page-header { padding-left: 20px; padding-right: 20px; }
+    .transform-inner { grid-template-columns: 1fr; }
+    .transform-arrow { display: none; }
+    .transform-after { border-left: none; border-top: 1px solid var(--after-border); }
+    .training-row { grid-template-columns: 1fr; }
+  }
+</style>
+
+<!-- HEADER + HERO -->
+<div class="min-h-screen bg-gray-50">
+  <!-- Header -->
+  {% with header_title="AI Role Evolution", header_subtitle="Future-ready organizational role planning", active_page="ai_role_designe", show_ppt=False %}
+    {% include 'header_shared.html' %}
+  {% endwith %}
+
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
+    <div class="rounded-2xl p-6 bg-gradient-to-r from-orange-50 via-white to-purple-50 border border-gray-100 shadow-sm">
+      <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+        <div>
+          <div class="text-2xl font-bold text-gray-900 font-['Inter']">Current Role → AI-Augmented Role</div>
+          <div class="text-sm text-gray-600 mt-1 font-['Inter']">Compare responsibilities, skills, and daily work before and after AI adoption.</div>
+        </div>
+        <form method="get" action="/ai_role_designe" class="flex items-center gap-2">
+          <label class="text-xs font-medium text-gray-700 font-['Inter']" for="roleSelect">Role</label>
+          <select id="roleSelect" name="role_id" class="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:ring-1 focus:ring-blue-500 focus:border-blue-500 font-['Inter']" onchange="this.form.submit()">
+            {% for r in roles %}
+            <option value="{{ r.role_definition_id }}" {% if selected_role_id and (selected_role_id|string) == (r.role_definition_id|string) %}selected{% endif %}>
+              {{ r.role_name or ('Role #' ~ r.role_definition_id) }}
+            </option>
+            {% endfor %}
+          </select>
+        </form>
+      </div>
+    </div>
+
+    {% if selected_role %}
+    {% set comp = selected_role.comparaison_obj or {} %}
+
+    <div class="content-wrap">
+
+  <!-- SIDEBAR -->
+  <aside class="side-nav">
+    <div class="side-nav-label">On this page</div>
+    <a href="#overview" class="active"><span class="dot"></span>Overview</a>
+    <a href="#role-definition"><span class="dot"></span>Role Definition</a>
+    <a href="#responsibilities"><span class="dot"></span>Responsibilities</a>
+    {% if comp.day_to_day_changes %}
+    <a href="#day-to-day"><span class="dot"></span>Day-to-Day</a>
+    {% endif %}
+    {% if comp.adaptation_challenges %}
+    <a href="#challenges"><span class="dot"></span>Challenges</a>
+    {% endif %}
+    {% if comp.transformed_responsibilities %}
+    <a href="#transformation"><span class="dot"></span>Transformation</a>
+    {% endif %}
+    <a href="#skills"><span class="dot"></span>Skills & Competencies</a>
+    {% if selected_role.ai_training %}
+    <a href="#training"><span class="dot"></span>AI Training</a>
+    {% endif %}
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="sections">
+
+    <!-- ── OVERVIEW ── -->
+    <section id="overview" class="scroll-mt-20">
+      <div class="section-label">Overview</div>
+      <div class="summary-grid">
+        {% if comp.role_evolution_summary %}
+        <div class="summary-card evo">
+          <div class="summary-card-label">Role Evolution</div>
+          <div class="summary-card-text">{{ comp.role_evolution_summary }}</div>
+        </div>
+        {% endif %}
+        {% if comp.key_skills_shift %}
+        <div class="summary-card skills">
+          <div class="summary-card-label">Key Skills Shift</div>
+          <div class="summary-card-text">{{ comp.key_skills_shift }}</div>
+        </div>
+        {% endif %}
+      </div>
+    </section>
+
+    <!-- ── ROLE DEFINITION ── -->
+    <section id="role-definition" class="scroll-mt-20">
+      <div class="section-label">Role Definition</div>
+      <div class="two-col">
+        <div class="card card-before">
+          <div class="card-head">
+            <span class="card-title">Current Role</span>
+            <span class="tag tag-before">Before AI</span>
+          </div>
+          <div class="card-body">
+            {% set items = selected_role.role_definition_bullets or [] %}
+            <ul class="bullet-list">
+              {% for item in items %}
+              <li class="{% if loop.index > 6 %}hidden extra-old-def{% endif %}">
+                <span class="b b-before"></span>{{ item }}
+              </li>
+              {% endfor %}
+            </ul>
+            {% if items|length > 6 %}
+            <button class="show-more-btn" data-toggle-class="extra-old-def" data-collapsed-label="↓ Show {{ items|length - 6 }} more" data-expanded-label="↑ Show less" onclick="toggleItems(this)">
+              ↓ Show {{ items|length - 6 }} more
+            </button>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="card card-after">
+          <div class="card-head">
+            <span class="card-title">AI-Augmented Role</span>
+            <span class="tag tag-after">With AI</span>
+          </div>
+          <div class="card-body">
+            {% set items = selected_role.ai_role_definition_bullets or [] %}
+            <ul class="bullet-list">
+              {% for item in items %}
+              <li class="{% if loop.index > 6 %}hidden extra-ai-def{% endif %}">
+                <span class="b b-after"></span>{{ item }}
+              </li>
+              {% endfor %}
+            </ul>
+            {% if items|length > 6 %}
+            <button class="show-more-btn" data-toggle-class="extra-ai-def" data-collapsed-label="↓ Show {{ items|length - 6 }} more" data-expanded-label="↑ Show less" onclick="toggleItems(this)">
+              ↓ Show {{ items|length - 6 }} more
+            </button>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── DAY TO DAY ── -->
+    {% if comp.day_to_day_changes %}
+    <section id="day-to-day" class="scroll-mt-20">
+      <div class="section-label">Day-to-Day Changes</div>
+      <div class="card">
+        <div class="card-head">
+          <span class="card-title">What changes in daily work</span>
+          <span class="card-count">{{ comp.day_to_day_changes|length }} changes</span>
+        </div>
+        <div class="card-body">
+          {% set items = comp.day_to_day_changes %}
+          <ul class="bullet-list">
+            {% for item in items %}
+            <li class="{% if loop.index > 5 %}hidden extra-day{% endif %}">
+              <span class="b b-accent"></span>{{ item }}
+            </li>
+            {% endfor %}
+          </ul>
+          {% if items|length > 5 %}
+          <button class="show-more-btn" data-toggle-class="extra-day" data-collapsed-label="↓ Show more" data-expanded-label="↑ Show less" onclick="toggleItems(this)">↓ Show more</button>
+          {% endif %}
+        </div>
+      </div>
+    </section>
+    {% endif %}
+
+    <!-- ── ADAPTATION CHALLENGES ── -->
+    {% if comp.adaptation_challenges %}
+    <section id="challenges" class="scroll-mt-20">
+      <div class="section-label">Adaptation Challenges</div>
+      <div class="card">
+        <div class="card-head">
+          <span class="card-title">What the employee will need to navigate</span>
+          <span class="card-count">{{ comp.adaptation_challenges|length }}</span>
+        </div>
+        <div class="card-body">
+          {% set items = comp.adaptation_challenges %}
+          <ul class="bullet-list">
+            {% for item in items %}
+            <li class="{% if loop.index > 5 %}hidden extra-chal{% endif %}">
+              <span class="b b-neutral"></span>{{ item }}
+            </li>
+            {% endfor %}
+          </ul>
+          {% if items|length > 5 %}
+          <button class="show-more-btn" data-toggle-class="extra-chal" data-collapsed-label="↓ Show more" data-expanded-label="↑ Show less" onclick="toggleItems(this)">↓ Show more</button>
+          {% endif %}
+        </div>
+      </div>
+    </section>
+    {% endif %}
+
+    <!-- ── RESPONSIBILITIES ── -->
+    <section id="responsibilities" class="scroll-mt-20">
+      <div class="section-label">Responsibilities</div>
+      <div class="two-col">
+        <div class="card card-before">
+          <div class="card-head">
+            <span class="card-title">Current Responsibilities</span>
+            {% set items = selected_role.responsabilities_list or [] %}
+            <span class="card-count">{{ items|length }}</span>
+          </div>
+          <div class="card-body">
+            <ul class="bullet-list">
+              {% for item in items %}
+              <li class="{% if loop.index > 8 %}hidden extra-old-resp{% endif %}">
+                <span class="b b-before"></span>{{ item }}
+              </li>
+              {% endfor %}
+            </ul>
+            {% if items|length > 8 %}
+            <button class="show-more-btn" data-toggle-class="extra-old-resp" data-collapsed-label="↓ Show {{ items|length - 8 }} more" data-expanded-label="↑ Show less" onclick="toggleItems(this)">
+              ↓ Show {{ items|length - 8 }} more
+            </button>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="card card-after">
+          <div class="card-head">
+            <span class="card-title">New Responsibilities</span>
+            {% set items = selected_role.ai_responsabilities_list or [] %}
+            <span class="card-count">{{ items|length }}</span>
+          </div>
+          <div class="card-body">
+            {% set kept_norm = (comp.kept_responsibilities or []) | map('lower') | map('trim') | list %}
+            {% set new_norm = (comp.new_responsibilities or []) | map('lower') | map('trim') | list %}
+
+            {% set grouped = namespace(unchanged=[], new=[], transformed=[], unknown=[]) %}
+            {% for item in items %}
+              {% set item_norm = (item or '') | lower | trim %}
+
+              {% set ns = namespace(transformed=false) %}
+              {% for tr in (comp.transformed_responsibilities or []) %}
+                {% if (tr.after or '') | lower | trim == item_norm %}
+                  {% set ns.transformed = true %}
+                {% endif %}
+              {% endfor %}
+
+              {% if item_norm in kept_norm %}
+                {% set grouped.unchanged = grouped.unchanged + [item] %}
+              {% elif item_norm in new_norm %}
+                {% set grouped.new = grouped.new + [item] %}
+              {% elif ns.transformed %}
+                {% set grouped.transformed = grouped.transformed + [item] %}
+              {% else %}
+                {% set grouped.unknown = grouped.unknown + [item] %}
+              {% endif %}
+            {% endfor %}
+
+            {% set ordered_items = grouped.unchanged + grouped.new + grouped.unknown + grouped.transformed %}
+
+            <ul class="bullet-list">
+              {% for item in ordered_items %}
+              {% set item_norm = (item or '') | lower | trim %}
+
+              {% set ns2 = namespace(transformed=false) %}
+              {% for tr in (comp.transformed_responsibilities or []) %}
+                {% if (tr.after or '') | lower | trim == item_norm %}
+                  {% set ns2.transformed = true %}
+                {% endif %}
+              {% endfor %}
+
+              {% set status = '' %}
+              {% if item_norm in kept_norm %}
+                {% set status = 'unchanged' %}
+              {% elif item_norm in new_norm %}
+                {% set status = 'new' %}
+              {% elif ns2.transformed %}
+                {% set status = 'transformed' %}
+              {% endif %}
+
+              <li class="{% if loop.index > 8 %}hidden extra-ai-resp{% endif %}" style="gap:12px;">
+                <span class="b b-after"></span>
+                <span style="flex:1; min-width:0;">{{ item }}</span>
+                {% if status == 'unchanged' %}
+                <span class="skill-tag" style="background: var(--surface); color: var(--ink-muted); border-color: var(--border);">unchanged</span>
+                {% elif status == 'transformed' %}
+                <span class="skill-tag" style="background: #ecfeff; color: #0f766e; border-color: #99f6e4;">transformed</span>
+                {% elif status == 'new' %}
+                <span class="skill-tag skill-tag-b">new</span>
+                {% endif %}
+              </li>
+              {% endfor %}
+            </ul>
+
+            {% if ordered_items|length > 8 %}
+            <button class="show-more-btn" data-toggle-class="extra-ai-resp" data-collapsed-label="↓ Show {{ ordered_items|length - 8 }} more" data-expanded-label="↑ Show less" onclick="toggleItems(this)">
+              ↓ Show {{ ordered_items|length - 8 }} more
+            </button>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── TRANSFORMED RESPONSIBILITIES ── -->
+    {% if comp.transformed_responsibilities %}
+    <section id="transformation" class="scroll-mt-20 relative">
+      <div class="section-label">Transformed Responsibilities</div>
+      
+      <!-- Premium Overlay -->
+      <div class="premium-cta-overlay absolute inset-0 z-50 flex items-center justify-center hidden">
+        <div class="premium-cta-card">
+          <div class="premium-badge mb-3">
+            <i class="fas fa-lock mr-1"></i> Premium
+          </div>
+          <h3 class="text-lg font-bold text-gray-900 mb-2">Unlock Transformations</h3>
+          <p class="text-sm text-gray-600 mb-4">Toggle the payment simulation switch at the top of the page to unlock this strategic data.</p>
+        </div>
+      </div>
+
+      <div class="premium-locked-container" style="display:flex; flex-direction:column; gap:10px;">
+        {% set items = comp.transformed_responsibilities_filtered if (comp.transformed_responsibilities_filtered is defined and comp.transformed_responsibilities_filtered) else (comp.transformed_responsibilities or []) %}
+        {% for tr in items %}
+        <div class="transform-card {% if loop.index > 4 %}hidden extra-transformed{% endif %}">
+          <div class="transform-inner">
+            <div class="transform-before">
+              <div class="transform-label">Before</div>
+              <div class="transform-text">{{ tr.before or '-' }}</div>
+            </div>
+            <div class="transform-arrow">→</div>
+            <div class="transform-after">
+              <div class="transform-label">After</div>
+              <div class="transform-text">{{ tr.after or '-' }}</div>
+            </div>
+          </div>
+          {% if tr.change %}
+          <div class="transform-change">{{ tr.change }}</div>
+          {% endif %}
+        </div>
+        {% endfor %}
+        {% if items|length > 4 %}
+        <button class="show-more-btn" data-toggle-class="extra-transformed" data-collapsed-label="↓ Show {{ items|length - 4 }} more transformations" data-expanded-label="↑ Show less" onclick="toggleItems(this)">
+          ↓ Show {{ items|length - 4 }} more transformations
+        </button>
+        {% endif %}
+      </div>
+    </section>
+    {% endif %}
+
+    <!-- ── SKILLS & COMPETENCIES ── -->
+    <section id="skills" class="scroll-mt-20">
+      <div class="section-label">Skills & Competencies</div>
+      <div class="two-col">
+        <div class="card">
+          <div class="card-head">
+            <span class="card-title">New Skills Required</span>
+          </div>
+          <div class="card-body">
+            <div class="tags-wrap">
+              {% for item in selected_role.new_skills_list or [] %}
+              <span class="skill-tag skill-tag-a">{{ item }}</span>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-head">
+            <span class="card-title">New Competencies (e-CF)</span>
+          </div>
+          <div class="card-body">
+            <div class="tags-wrap">
+              {% for item in selected_role.new_competencies_list or [] %}
+              <span class="skill-tag skill-tag-b">{{ item }}</span>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── AI TRAINING ── -->
+    {% if selected_role.ai_training %}
+    <section id="training" class="scroll-mt-20 relative">
+      <div class="section-label">AI Training Plan</div>
+      
+      <!-- Premium Overlay -->
+      <div class="premium-cta-overlay absolute inset-0 z-50 flex items-center justify-center hidden">
+        <div class="premium-cta-card">
+          <div class="premium-badge mb-3">
+            <i class="fas fa-lock mr-1"></i> Premium
+          </div>
+          <h3 class="text-lg font-bold text-gray-900 mb-2">Unlock Training Plan</h3>
+          <p class="text-sm text-gray-600 mb-4">Toggle the payment simulation switch at the top of the page to unlock this strategic data.</p>
+        </div>
+      </div>
+
+      <div class="card premium-locked-container">
+        <div class="card-head">
+          <span class="card-title">Recommended modules</span>
+          <span class="card-count">{{ selected_role.ai_training|length }} modules</span>
+        </div>
+        <div class="card-body">
+          <div class="training-grid">
+            {% set items = selected_role.ai_training %}
+            {% for t in items %}
+            <div class="training-row {% if loop.index > 5 %}hidden extra-training{% endif %}">
+              <div class="training-module">{{ t.module }}</div>
+              <div class="training-obj">{{ t.objective }}</div>
+              <div class="training-dur">{{ t.duration }}</div>
+            </div>
+            {% endfor %}
+          </div>
+          {% if items|length > 5 %}
+          <button class="show-more-btn" style="margin-top:12px" data-toggle-class="extra-training" data-collapsed-label="↓ Show more" data-expanded-label="↑ Show less" onclick="toggleItems(this)">
+            ↓ Show more
+          </button>
+          {% endif %}
+        </div>
+      </div>
+    </section>
+    {% endif %}
+
+    </div>
+    {% else %}
+    <div class="mt-6 bg-white rounded-xl shadow-sm border border-gray-100 p-10 text-center text-gray-500">
+      <i class="fas fa-inbox text-2xl text-gray-300 mb-2"></i>
+      <div class="text-sm font-['Inter']">No roles found</div>
+    </div>
+    {% endif %}
+  </main>
+</div>
+
+<script>
+function toggleItems(btnEl) {
+  if (!btnEl) return;
+
+  const cls = btnEl.getAttribute('data-toggle-class');
+  if (!cls) return;
+
+  const collapsedLabel = btnEl.getAttribute('data-collapsed-label') || '↓ Show more';
+  const expandedLabel = btnEl.getAttribute('data-expanded-label') || '↑ Show less';
+
+  const els = document.querySelectorAll('.' + cls);
+  const anyHidden = Array.from(els).some(e => e.classList.contains('hidden'));
+  els.forEach(e => e.classList.toggle('hidden', !anyHidden));
+
+  btnEl.textContent = anyHidden ? expandedLabel : collapsedLabel;
+  btnEl.setAttribute('aria-expanded', anyHidden ? 'true' : 'false');
+}
+
+// Sidebar active state on scroll
+const sections = document.querySelectorAll('section[id]');
+const navLinks = document.querySelectorAll('.side-nav a');
+window.addEventListener('scroll', () => {
+  let current = '';
+  sections.forEach(s => {
+    if (window.scrollY >= s.offsetTop - 100) current = s.id;
+  });
+  navLinks.forEach(a => {
+    a.classList.toggle('active', a.getAttribute('href') === '#' + current);
+  });
+}, { passive: true });
+</script>
+{% endblock %}

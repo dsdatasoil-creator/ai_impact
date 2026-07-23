@@ -1,0 +1,1332 @@
+<!-- templates/cost_analysis.html -->
+{% extends "base.html" %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+    <!-- Header -->
+    {% with header_title="Cost & ROI Analysis", header_subtitle="Detailed Financial Impact of AI Implementation", active_page="cost_analysis", show_ppt=True %}
+        {% include 'header_shared.html' %}
+    {% endwith %}
+
+    <!-- Pricing Modal -->
+    <div id="pricingModal" class="hidden fixed inset-0 z-[60] overflow-y-auto">
+        <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 transition-opacity bg-black bg-opacity-40" aria-hidden="true" onclick="closePricingModal()"></div>
+            <div class="inline-block align-bottom bg-white rounded-xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl w-full">
+                <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                    <div class="sm:flex sm:items-start">
+                        <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-blue-100 sm:mx-0 sm:h-10 sm:w-10">
+                            <i class="fas fa-info-circle text-blue-600"></i>
+                        </div>
+                        <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+                            <h3 class="text-lg leading-6 font-bold text-gray-900 font-['Inter']" id="pricingModalTitle">Pricing Logic</h3>
+                            <div class="mt-4">
+                                <p class="text-sm text-gray-600 font-['Inter'] whitespace-pre-wrap leading-relaxed" id="pricingModalReasoning"></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                    <button type="button" onclick="closePricingModal()" class="w-full inline-flex justify-center rounded-lg border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm transition duration-150">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
+        <!-- Filters Section -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-6">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
+                <h2 class="text-lg font-semibold text-gray-900 font-['Inter'] mb-2 sm:mb-0">Filters</h2>
+                <div class="flex items-center gap-2">
+                    <button onclick="applyCostFilters()" class="text-sm text-white bg-blue-600 hover:bg-blue-700 transition duration-150 px-3 py-1.5 rounded-lg">
+                        <i class="fas fa-filter mr-1.5 text-xs"></i> Apply
+                    </button>
+                    <button onclick="resetCostFilters()" class="text-sm text-gray-600 hover:text-blue-600 transition duration-150 px-3 py-1.5 border border-gray-200 rounded-lg hover:bg-gray-50">
+                        <i class="fas fa-redo-alt mr-1.5 text-xs"></i> Reset All
+                    </button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
+                <!-- Tool Filter -->
+                <div class="relative" data-filter="tool">
+                    <label class="block text-xs font-medium text-gray-700 mb-1.5 font-['Inter']">AI Tool</label>
+                    <button type="button" onclick="toggleDropdown('tool')" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-left bg-white hover:bg-gray-50 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 font-['Inter']">
+                        <span data-filter-label>All</span>
+                    </button>
+                    <div class="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg hidden max-h-64 overflow-auto" data-filter-menu>
+                        <div class="p-2" data-filter-options>
+                            {% for tool in tools_list %}
+                            <div class="flex items-center gap-2 px-2 py-1">
+                                <input type="checkbox" id="tool-{{ loop.index0 }}" value="{{ tool }}" class="h-4 w-4">
+                                <label for="tool-{{ loop.index0 }}" class="text-sm text-gray-700">{{ tool }}</label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Role Filter -->
+                <div class="relative" data-filter="role">
+                    <label class="block text-xs font-medium text-gray-700 mb-1.5 font-['Inter']">Role</label>
+                    <button type="button" onclick="toggleDropdown('role')" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-left bg-white hover:bg-gray-50 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 font-['Inter']">
+                        <span data-filter-label>All</span>
+                    </button>
+                    <div class="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg hidden max-h-64 overflow-auto" data-filter-menu>
+                        <div class="p-2" data-filter-options>
+                            {% for role in roles %}
+                            <div class="flex items-center gap-2 px-2 py-1">
+                                <input type="checkbox" id="role-{{ loop.index0 }}" value="{{ role }}" class="h-4 w-4" {% if current_role and (role in current_role) %}checked{% endif %}>
+                                <label for="role-{{ loop.index0 }}" class="text-sm text-gray-700">{{ role }}</label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Entity Filter -->
+                <div class="relative" data-filter="entity">
+                    <label class="block text-xs font-medium text-gray-700 mb-1.5 font-['Inter']">{% if is_teamwill_like %}Unit{% else %}Entity{% endif %}</label>
+                    <button type="button" onclick="toggleDropdown('entity')" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-left bg-white hover:bg-gray-50 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 font-['Inter']">
+                        <span data-filter-label>All</span>
+                    </button>
+                    <div class="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg hidden max-h-64 overflow-auto" data-filter-menu>
+                        <div class="p-2" data-filter-options>
+                            {% for entity in entities %}
+                            <div class="flex items-center gap-2 px-2 py-1">
+                                <input type="checkbox" id="entity-{{ loop.index0 }}" value="{{ entity }}" class="h-4 w-4" {% if current_entity and (entity in current_entity) %}checked{% endif %}>
+                                <label for="entity-{{ loop.index0 }}" class="text-sm text-gray-700">{{ entity }}</label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Team Filter -->
+                <div class="relative" data-filter="team">
+                    <label class="block text-xs font-medium text-gray-700 mb-1.5 font-['Inter']">Team</label>
+                    <button type="button" onclick="toggleDropdown('team')" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-left bg-white hover:bg-gray-50 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 font-['Inter']">
+                        <span data-filter-label>All</span>
+                    </button>
+                    <div class="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg hidden max-h-64 overflow-auto" data-filter-menu>
+                        <div class="p-2" data-filter-options>
+                            {% for team in teams %}
+                            <div class="flex items-center gap-2 px-2 py-1">
+                                <input type="checkbox" id="team-{{ loop.index0 }}" value="{{ team }}" class="h-4 w-4" {% if current_team and (team in current_team) %}checked{% endif %}>
+                                <label for="team-{{ loop.index0 }}" class="text-sm text-gray-700">{{ team }}</label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Category Filter -->
+                <div class="relative" data-filter="category">
+                    <label class="block text-xs font-medium text-gray-700 mb-1.5 font-['Inter']">{% if is_teamwill_like %}Country{% else %}Category{% endif %}</label>
+                    <button type="button" onclick="toggleDropdown('category')" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-left bg-white hover:bg-gray-50 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 font-['Inter']">
+                        <span data-filter-label>All</span>
+                    </button>
+                    <div class="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg hidden max-h-64 overflow-auto" data-filter-menu>
+                        <div class="p-2" data-filter-options>
+                            {% for category in categories %}
+                            <div class="flex items-center gap-2 px-2 py-1">
+                                <input type="checkbox" id="category-{{ loop.index0 }}" value="{{ category }}" class="h-4 w-4" {% if current_category and (category in current_category) %}checked{% endif %}>
+                                <label for="category-{{ loop.index0 }}" class="text-sm text-gray-700">{{ category }}</label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SGACOGS Filter -->
+                <div class="relative" data-filter="sgacogs">
+                    <label class="block text-xs font-medium text-gray-700 mb-1.5 font-['Inter']">{% if is_teamwill_like %}Engagement{% else %}SGACOGS{% endif %}</label>
+                    <button type="button" onclick="toggleDropdown('sgacogs')" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-left bg-white hover:bg-gray-50 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 font-['Inter']">
+                        <span data-filter-label>All</span>
+                    </button>
+                    <div class="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg hidden max-h-64 overflow-auto" data-filter-menu>
+                        <div class="p-2" data-filter-options>
+                            {% for sgacogs in sgacogs_list %}
+                            <div class="flex items-center gap-2 px-2 py-1">
+                                <input type="checkbox" id="sgacogs-{{ loop.index0 }}" value="{{ sgacogs }}" class="h-4 w-4" {% if current_sgacogs and (sgacogs in current_sgacogs) %}checked{% endif %}>
+                                <label for="sgacogs-{{ loop.index0 }}" class="text-sm text-gray-700">{{ sgacogs }}</label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ROI Mode Selection -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <!-- Workforce Optimization ROI Info -->
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex flex-col h-full hover:shadow-md transition-shadow cursor-pointer group" onclick="switchROIMode('workforce')">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="h-12 w-12 bg-blue-50 rounded-xl flex items-center justify-center text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                        <i class="fas fa-users-cog text-xl"></i>
+                    </div>
+                    <span id="workforce-active-badge" class="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-blue-100 text-blue-700 hidden">Active Mode</span>
+                </div>
+                <h3 class="text-lg font-bold text-gray-900 mb-2">Workforce Optimization ROI</h3>
+                <p class="text-sm text-gray-600 mb-4 flex-grow font-['Inter']">Measures the return on investment achieved by using AI to maintain the same level of output with fewer employees or fewer labor hours. The value comes from labor cost savings while preserving business performance.</p>
+                <div class="p-3 bg-gray-50 rounded-xl mb-4 border border-gray-100">
+                    <p class="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Example</p>
+                    <p class="text-[11px] text-gray-500 italic leading-relaxed font-['Inter']">A company employs 100 people to process 10,000 customer requests per month. After implementing AI, employee productivity increases by 25%. The company can now process the same 10,000 requests with only 80 employees. The labor cost savings generated by reducing workforce requirements are compared against the AI investment cost to calculate the ROI.</p>
+                </div>
+                <button type="button" class="w-full py-2.5 rounded-xl bg-blue-600 text-white font-bold text-sm hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 mt-auto">
+                    View Optimization Details
+                </button>
+            </div>
+
+            <!-- Productivity Growth ROI Info -->
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex flex-col h-full hover:shadow-md transition-shadow cursor-pointer group" onclick="switchROIMode('growth')">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="h-12 w-12 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
+                        <i class="fas fa-chart-line text-xl"></i>
+                    </div>
+                    <span id="growth-active-badge" class="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-indigo-100 text-indigo-700 hidden">Active Mode</span>
+                </div>
+                <h3 class="text-lg font-bold text-gray-900 mb-2">Productivity Growth ROI</h3>
+                <p class="text-sm text-gray-600 mb-4 flex-grow font-['Inter']">Measures the return on investment achieved by using AI to increase output while maintaining the same workforce size. Instead of reducing headcount, employees use the time saved by AI to perform additional work, serve more customers, or generate additional revenue.</p>
+                <div class="p-3 bg-gray-50 rounded-xl mb-4 border border-gray-100">
+                    <p class="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Example</p>
+                    <p class="text-[11px] text-gray-500 italic leading-relaxed font-['Inter']">A company employs 100 people to process 10,000 customer requests per month. After implementing AI, productivity increases by 25%, but the company keeps all 100 employees. The workforce can now process 12,500 requests per month. The additional value or revenue generated by the extra 2,500 requests is compared against the AI investment cost to calculate the ROI.</p>
+                </div>
+                <button type="button" class="w-full py-2.5 rounded-xl bg-indigo-600 text-white font-bold text-sm hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100 mt-auto">
+                    View Growth Details
+                </button>
+            </div>
+        </div>
+
+        <!-- Section Title Indicator -->
+        <div id="mode-title-container" class="mb-8 hidden">
+            <h2 id="active-mode-title" class="text-2xl font-black text-gray-900 font-['Inter'] flex items-center">
+                <span class="w-2 h-8 bg-blue-600 rounded-full mr-4"></span>
+                Workforce Optimization Analysis
+            </h2>
+            <p id="active-mode-subtitle" class="text-sm text-gray-500 font-medium mt-2 ml-6 font-['Inter']"></p>
+        </div>
+
+        <!-- ROI-Workforce Optimization Section -->
+        <div id="workforce-roi-section" class="hidden">
+            <div class="grid mobile-kpi-grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-4 gap-3 mb-6">
+                <div class="kpi-card bg-white rounded-xl shadow-sm p-4 border border-gray-100">
+                    <div class="flex items-center justify-between">
+                        <div class="flex-1">
+                            <p class="text-gray-500 text-[10px] font-bold uppercase tracking-wider font-['Inter']">Workforce Cost (Annual)</p>
+                            <p class="text-xl font-bold text-gray-900 mt-1 font-['Inter'] kpi-current-cost-val">$0</p>
+                            <p class="text-[9px] text-gray-400 mt-1 font-medium kpi-employee-count-val">0 Employees</p>
+                        </div>
+                        <div class="bg-red-50 p-2 rounded-lg"><i class="fas fa-money-bill-wave text-red-500 text-base"></i></div>
+                    </div>
+                </div>
+                <div class="kpi-card bg-white rounded-xl shadow-sm p-4 border border-gray-100">
+                    <div class="flex items-center justify-between">
+                        <div class="flex-1">
+                            <p class="text-gray-500 text-[10px] font-bold uppercase tracking-wider font-['Inter']">Workforce Salary Savings (Annual)</p>
+                            <p class="text-xl font-bold text-green-600 mt-1 font-['Inter'] kpi-cost-savings-val">$0</p>
+                        </div>
+                        <div class="bg-green-50 p-2 rounded-lg"><i class="fas fa-hand-holding-usd text-green-500 text-base"></i></div>
+                    </div>
+                </div>
+                <div class="kpi-card bg-white rounded-xl shadow-sm p-4 border border-gray-100">
+                    <div class="flex items-center justify-between">
+                        <div class="flex-1">
+                            <p class="text-gray-500 text-[10px] font-bold uppercase tracking-wider font-['Inter']">AI Operational Cost (Annual)</p>
+                            <p class="text-xl font-bold text-purple-600 mt-1 font-['Inter']" id="kpi-total-operational-cost-workforce">$0</p>
+                        </div>
+                        <div class="bg-purple-50 p-2 rounded-lg"><i class="fas fa-microchip text-purple-500 text-base"></i></div>
+                    </div>
+                </div>
+                <div class="kpi-card bg-white rounded-xl shadow-sm p-4 border border-gray-100">
+                    <div class="flex items-center justify-between">
+                        <div class="flex-1">
+                            <p class="text-gray-500 text-[10px] font-bold uppercase tracking-wider font-['Inter']">AI-Driven Net Gain (Annual)</p>
+                            <p class="text-xl font-bold text-blue-700 mt-1 font-['Inter'] kpi-net-gain-val">$0</p>
+                            <p class="text-[10px] text-gray-500 mt-1 font-medium font-['Inter']">ROI: <span id="kpi-roi-workforce" class="font-bold text-blue-600">0%</span></p>
+                        </div>
+                        <div class="bg-blue-50 p-2 rounded-lg"><i class="fas fa-plus-circle text-blue-600 text-base"></i></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Workforce Specific Charts & Tabs -->
+            <div id="workforce-charts-container" class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                    <h3 class="text-lg font-bold text-gray-900 mb-6 font-['Inter'] flex items-center">
+                        <i class="fas fa-chart-bar mr-3 text-blue-500"></i> Top 10 Roles by Net Gain
+                    </h3>
+                    <div style="height: 350px; width: 100%;">
+                        <canvas id="roiRolesChart"></canvas>
+                    </div>
+                </div>
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                    <h3 class="text-lg font-bold text-gray-900 mb-6 font-['Inter'] flex items-center">
+                        <i class="fas fa-chart-bar mr-3 text-red-500"></i> Bottom 10 Roles by Net Gain
+                    </h3>
+                    <div style="height: 350px; width: 100%;">
+                        <canvas id="bottomRoiRolesChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Report Tabs (Moved inside workforce section) -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-12">
+                <div class="border-b border-gray-200 bg-gray-50/50">
+                    <nav class="flex -mb-px px-6 space-x-8" aria-label="Tabs">
+                        <button onclick="switchCostTab('role')" id="role-tab" class="cost-tab-btn border-b-2 border-blue-500 py-4 px-1 text-sm font-semibold text-blue-600 whitespace-nowrap transition duration-150">
+                            <i class="fas fa-user-tie mr-2"></i>By Role
+                        </button>
+                        <button onclick="switchCostTab('task')" id="task-tab" class="cost-tab-btn border-b-2 border-transparent py-4 px-1 text-sm font-semibold text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap transition duration-150">
+                            <i class="fas fa-tasks mr-2"></i>By Task
+                        </button>
+                        <button onclick="switchCostTab('tool')" id="tool-tab" class="cost-tab-btn border-b-2 border-transparent py-4 px-1 text-sm font-semibold text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap transition duration-150">
+                            <i class="fas fa-tools mr-2"></i>By AI Tool
+                        </button>
+                    </nav>
+                </div>
+                <div class="p-0">
+                    <!-- Tool Report -->
+                    <div id="tool-content" class="cost-tab-content hidden">
+                        <div class="overflow-x-auto">
+                            <table id="tool-cost-table" class="w-full compact-table divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider sortable" data-column="0" data-sort-key="tool_used">AI Tool <i class="fas fa-sort ml-1 opacity-30"></i></th>
+                                        <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider sortable" data-column="1" data-sort-key="total_usage">Usage <i class="fas fa-sort ml-1 opacity-30"></i></th>
+                                        <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider sortable" data-column="2" data-sort-key="num_users">Users <i class="fas fa-sort ml-1 opacity-30"></i></th>
+                                        <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider sortable" data-column="3" data-sort-key="total_cost">AI Investment Cost (Annual) <i class="fas fa-sort ml-1 opacity-30"></i></th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-100">
+                                    <tr><td colspan="5" class="px-6 py-12 text-center text-gray-400"><i class="fas fa-spinner fa-spin mr-2"></i>Loading data...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <!-- Role Report -->
+                    <div id="role-content" class="cost-tab-content">
+                        <div class="overflow-x-auto">
+                            <table id="role-cost-table" class="w-full compact-table divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider sortable" data-column="0" data-sort-key="role_title">Role <i class="fas fa-sort ml-1 opacity-30"></i></th>
+                                        <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider sortable" data-column="1" data-sort-key="total_ai_cost">AI Investment Cost (Annual) <i class="fas fa-sort ml-1 opacity-30"></i></th>
+                                        <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider sortable" data-column="3" data-sort-key="total_savings">Workforce Salary Savings (Annual) <i class="fas fa-sort ml-1 opacity-30"></i></th>
+                                        <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider sortable" data-column="4" data-sort-key="net_gain">Net Gain <i class="fas fa-sort ml-1 opacity-30"></i></th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-100">
+                                    <tr><td colspan="5" class="px-6 py-12 text-center text-gray-400"><i class="fas fa-spinner fa-spin mr-2"></i>Loading data...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <!-- Task Report -->
+                    <div id="task-content" class="cost-tab-content hidden">
+                        <div class="overflow-x-auto">
+                            <table id="task-cost-table" class="w-full compact-table divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider sortable" data-column="0" data-sort-key="task_l2">Task <i class="fas fa-sort ml-1 opacity-30"></i></th>
+                                        <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider sortable" data-column="1" data-sort-key="current_cost">Current (Annual) <i class="fas fa-sort ml-1 opacity-30"></i></th>
+                                        <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider sortable" data-column="2" data-sort-key="savings">Workforce Salary Savings (Annual) <i class="fas fa-sort ml-1 opacity-30"></i></th>
+                                        <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider sortable" data-column="3" data-sort-key="ai_cost">AI Investment Cost (Annual) <i class="fas fa-sort ml-1 opacity-30"></i></th>
+                                        <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider sortable" data-column="4" data-sort-key="net_gain">Net Gain <i class="fas fa-sort ml-1 opacity-30"></i></th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-100">
+                                    <tr><td colspan="5" class="px-6 py-12 text-center text-gray-400"><i class="fas fa-spinner fa-spin mr-2"></i>Loading data...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ROI-Productivity Growth Section -->
+        <div id="growth-roi-section" class="hidden">
+            <div class="grid mobile-kpi-grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-4 mb-6">
+                <div class="kpi-card bg-white rounded-xl shadow-sm p-4 border border-gray-100">
+                    <div class="flex items-center justify-between">
+                        <div class="flex-1">
+                            <p class="text-gray-500 text-[10px] font-bold uppercase tracking-wider font-['Inter']">Workforce Cost (Annual)</p>
+                            <p class="text-xl font-bold text-gray-900 mt-1 font-['Inter'] kpi-current-cost-val">$0</p>
+                            <p class="text-[9px] text-gray-400 mt-1 font-medium kpi-employee-count-val">0 Employees</p>
+                        </div>
+                        <div class="bg-red-50 p-2 rounded-lg"><i class="fas fa-money-bill-wave text-red-500 text-base"></i></div>
+                    </div>
+                </div>
+                <div class="kpi-card bg-white rounded-xl shadow-sm p-4 border border-gray-100">
+                    <div class="flex items-center justify-between">
+                        <div class="flex-1">
+                            <p class="text-gray-500 text-[10px] font-bold uppercase tracking-wider font-['Inter']">AI Operational Cost (Annual)</p>
+                            <p class="text-xl font-bold text-purple-600 mt-1 font-['Inter']" id="kpi-total-operational-cost-growth">$0</p>
+                            <p class="text-[9px] text-gray-400 mt-1 font-medium" id="kpi-ai-labor-ratio-growth">0.0% AI-to-Workforce Cost Ratio</p>
+                        </div>
+                        <div class="bg-purple-50 p-2 rounded-lg"><i class="fas fa-microchip text-purple-500 text-base"></i></div>
+                    </div>
+                </div>
+                <div class="kpi-card bg-white rounded-xl shadow-sm p-4 border border-gray-100">
+                    <div class="flex items-center justify-between">
+                        <div class="flex-1">
+                            <p class="text-gray-500 text-[10px] font-bold uppercase tracking-wider font-['Inter']">Potential Productivity Gain</p>
+                            <p class="text-xl font-bold text-indigo-700 mt-1 font-['Inter'] kpi-prod-gain-val">0%</p>
+                        </div>
+                        <div class="bg-indigo-50 p-2 rounded-lg"><i class="fas fa-rocket text-indigo-600 text-base"></i></div>
+                    </div>
+                </div>
+
+                <!-- Business Value modifiable card -->
+                <div class="kpi-card bg-white rounded-xl shadow-sm p-4 border border-gray-100">
+                    <div class="flex flex-col h-full justify-between">
+                        <div class="flex items-center justify-between mb-2">
+                            <p class="text-gray-500 text-[10px] font-bold tracking-wider font-['Inter'] uppercase">Total Annual Revenue</p>
+                            <div class="bg-indigo-50 p-1.5 rounded-lg"><i class="fas fa-gem text-indigo-600 text-sm"></i></div>
+                        </div>
+                        <div class="relative">
+                            <span class="absolute left-2 top-1.5 text-[12px] text-gray-500 font-bold">$</span>
+                            <input type="number" id="business-value-input" value="160" step="1"
+                                   class="w-full bg-gray-50 border border-gray-200 rounded-lg py-1.5 pl-6 pr-8 text-gray-900 text-sm font-bold focus:ring-2 focus:ring-indigo-300 transition-all outline-none"
+                                   oninput="calculateBusinessROI()" placeholder="Yearly Value">
+                            <span class="absolute right-3 top-1.5 text-[12px] text-gray-500 font-bold">M</span>
+                        </div>
+                        <p class="text-[9px] text-gray-400 mt-2 font-medium">Configure total annual revenue (in Millions)</p>
+                    </div>
+                </div>
+
+                <div class="kpi-card bg-white rounded-xl shadow-sm p-4 border border-gray-100">
+                    <div class="flex items-center justify-between">
+                        <div class="flex-1">
+                            <p class="text-gray-500 text-[10px] font-bold uppercase tracking-wider font-['Inter']">Potential AI Revenue (Annual)</p>
+                            <p class="text-xl font-bold text-green-700 mt-1 font-['Inter']" id="kpi-expected-gain-val">$0</p>
+                        </div>
+                        <div class="bg-green-50 p-2 rounded-lg"><i class="fas fa-chart-line text-green-600 text-base"></i></div>
+                    </div>
+                </div>
+
+                <div class="kpi-card bg-white rounded-xl shadow-sm p-4 border border-gray-100">
+                    <div class="flex items-center justify-between">
+                        <div class="flex-1">
+                            <p class="text-gray-500 text-[10px] font-bold uppercase tracking-wider font-['Inter']">AI-Driven Net Growth (Annual)</p>
+                            <p class="text-xl font-bold text-blue-700 mt-1 font-['Inter']" id="kpi-net-gain-growth-val">$0</p>
+                            <p class="text-[10px] text-gray-500 mt-1 font-medium font-['Inter']">Growth ROI: <span id="kpi-business-roi" class="font-bold text-indigo-600">0%</span></p>
+                        </div>
+                        <div class="bg-blue-50 p-2 rounded-lg"><i class="fas fa-plus-circle text-blue-600 text-base"></i></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Growth Specific Charts -->
+            <div id="growth-charts-container" class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                    <h3 class="text-lg font-bold text-gray-900 mb-6 font-['Inter'] flex items-center">
+                        <i class="fas fa-chart-bar mr-3 text-indigo-500"></i> Top 10 Roles by Net Growth
+                    </h3>
+                    <div style="height: 350px; width: 100%;">
+                        <canvas id="growthRoiRolesChart"></canvas>
+                    </div>
+                </div>
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                    <h3 class="text-lg font-bold text-gray-900 mb-6 font-['Inter'] flex items-center">
+                        <i class="fas fa-chart-bar mr-3 text-red-500"></i> Bottom 10 Roles by Net Growth
+                    </h3>
+                    <div style="height: 350px; width: 100%;">
+                        <canvas id="growthBottomRoiRolesChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Growth Specific Report Tabs -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-12">
+                <div class="border-b border-gray-200 bg-gray-50/50">
+                    <nav class="flex -mb-px px-6 space-x-8" aria-label="Tabs">
+                        <button onclick="switchGrowthTab('role')" id="growth-role-tab" class="growth-tab-btn border-b-2 border-indigo-500 py-4 px-1 text-sm font-semibold text-indigo-600 whitespace-nowrap transition duration-150">
+                            <i class="fas fa-user-tie mr-2"></i>By Role
+                        </button>
+                        <button onclick="switchGrowthTab('task')" id="growth-task-tab" class="growth-tab-btn border-b-2 border-transparent py-4 px-1 text-sm font-semibold text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap transition duration-150">
+                            <i class="fas fa-tasks mr-2"></i>By Task
+                        </button>
+                        <button onclick="switchGrowthTab('tool')" id="growth-tool-tab" class="growth-tab-btn border-b-2 border-transparent py-4 px-1 text-sm font-semibold text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap transition duration-150">
+                            <i class="fas fa-tools mr-2"></i>By AI Tool
+                        </button>
+                    </nav>
+                </div>
+                <div class="p-0">
+                    <!-- Role Report -->
+                    <div id="growth-role-content" class="growth-tab-content">
+                        <div class="overflow-x-auto">
+                            <table id="growth-role-table" class="w-full compact-table divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider sortable" data-column="0" data-sort-key="role_title">Role <i class="fas fa-sort ml-1 opacity-30"></i></th>
+                                        <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider sortable" data-column="1" data-sort-key="revenueAllocValue">Revenue Allocation (USD) <i class="fas fa-sort ml-1 opacity-30"></i></th>
+                                        <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider sortable" data-column="2" data-sort-key="expectedRevenue">Potential AI Revenue (Annual) <i class="fas fa-sort ml-1 opacity-30"></i></th>
+                                        <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider sortable" data-column="3" data-sort-key="scaledAiCost">AI Investment Cost (Annual) <i class="fas fa-sort ml-1 opacity-30"></i></th>
+                                        <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider sortable" data-column="4" data-sort-key="netGain">Net Gain <i class="fas fa-sort ml-1 opacity-30"></i></th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-100">
+                                    <tr><td colspan="6" class="px-6 py-12 text-center text-gray-400"><i class="fas fa-spinner fa-spin mr-2"></i>Loading data...</td></tr>
+                                </tbody>
+                                <!--<tfoot class="bg-indigo-50/50 font-bold border-t-2 border-indigo-100">
+                                    <tr id="growth-role-footer">
+                                        <td class="px-6 py-3 text-sm text-gray-900">Total</td>
+                                        <td class="px-6 py-3 text-sm text-gray-700">$0</td>
+                                        <td class="px-6 py-3 text-sm text-green-700">$0</td>
+                                        <td class="px-6 py-3 text-sm text-purple-700">$0</td>
+                                        <td class="px-6 py-3 text-sm text-blue-700">$0</td>
+                                    </tr>
+                                </tfoot>-->
+                            </table>
+                        </div>
+                        <div id="growth-role-pagination" class="px-6 py-4 bg-gray-50 border-t border-gray-200"></div>
+                    </div>
+                    <!-- Task Report -->
+                    <div id="growth-task-content" class="growth-tab-content hidden">
+                        <div class="overflow-x-auto">
+                            <table id="growth-task-table" class="w-full compact-table divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider sortable" data-column="0" data-sort-key="task_l2">Task <i class="fas fa-sort ml-1 opacity-30"></i></th>
+                                        <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider sortable" data-column="1" data-sort-key="revenueAllocValue">Revenue Allocation (USD) <i class="fas fa-sort ml-1 opacity-30"></i></th>
+                                        <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider sortable" data-column="2" data-sort-key="expectedRevenue">Potential AI Revenue (Annual) <i class="fas fa-sort ml-1 opacity-30"></i></th>
+                                        <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider sortable" data-column="3" data-sort-key="scaledAiCost">AI Investment Cost (Annual) <i class="fas fa-sort ml-1 opacity-30"></i></th>
+                                        <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider sortable" data-column="4" data-sort-key="netGain">Net Gain <i class="fas fa-sort ml-1 opacity-30"></i></th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-100">
+                                    <tr><td colspan="6" class="px-6 py-12 text-center text-gray-400"><i class="fas fa-spinner fa-spin mr-2"></i>Loading data...</td></tr>
+                                </tbody>
+                                <!--<tfoot class="bg-indigo-50/50 font-bold border-t-2 border-indigo-100">
+                                    <tr id="growth-task-footer">
+                                        <td class="px-6 py-3 text-sm text-gray-900">Total</td>
+                                        <td class="px-6 py-3 text-sm text-gray-700">$0</td>
+                                        <td class="px-6 py-3 text-sm text-green-700">$0</td>
+                                        <td class="px-6 py-3 text-sm text-purple-700">$0</td>
+                                        <td class="px-6 py-3 text-sm text-blue-700">$0</td>
+                                    </tr>
+                                </tfoot>-->
+                            </table>
+                        </div>
+                        <div id="growth-task-pagination" class="px-6 py-4 bg-gray-50 border-t border-gray-200"></div>
+                    </div>
+                    <!-- Tool Report -->
+                    <div id="growth-tool-content" class="growth-tab-content hidden">
+                        <div class="overflow-x-auto">
+                            <table id="growth-tool-table" class="w-full compact-table divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider sortable" data-column="0" data-sort-key="tool_used">AI Tool <i class="fas fa-sort ml-1 opacity-30"></i></th>
+                                        <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider sortable" data-column="1" data-sort-key="total_usage">Usage <i class="fas fa-sort ml-1 opacity-30"></i></th>
+                                        <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider sortable" data-column="2" data-sort-key="num_users">Users <i class="fas fa-sort ml-1 opacity-30"></i></th>
+                                        <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider sortable" data-column="3" data-sort-key="scaledAiCost">AI Investment Cost <i class="fas fa-sort ml-1 opacity-30"></i></th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-100">
+                                    <tr><td colspan="5" class="px-6 py-12 text-center text-gray-400"><i class="fas fa-spinner fa-spin mr-2"></i>Loading data...</td></tr>
+                                </tbody>
+                                <!--<tfoot class="bg-indigo-50/50 font-bold border-t-2 border-indigo-100">
+                                    <tr id="growth-tool-footer">
+                                        <td class="px-6 py-3 text-sm text-gray-900">Total</td>
+                                        <td class="px-6 py-3 text-sm text-gray-700">-</td>
+                                        <td class="px-6 py-3 text-sm text-gray-700">-</td>
+                                        <td class="px-6 py-3 text-sm text-purple-700">$0</td>
+                                    </tr>
+                                </tfoot>-->
+                            </table>
+                        </div>
+                        <div id="growth-tool-pagination" class="px-6 py-4 bg-gray-50 border-t border-gray-200"></div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Global function to switch ROI mode, placed at the top of the script
+    function switchROIMode(mode) {
+        console.log('--- switchROIMode called with:', mode, '---');
+        try {
+            const workforceSection = document.getElementById('workforce-roi-section');
+            const growthSection = document.getElementById('growth-roi-section');
+            const workforceBadge = document.getElementById('workforce-active-badge');
+            const growthBadge = document.getElementById('growth-active-badge');
+            const modeTitleContainer = document.getElementById('mode-title-container');
+            const modeTitle = document.getElementById('active-mode-title');
+            const modeSubtitle = document.getElementById('active-mode-subtitle');
+            const workforceCharts = document.getElementById('workforce-charts-container');
+            const growthCharts = document.getElementById('growth-charts-container');
+            const subtitleText = "The employee AI training costs and emergent roles salaries are not taken into consideration in our cost analysis in this demo version.";
+
+            if (modeTitleContainer) modeTitleContainer.classList.remove('hidden');
+            
+            if (mode === 'workforce') {
+                if (workforceSection) workforceSection.classList.remove('hidden');
+                if (growthSection) growthSection.classList.add('hidden');
+                if (workforceCharts) workforceCharts.classList.remove('hidden');
+                if (growthCharts) growthCharts.classList.add('hidden');
+                if (workforceBadge) workforceBadge.classList.remove('hidden');
+                if (growthBadge) growthBadge.classList.add('hidden');
+                if (modeTitle) modeTitle.innerHTML = '<span class="w-2 h-8 bg-blue-600 rounded-full mr-4"></span>Workforce Optimization Analysis';
+                if (modeSubtitle) modeSubtitle.textContent = subtitleText;
+                
+                // Ensure switchCostTab is defined before calling
+                if (typeof switchCostTab === 'function') {
+                    switchCostTab('role');
+                }
+            } else {
+                if (workforceSection) workforceSection.classList.add('hidden');
+                if (growthSection) growthSection.classList.remove('hidden');
+                if (workforceCharts) workforceCharts.classList.add('hidden');
+                if (growthCharts) growthCharts.classList.remove('hidden');
+                if (workforceBadge) workforceBadge.classList.add('hidden');
+                if (growthBadge) growthBadge.classList.remove('hidden');
+                if (modeTitle) modeTitle.innerHTML = '<span class="w-2 h-8 bg-indigo-600 rounded-full mr-4"></span>Productivity Growth Analysis';
+                if (modeSubtitle) modeSubtitle.textContent = subtitleText;
+                
+                // Ensure functions are defined before calling
+                if (typeof switchGrowthTab === 'function') {
+                    switchGrowthTab('role');
+                }
+                if (typeof calculateBusinessROI === 'function') {
+                    calculateBusinessROI();
+                }
+            }
+
+            // Scroll to the content container
+            if (modeTitleContainer) {
+                setTimeout(() => {
+                    modeTitleContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 50);
+            }
+        } catch (error) {
+            console.error('Error in switchROIMode:', error);
+        }
+    }
+
+    let roiChart = null;
+    let bottomRoiChart = null;
+    let growthRoiChart = null;
+    let growthBottomRoiChart = null;
+
+    function toggleDropdown(filterName) {
+        const menu = document.querySelector(`[data-filter="${filterName}"] [data-filter-menu]`);
+        const allMenus = document.querySelectorAll('[data-filter-menu]');
+        allMenus.forEach(m => { if (m !== menu) m.classList.add('hidden'); });
+        menu.classList.toggle('hidden');
+    }
+
+    function getSelectedValues(filterName) {
+        return Array.from(document.querySelectorAll(`[data-filter="${filterName}"] input:checked`)).map(cb => cb.value);
+    }
+
+    function setFilterLabel(filterName) {
+        const selected = getSelectedValues(filterName);
+        const label = document.querySelector(`[data-filter="${filterName}"] [data-filter-label]`);
+        if (label) label.textContent = selected.length === 0 ? 'All' : (selected.length === 1 ? selected[0] : `${selected.length} selected`);
+    }
+
+    function applyCostFilters() {
+        // Hide all result sections and badges to force user to click View Details again
+        document.getElementById('workforce-roi-section')?.classList.add('hidden');
+        document.getElementById('growth-roi-section')?.classList.add('hidden');
+        document.getElementById('mode-title-container')?.classList.add('hidden');
+        document.getElementById('workforce-charts-container')?.classList.add('hidden');
+        document.getElementById('growth-charts-container')?.classList.add('hidden');
+        document.getElementById('workforce-active-badge')?.classList.add('hidden');
+        document.getElementById('growth-active-badge')?.classList.add('hidden');
+
+        loadCostData();
+        const allMenus = document.querySelectorAll('[data-filter-menu]');
+        allMenus.forEach(m => m.classList.add('hidden'));
+    }
+
+    function resetCostFilters() {
+        document.querySelectorAll('[data-filter] input:checked').forEach(cb => cb.checked = false);
+        ['role', 'entity', 'team', 'category', 'sgacogs', 'tool'].forEach(setFilterLabel);
+        applyCostFilters();
+    }
+
+    function openPricingModal(toolName, reasoning) {
+        document.getElementById('pricingModalTitle').textContent = `Pricing: ${toolName}`;
+        document.getElementById('pricingModalReasoning').textContent = reasoning || 'No detailed pricing information available.';
+        document.getElementById('pricingModal').classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closePricingModal() {
+        document.getElementById('pricingModal').classList.add('hidden');
+        document.body.style.overflow = '';
+    }
+
+    function showWorkforceCostBreakdown() {
+        if (!currentStats) return;
+        const aiYearly = (currentStats.total_ai_cost || 0) * 12;
+        const infraYearly = (currentStats.total_infra_cost || 0) * 12;
+        alert(`AI Operational Cost Breakdown:\n\n- AI Investment (Licenses): $${aiYearly.toLocaleString(undefined, {maximumFractionDigits: 0})}\n- Infrastructure & Support: $${infraYearly.toLocaleString(undefined, {maximumFractionDigits: 0})}`);
+    }
+
+    function showGrowthCostBreakdown() {
+        if (!currentStats) return;
+        const prodGain = currentStats.prod_gain || 0;
+        const aiInvestmentYearly = (currentStats.total_ai_cost || 0) * 12;
+        const infraInvestmentYearly = (currentStats.total_infra_cost || 0) * 12;
+        const displayedAIInvestment = aiInvestmentYearly * ((100 + prodGain) / 100);
+        
+        alert(`AI Operational Cost Breakdown (Growth Mode):\n\n- Scaled AI Investment: $${displayedAIInvestment.toLocaleString(undefined, {maximumFractionDigits: 0})}\n- Infrastructure & Support: $${infraInvestmentYearly.toLocaleString(undefined, {maximumFractionDigits: 0})}`);
+    }
+
+    function formatCurrency(value) {
+        const absValue = Math.abs(value);
+        if (absValue >= 1000000) {
+            return '$' + (value / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
+        }
+        if (absValue >= 1000) {
+            return '$' + (value / 1000).toFixed(1).replace(/\.0$/, '') + 'K';
+        }
+        return '$' + Math.round(value).toLocaleString();
+    }
+
+    let currentStats = null;
+
+    async function loadCostData() {
+        const params = new URLSearchParams();
+        ['role', 'entity', 'team', 'category', 'sgacogs', 'tool'].forEach(f => {
+            getSelectedValues(f).forEach(v => params.append(f, v));
+        });
+
+        // Update labels
+        ['role', 'entity', 'team', 'category', 'sgacogs', 'tool'].forEach(setFilterLabel);
+
+        try {
+            const resp = await fetch(`/api/cost_analysis_data?${params.toString()}`);
+            const data = await resp.json();
+            if (data.error) throw new Error(data.error);
+
+            currentStats = data.stats;
+            lastReportData = data; // Set this early so renderGrowthTables can access it
+
+            updateKPIs(data.stats);
+            calculateBusinessROI(); // Initial calculation for business ROI
+            renderChart(data.top_roles, 'roiRolesChart', true);
+            renderChart(data.bottom_roles, 'bottomRoiRolesChart', false);
+            
+            // Re-initialize tables with new data
+            updateTables(data);
+            
+            // Trigger render for the currently active tab
+            const activeTabBtn = document.querySelector('.cost-tab-btn.border-blue-500');
+            if (activeTabBtn) {
+                const tabName = activeTabBtn.id.replace('-tab', '');
+                const tableId = `${tabName}-cost-table`;
+                const instance = window.__tableInstances ? window.__tableInstances[tableId] : null;
+                if (instance) {
+                    instance.render();
+                }
+            }
+        } catch (err) {
+            console.error('Error loading cost data:', err);
+        }
+    }
+
+    function switchGrowthTab(tab) {
+        document.querySelectorAll('.growth-tab-content').forEach(c => c.classList.add('hidden'));
+        document.querySelectorAll('.growth-tab-btn').forEach(b => {
+            b.classList.remove('border-indigo-500', 'text-indigo-600');
+            b.classList.add('border-transparent', 'text-gray-500');
+        });
+
+        const activeContent = document.getElementById(`growth-${tab}-content`);
+        if (activeContent) activeContent.classList.remove('hidden');
+        
+        const activeBtn = document.getElementById(`growth-${tab}-tab`);
+        if (activeBtn) {
+            activeBtn.classList.add('border-indigo-500', 'text-indigo-600');
+            activeBtn.classList.remove('border-transparent', 'text-gray-500');
+        }
+    }
+
+    function calculateBusinessROI() {
+        if (!currentStats) return;
+        const businessValue = (parseFloat(document.getElementById('business-value-input').value) || 0) * 1000000;
+        // All backend values are monthly, convert to yearly
+        const aiInvestmentYearly = (currentStats.total_ai_cost || 0) * 12;
+        const infraInvestmentYearly = (currentStats.total_infra_cost || 0) * 12;
+        const prodGain = currentStats.prod_gain || 0;
+        const currentFte = currentStats.current_fte || 0;
+        const totalFteSaving = currentStats.total_fte_saving || 0;
+
+        // Displayed AI Investment Cost for Growth section (Investment + Investment * Global Prod Gain)
+        const displayedAIInvestment = aiInvestmentYearly * ((100 + prodGain) / 100);
+        const aiCostGrowthEl = document.getElementById('kpi-ai-cost-growth');
+        if (aiCostGrowthEl) {
+            aiCostGrowthEl.textContent = formatCurrency(displayedAIInvestment);
+        }
+
+        // AI-to-Workforce Cost Ratio = (Scaled AI Investment) / (Workforce Cost Annual)
+        const workforceCostYearly = (currentStats.current_cost || 0) * 12;
+        const aiLaborRatioEl = document.getElementById('kpi-ai-labor-ratio-growth');
+        if (aiLaborRatioEl && workforceCostYearly > 0) {
+            const ratio = (displayedAIInvestment / workforceCostYearly) * 100;
+            aiLaborRatioEl.textContent = ratio.toFixed(1) + '% AI-to-Workforce Cost Ratio';
+        }
+
+        // Revert to original FTE-based calculation for ROI (Wait, this was in previous version, keeping it for now if needed, but bizRoi will be overwritten)
+        let investmentScore = 0;
+        if (currentFte > 0) {
+            investmentScore = (aiInvestmentYearly + infraInvestmentYearly) + (aiInvestmentYearly + infraInvestmentYearly) * (totalFteSaving / currentFte);
+        }
+        
+        const potentialGain = businessValue * (prodGain / 100);
+        const expectedGainEl = document.getElementById('kpi-expected-gain-val');
+        if (expectedGainEl) {
+            expectedGainEl.textContent = formatCurrency(potentialGain);
+        }
+
+        // Net Gain (Growth) = Potential Gain - (Displayed AI Investment + Infrastructure & Support)
+        const totalInvestmentForGrowth = displayedAIInvestment + infraInvestmentYearly;
+        
+        // Update Merged Card
+        const totalOperationalGrowthEl = document.getElementById('kpi-total-operational-cost-growth');
+        if (totalOperationalGrowthEl) {
+            totalOperationalGrowthEl.textContent = formatCurrency(totalInvestmentForGrowth);
+        }
+
+        const netGainGrowth = potentialGain - totalInvestmentForGrowth;
+        const netGainGrowthEl = document.getElementById('kpi-net-gain-growth-val');
+        if (netGainGrowthEl) {
+            netGainGrowthEl.textContent = formatCurrency(netGainGrowth);
+            netGainGrowthEl.className = `text-xl font-bold mt-1 font-['Inter'] ${netGainGrowth >= 0 ? 'text-blue-700' : 'text-red-600'}`;
+        }
+
+        // ROI = 100 * Net Gain (Growth) / Total Investment (Displayed AI + Infra)
+        let bizRoi = 0;
+        if (totalInvestmentForGrowth > 0) {
+            bizRoi = (netGainGrowth / totalInvestmentForGrowth) * 100;
+        }
+        
+        console.log('--- Productivity Growth Analysis (Yearly) ---');
+        console.log('Initial Net Profit:', businessValue);
+        console.log('Potential Gain (Value * Prod Gain %):', potentialGain);
+        console.log('AI Investment (Base):', aiInvestmentYearly);
+        console.log('AI Investment (Displayed/Scaled):', displayedAIInvestment);
+        console.log('Infrastructure & Support:', infraInvestmentYearly);
+        console.log('Total Investment for Growth (Scaled AI + Infra):', totalInvestmentForGrowth);
+        console.log('Net Gain (Growth) (Potential Gain - Total Investment):', netGainGrowth);
+        console.log('Calculated Business ROI (%):', bizRoi);
+        console.log('--------------------------------');
+        
+        const el = document.getElementById('kpi-business-roi');
+        if (el) {
+            el.textContent = bizRoi.toFixed(1) + '%';
+            el.className = `font-bold ${bizRoi >= 0 ? 'text-indigo-600' : 'text-red-500'}`;
+        }
+
+        renderGrowthTables(businessValue, (currentStats.current_cost || 0) * 12, potentialGain);
+    }
+
+    function renderGrowthTables(totalRevenue, totalWorkforceCost, totalPotentialGain) {
+        console.log('Rendering Growth Tables...', totalRevenue, totalWorkforceCost, totalPotentialGain);
+        if (!lastReportData) {
+            console.warn('No lastReportData yet, skipping growth table render.');
+            return;
+        }
+        
+        if (typeof window.PaginatedTable === 'undefined') {
+            console.error('PaginatedTable is not defined! Check if base.html loaded correctly.');
+            return;
+        }
+
+        const escapeHtml = (v) => v === null || v === undefined ? '' : String(v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        const overallProdGain = currentStats ? (Number(currentStats.prod_gain) || 0) : 0;
+
+        try {
+            // 1. Role Growth Table
+            const rawRoleReport = lastReportData.role_cost_report || [];
+            console.log('Processing Role Growth Table, raw count:', rawRoleReport.length);
+            const roleData = rawRoleReport.map(r => {
+                const roleCostYearly = (Number(r.current_cost) || 0) * 12;
+                const revenueAllocRatio = totalWorkforceCost > 0 ? (roleCostYearly / totalWorkforceCost) : 0;
+                const revenueAllocValue = Number(totalRevenue) * revenueAllocRatio;
+                const expectedRevenue = Number(totalPotentialGain) * revenueAllocRatio;
+                const aiCostYearly = (Number(r.total_ai_cost) || 0) * 12;
+                const infraCostYearly = (Number(r.total_infra_cost) || 0) * 12;
+                const scaledAiCost = aiCostYearly * ((100 + overallProdGain) / 100);
+                const netGain = expectedRevenue - scaledAiCost - infraCostYearly;
+                return { ...r, revenueAllocValue, expectedRevenue, scaledAiCost, infraCostYearly, netGain };
+            });
+
+            // Update Growth Charts
+            const chartRoles = roleData.map(r => ({
+                role: r.role_title,
+                net_gain: r.netGain,
+                revenue: r.expectedRevenue,
+                investment: r.scaledAiCost
+            }));
+            const sortedChartRoles = [...chartRoles].sort((a, b) => b.net_gain - a.net_gain);
+            renderChart(sortedChartRoles.slice(0, 10), 'growthRoiRolesChart', true);
+            renderChart(sortedChartRoles.slice(-10).reverse(), 'growthBottomRoiRolesChart', false);
+
+            console.log('Instantiating PaginatedTable for growth-role-table');
+            new window.PaginatedTable('growth-role-table', roleData, {
+                pageSize: 20,
+                initialSortCol: 4,
+                initialSortDir: 'desc',
+                createRowFn: (r) => `
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 text-sm font-semibold text-gray-900 font-['Inter']">${escapeHtml(r.role_title)}</td>
+                        <td class="px-6 py-4 text-sm text-gray-600 font-['Inter']">${formatCurrency(r.revenueAllocValue || 0)}</td>
+                        <td class="px-6 py-4 text-sm text-green-600 font-bold font-['Inter']">${formatCurrency(r.expectedRevenue || 0)}</td>
+                        <td class="px-6 py-4 text-sm text-purple-600 font-medium font-['Inter']">${formatCurrency((r.scaledAiCost || 0) + (r.infraCostYearly || 0))}</td>
+                        <td class="px-6 py-4 text-sm font-bold font-['Inter'] ${(r.netGain || 0) >= 0 ? 'text-blue-600' : 'text-red-600'}">${formatCurrency(r.netGain || 0)}</td>
+                    </tr>`
+            });
+
+            // Update Role Footer
+            const sumRevValue = roleData.reduce((sum, r) => sum + (r.revenueAllocValue || 0), 0);
+            const sumExp = roleData.reduce((sum, r) => sum + (r.expectedRevenue || 0), 0);
+            const sumAi = roleData.reduce((sum, r) => sum + (r.scaledAiCost || 0) + (r.infraCostYearly || 0), 0);
+            const sumGain = roleData.reduce((sum, r) => sum + (r.netGain || 0), 0);
+            // ROI calculation removed from footer as requested
+
+            const roleFooter = document.querySelector('#growth-role-footer');
+            if (roleFooter) {
+                const cells = roleFooter.querySelectorAll('td');
+                if (cells.length >= 5) {
+                    cells[1].textContent = '$' + sumRevValue.toLocaleString(undefined, {maximumFractionDigits: 0});
+                    cells[2].textContent = '$' + sumExp.toLocaleString(undefined, {maximumFractionDigits: 0});
+                    cells[3].textContent = '$' + sumAi.toLocaleString(undefined, {maximumFractionDigits: 0});
+                    cells[4].textContent = '$' + sumGain.toLocaleString(undefined, {maximumFractionDigits: 0});
+                }
+            }
+
+            // 2. Task Growth Table
+            const rawTaskReport = lastReportData.task_cost_report || [];
+            console.log('Processing Task Growth Table, raw count:', rawTaskReport.length);
+            const taskData = rawTaskReport.map(r => {
+                const taskCostYearly = (Number(r.current_cost) || 0) * 12;
+                const revenueAllocRatio = totalWorkforceCost > 0 ? (taskCostYearly / totalWorkforceCost) : 0;
+                const revenueAllocValue = Number(totalRevenue) * revenueAllocRatio;
+                const expectedRevenue = Number(totalPotentialGain) * revenueAllocRatio;
+                const aiCostYearly = (Number(r.ai_cost) || 0) * 12;
+                const infraCostYearly = (Number(r.infra_cost) || 0) * 12;
+                const scaledAiCost = aiCostYearly * ((100 + overallProdGain) / 100);
+                const netGain = expectedRevenue - scaledAiCost - infraCostYearly;
+                return { ...r, revenueAllocValue, expectedRevenue, scaledAiCost, infraCostYearly, netGain };
+            });
+
+            console.log('Instantiating PaginatedTable for growth-task-table');
+            new window.PaginatedTable('growth-task-table', taskData, {
+                pageSize: 20,
+                initialSortCol: 4,
+                initialSortDir: 'desc',
+                createRowFn: (r) => `
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 text-sm font-semibold text-gray-900 font-['Inter']">${escapeHtml(r.task_l2)}</td>
+                        <td class="px-6 py-4 text-sm text-gray-600 font-['Inter']">${formatCurrency(r.revenueAllocValue || 0)}</td>
+                        <td class="px-6 py-4 text-sm text-green-600 font-bold font-['Inter']">${formatCurrency(r.expectedRevenue || 0)}</td>
+                        <td class="px-6 py-4 text-sm text-purple-600 font-medium font-['Inter']">${formatCurrency((r.scaledAiCost || 0) + (r.infraCostYearly || 0))}</td>
+                        <td class="px-6 py-4 text-sm font-bold font-['Inter'] ${(r.netGain || 0) >= 0 ? 'text-blue-600' : 'text-red-600'}">${formatCurrency(r.netGain || 0)}</td>
+                    </tr>`
+            });
+
+            // Update Task Footer
+            const sumTaskRevValue = taskData.reduce((sum, r) => sum + (r.revenueAllocValue || 0), 0);
+            const sumTaskExp = taskData.reduce((sum, r) => sum + (r.expectedRevenue || 0), 0);
+            const sumTaskAiInfra = taskData.reduce((sum, r) => sum + (r.scaledAiCost || 0) + (r.infraCostYearly || 0), 0);
+            const sumTaskGain = taskData.reduce((sum, r) => sum + (r.netGain || 0), 0);
+            // ROI calculation removed from footer as requested
+
+            const taskFooter = document.querySelector('#growth-task-footer');
+            if (taskFooter) {
+                const cells = taskFooter.querySelectorAll('td');
+                if (cells.length >= 5) {
+                    cells[1].textContent = '$' + sumTaskRevValue.toLocaleString(undefined, {maximumFractionDigits: 0});
+                    cells[2].textContent = '$' + sumTaskExp.toLocaleString(undefined, {maximumFractionDigits: 0});
+                    cells[3].textContent = '$' + sumTaskAiInfra.toLocaleString(undefined, {maximumFractionDigits: 0});
+                    cells[4].textContent = '$' + sumTaskGain.toLocaleString(undefined, {maximumFractionDigits: 0});
+                }
+            }
+
+            // 3. Tool Growth Table
+            const rawToolReport = lastReportData.tool_cost_report || [];
+            console.log('Processing Tool Growth Table, raw count:', rawToolReport.length);
+            const toolData = rawToolReport.map(r => {
+                const aiCostYearly = (Number(r.total_cost) || 0) * 12;
+                const infraCostYearly = (Number(r.infrastructure_cost) || 0) * 12;
+                const scaledAiCost = aiCostYearly * ((100 + overallProdGain) / 100);
+                return { ...r, scaledAiCost, infraCostYearly };
+            });
+
+            console.log('Instantiating PaginatedTable for growth-tool-table');
+            new window.PaginatedTable('growth-tool-table', toolData, {
+                pageSize: 20,
+                initialSortCol: 3,
+                initialSortDir: 'desc',
+                createRowFn: (r) => `
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 text-sm font-semibold text-gray-900 font-['Inter']">
+                            <div class="flex items-center gap-2">
+                                ${escapeHtml(r.tool_used)}
+                                <button onclick="openPricingModal('${escapeHtml(r.tool_used)}', '${escapeHtml(r.pricing_reasoning || '')}')" class="text-blue-500 hover:text-blue-700">
+                                    <i class="fas fa-info-circle text-xs"></i>
+                                </button>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 text-sm text-gray-600 font-['Inter']">${(r.total_usage || 0).toLocaleString()}</td>
+                        <td class="px-6 py-4 text-sm text-gray-600 font-['Inter']">${(r.num_users || 0).toLocaleString()}</td>
+                        <td class="px-6 py-4 text-sm text-purple-600 font-bold font-['Inter']">${formatCurrency((r.scaledAiCost || 0) + (r.infraCostYearly || 0))}</td>
+                    </tr>`
+            });
+
+            // Update Tool Footer
+            const sumAiTool = toolData.reduce((sum, r) => sum + (r.scaledAiCost || 0), 0);
+            const sumInfraTool = toolData.reduce((sum, r) => sum + (r.infraCostYearly || 0), 0);
+
+            const toolFooter = document.querySelector('#growth-tool-footer');
+            if (toolFooter) {
+                const cells = toolFooter.querySelectorAll('td');
+                if (cells.length >= 4) {
+                    cells[3].textContent = '$' + (sumAiTool + sumInfraTool).toLocaleString(undefined, {maximumFractionDigits: 0});
+                }
+            }
+        } catch (err) {
+            console.error('Error in renderGrowthTables:', err);
+        }
+    }
+
+    function updateKPIs(stats) {
+        if (!stats) return;
+
+        const currentCostYearly = (stats.current_cost || 0) * 12;
+        const savingsYearly = (stats.total_cost_saving || 0) * 12;
+        const aiYearly = (stats.total_ai_cost || 0) * 12;
+        const infraYearly = (stats.total_infra_cost || 0) * 12;
+        const netGainWorkforce = savingsYearly - (aiYearly + infraYearly);
+        
+        console.log('--- Workforce Optimization Analysis (Yearly) ---');
+        console.log('Workforce Cost:', currentCostYearly);
+        console.log('Workforce Salary Savings:', savingsYearly);
+        console.log('AI Investment Cost (Base):', aiYearly);
+        console.log('Infrastructure & Support:', infraYearly);
+        console.log('Net Gain (Savings - (AI + Infra)):', netGainWorkforce);
+        console.log('ROI (%):', stats.roi || 0);
+        console.log('--------------------------------');
+
+        // Update all instances of cost values (Convert monthly backend values to yearly)
+        document.querySelectorAll('.kpi-current-cost-val').forEach(el => {
+            el.textContent = formatCurrency(currentCostYearly);
+        });
+        document.querySelectorAll('.kpi-cost-savings-val').forEach(el => {
+            el.textContent = formatCurrency(savingsYearly);
+        });
+        document.querySelectorAll('.kpi-ai-cost-val').forEach(el => {
+            el.textContent = formatCurrency(aiYearly);
+        });
+        document.querySelectorAll('.kpi-infra-cost-val').forEach(el => {
+            el.textContent = formatCurrency(infraYearly);
+        });
+        document.querySelectorAll('.kpi-prod-gain-val').forEach(el => {
+            el.textContent = (stats.prod_gain || 0).toFixed(1) + '%';
+        });
+
+        // Update Merged Card for Workforce
+        const totalOperationalWorkforceEl = document.getElementById('kpi-total-operational-cost-workforce');
+        if (totalOperationalWorkforceEl) {
+            totalOperationalWorkforceEl.textContent = formatCurrency(aiYearly + infraYearly);
+        }
+
+        document.querySelectorAll('.kpi-employee-count-val').forEach(el => {
+            el.textContent = (stats.unique_employees || 0).toLocaleString() + ' Employees';
+        });
+        
+        document.querySelectorAll('.kpi-net-gain-val').forEach(el => {
+            el.textContent = formatCurrency(netGainWorkforce);
+            el.className = `text-xl font-bold mt-1 font-['Inter'] kpi-net-gain-val ${netGainWorkforce >= 0 ? 'text-blue-700' : 'text-red-600'}`;
+        });
+
+        const roiWorkforceEl = document.getElementById('kpi-roi-workforce');
+        const roi = stats.roi || 0;
+        if (roiWorkforceEl) {
+            roiWorkforceEl.textContent = roi.toFixed(1) + '%';
+        }
+        
+        const roiEl = document.getElementById('kpi-roi');
+        if (roiEl) {
+            roiEl.textContent = roi.toFixed(1) + '%';
+            roiEl.className = `text-xl font-bold mt-1 font-['Inter'] ${roi >= 0 ? 'text-blue-600' : 'text-red-600'}`;
+        }
+        
+        // Recalculate Business ROI whenever main KPIs update
+        calculateBusinessROI();
+    }
+
+    function toggleROISections(mode) {
+        const workforceKPIs = document.getElementById('workforce-roi-section');
+        const growthKPIs = document.getElementById('growth-roi-section');
+        const workforceCharts = document.querySelectorAll('.lg\\:grid-cols-2')[0];
+        const growthCharts = document.getElementById('growth-charts-container');
+        
+        if (mode === 'workforce') {
+            if (workforceKPIs) workforceKPIs.classList.remove('hidden');
+            if (growthKPIs) growthKPIs.classList.add('hidden');
+            if (workforceCharts) workforceCharts.style.display = 'grid';
+            if (growthCharts) growthCharts.style.display = 'none';
+        } else {
+            if (workforceKPIs) workforceKPIs.classList.add('hidden');
+            if (growthKPIs) growthKPIs.classList.remove('hidden');
+            if (workforceCharts) workforceCharts.style.display = 'none';
+            if (growthCharts) growthCharts.style.display = 'grid';
+        }
+    }
+
+    function renderChart(roles, canvasId, isTop) {
+        const canvas = document.getElementById(canvasId);
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        
+        if (canvasId === 'roiRolesChart' && roiChart) roiChart.destroy();
+        if (canvasId === 'bottomRoiRolesChart' && bottomRoiChart) bottomRoiChart.destroy();
+        if (canvasId === 'growthRoiRolesChart' && growthRoiChart) growthRoiChart.destroy();
+        if (canvasId === 'growthBottomRoiRolesChart' && growthBottomRoiChart) growthBottomRoiChart.destroy();
+
+        if (!roles || roles.length === 0) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.font = '14px Inter';
+            ctx.textAlign = 'center';
+            ctx.fillStyle = '#9ca3af';
+            ctx.fillText('No data available', canvas.width/2, canvas.height/2);
+            return;
+        }
+
+        const isGrowth = canvasId.includes('growth');
+        const isWorkforce = !isGrowth;
+
+        const chart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: roles.map(r => r.role),
+                datasets: [
+                    {
+                        label: isGrowth ? 'Net Growth (Yearly) ($)' : 'Net Gain (Yearly) ($)',
+                        data: roles.map(r => r.net_gain),
+                        backgroundColor: roles.map(r => r.net_gain >= 0 ? (isGrowth ? 'rgba(79, 70, 229, 0.7)' : 'rgba(59, 130, 246, 0.7)') : 'rgba(239, 68, 68, 0.7)'),
+                        borderColor: roles.map(r => r.net_gain >= 0 ? (isGrowth ? '#4f46e5' : '#3b82f6') : '#ef4444'),
+                        borderWidth: 1,
+                        borderRadius: 4,
+                        yAxisID: 'y1'
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: {
+                    duration: isGrowth ? 1000 : 0
+                },
+                plugins: {
+                    legend: { position: 'bottom', labels: { usePointStyle: true, padding: 15, font: { family: 'Inter', size: 10 } } },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false,
+                        backgroundColor: 'rgba(17, 24, 39, 0.9)',
+                        padding: 12,
+                        titleFont: { size: 12, weight: 'bold' },
+                        bodyFont: { size: 11 },
+                        callbacks: {
+                            label: function(context) {
+                                return `Net ${isGrowth ? 'Growth' : 'Gain'}: ${formatCurrency(context.parsed.y)}`;
+                            },
+                            afterBody: function(items) {
+                                const index = items[0].dataIndex;
+                                const role = roles[index];
+                                if (isGrowth) {
+                                    return [
+                                        `Potential AI Revenue: ${formatCurrency(role.revenue || 0)}`,
+                                        `AI Cost (Scaled): ${formatCurrency(role.investment || 0)}`
+                                    ];
+                                } else {
+                                    // For Workforce, backend might provide total_savings and total_ai_cost (monthly)
+                                    // or savings and investment (yearly if already processed)
+                                    const savings = role.savings !== undefined ? role.savings : (role.total_savings || 0) * 12;
+                                    const investment = role.investment !== undefined ? role.investment : ((role.total_ai_cost || 0) + (role.total_infra_cost || 0)) * 12;
+                                    return [
+                                        `Workforce Salary Savings: ${formatCurrency(savings)}`,
+                                        `AI Investment Cost: ${formatCurrency(investment)}`
+                                    ];
+                                }
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { display: false },
+                        ticks: {
+                            font: { family: 'Inter', size: 10 },
+                            callback: function(val, index) {
+                                const label = this.getLabelForValue(val);
+                                return label.length > 12 ? label.substring(0, 10) + '...' : label;
+                            }
+                        }
+                    },
+                    y1: {
+                        type: 'linear',
+                        display: true,
+                        position: 'left',
+                        title: { display: true, text: 'USD ($)', font: { weight: 'bold', size: 10 } },
+                        grid: { borderDash: [2, 2] },
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return formatCurrency(value);
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        if (canvasId === 'roiRolesChart') roiChart = chart;
+        if (canvasId === 'bottomRoiRolesChart') bottomRoiChart = chart;
+        if (canvasId === 'growthRoiRolesChart') growthRoiChart = chart;
+        if (canvasId === 'growthBottomRoiRolesChart') growthBottomRoiChart = chart;
+    }
+
+    function switchCostTab(tab) {
+        document.querySelectorAll('.cost-tab-content').forEach(c => c.classList.add('hidden'));
+        document.querySelectorAll('.cost-tab-btn').forEach(b => {
+            b.classList.remove('border-blue-500', 'text-blue-600');
+            b.classList.add('border-transparent', 'text-gray-500');
+        });
+
+        const activeContent = document.getElementById(`${tab}-content`);
+        if (activeContent) activeContent.classList.remove('hidden');
+        
+        const activeBtn = document.getElementById(`${tab}-tab`);
+        if (activeBtn) {
+            activeBtn.classList.add('border-blue-500', 'text-blue-600');
+            activeBtn.classList.remove('border-transparent', 'text-gray-500');
+        }
+
+        // Refresh PaginatedTable if it exists
+        const tableId = `${tab}-cost-table`;
+        const instance = window.__tableInstances ? window.__tableInstances[tableId] : null;
+        if (instance) {
+            instance.currentPage = 1; // Reset to page 1 on tab switch
+            instance.render();
+        }
+    }
+
+    let lastReportData = null;
+
+    function updateTables(data) {
+        lastReportData = data;
+        const escapeHtml = (v) => v === null || v === undefined ? '' : String(v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+        try {
+            // 1. Tool Table (Workforce)
+            new PaginatedTable('tool-cost-table', data.tool_cost_report || [], {
+                pageSize: 20,
+                initialSortCol: 3,
+                initialSortDir: 'desc',
+                createRowFn: (r) => `
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 text-sm font-semibold text-gray-900 font-['Inter']">
+                            <div class="flex items-center gap-2">
+                                ${escapeHtml(r.tool_used)}
+                                <button onclick="openPricingModal('${escapeHtml(r.tool_used)}', '${escapeHtml(r.pricing_reasoning || '')}')" class="text-blue-500 hover:text-blue-700">
+                                    <i class="fas fa-info-circle text-xs"></i>
+                                </button>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 text-sm text-gray-600 font-['Inter']">${(r.total_usage || 0).toLocaleString()}</td>
+                        <td class="px-6 py-4 text-sm text-gray-600 font-['Inter']">${(r.num_users || 0).toLocaleString()}</td>
+                        <td class="px-6 py-4 text-sm font-bold text-blue-600 font-['Inter']">${formatCurrency(((r.total_cost || 0) + (r.infrastructure_cost || 0)) * 12)}</td>
+                    </tr>`
+            });
+        } catch (e) { console.error('Error updating tool table:', e); }
+
+        try {
+            // 2. Role Table
+            new PaginatedTable('role-cost-table', data.role_cost_report || [], {
+                pageSize: 20,
+                initialSortCol: 4,
+                initialSortDir: 'desc',
+                createRowFn: (r) => `
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 text-sm font-semibold text-gray-900 font-['Inter']">${escapeHtml(r.role_title)}</td>
+                        <td class="px-6 py-4 text-sm text-purple-600 font-medium font-['Inter']">${formatCurrency(((r.total_ai_cost || 0) + (r.total_infra_cost || 0)) * 12)}</td>
+                        <td class="px-6 py-4 text-sm text-green-600 font-medium font-['Inter']">${formatCurrency((r.total_savings || 0) * 12)}</td>
+                        <td class="px-6 py-4 text-sm font-bold font-['Inter'] text-blue-600">${formatCurrency((r.net_gain || 0) * 12)}</td>
+                    </tr>`
+            });
+        } catch (e) { console.error('Error updating role table:', e); }
+
+        try {
+            // 3. Task Table
+            new PaginatedTable('task-cost-table', data.task_cost_report || [], {
+                pageSize: 20,
+                initialSortCol: 4,
+                initialSortDir: 'desc',
+                createRowFn: (r) => `
+                    <tr class="hover:bg-gray-50 cursor-pointer" onclick="openTaskModal('${r.task_id}')">
+                        <td class="px-6 py-4 text-sm font-semibold text-gray-900 font-['Inter']">${escapeHtml(r.task_l2)}</td>
+                        <td class="px-6 py-4 text-sm text-gray-600 font-['Inter']">${formatCurrency((r.current_cost || 0) * 12)}</td>
+                        <td class="px-6 py-4 text-sm text-green-600 font-bold font-['Inter']">${formatCurrency((r.total_savings || r.savings || 0) * 12)}</td>
+                        <td class="px-6 py-4 text-sm text-purple-500 font-medium font-['Inter']">${formatCurrency(((r.ai_cost || 0) + (r.infra_cost || 0)) * 12)}</td>
+                        <td class="px-6 py-4 text-sm font-bold font-['Inter'] text-blue-600">${formatCurrency((r.net_gain || 0) * 12)}</td>
+                    </tr>`
+            });
+        } catch (e) { console.error('Error updating task table:', e); }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        ['role', 'entity', 'team', 'category', 'sgacogs', 'tool'].forEach(setFilterLabel);
+        loadCostData();
+
+        document.querySelectorAll('[data-filter] input[type="checkbox"]').forEach(el => {
+            el.addEventListener('change', () => {
+                const filterName = el.closest('[data-filter]')?.getAttribute('data-filter');
+                if (filterName) {
+                    setFilterLabel(filterName);
+                    applyCostFilters(); // Apply immediately on change
+                }
+            });
+        });
+        
+        // Close dropdowns on click outside
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('[data-filter]')) {
+                document.querySelectorAll('[data-filter-menu]').forEach(m => m.classList.add('hidden'));
+            }
+        });
+    });
+</script>
+
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    .kpi-card { transition: transform 0.2s, box-shadow 0.2s; position: relative; overflow: visible !important; }
+    .kpi-card:hover { transform: translateY(-2px); box-shadow: 0 4px 15px -1px rgba(0, 0, 0, 0.08); }
+    .tooltip-container { position: relative; display: inline-block; }
+    .tooltip-content { 
+        pointer-events: none;
+        z-index: 9999 !important;
+    }
+    .compact-table th, .compact-table td { padding: 0.75rem 1.5rem !important; }
+    .btn-xs { padding: 0.25rem 0.5rem; font-size: 0.75rem; }
+    .shadow-blue-100\/50 { --tw-shadow-color: rgba(219, 234, 254, 0.5); --tw-shadow: 0 4px 14px 0 var(--tw-shadow-color); box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow); }
+    @media (max-width: 768px) {
+        .mobile-kpi-grid {
+            grid-template-columns: 1fr !important;
+        }
+    }
+</style>
+{% endblock %}

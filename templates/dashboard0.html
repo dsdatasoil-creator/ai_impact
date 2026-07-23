@@ -1,0 +1,953 @@
+<!-- templates/dashboard.html -->
+{% extends "base.html" %}
+
+{% block content %}
+<div class="min-h-screen">
+    <!-- Header -->
+    <header class="bg-white shadow-sm border-b">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-2 sm:space-y-0">
+                <div>
+                    <h1 class="text-xl sm:text-2xl font-bold text-gray-900">Task-level AI Analysis</h1>
+                    <p class="text-gray-600 text-sm">Monitor and analyze AI impact on tasks</p>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="/" class="text-blue-600 hover:text-blue-800 text-sm font-medium px-3 py-1.5 rounded-md hover:bg-blue-50 transition duration-150">
+                        <i class="fas fa-chart-pie mr-1"></i> AI Augmentation Analysis
+                    </a>
+                    <a href="/productivity_scenarios" class="text-blue-600 hover:text-blue-800 text-sm font-medium px-3 py-1.5 rounded-md hover:bg-blue-50 transition duration-150">
+        <i class="fas fa-chart-bar mr-1"></i> Productivity Scenarios
+    </a>
+                    {% if last_update %}
+                    <span class="text-xs sm:text-sm text-gray-500">Last updated: {{ last_update }}</span>
+                    {% else %}
+                    <span class="text-xs sm:text-sm text-gray-500">Last updated: N/A</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-6 lg:py-8">
+        <!-- KPI Cards -->
+        <div class="grid mobile-kpi-grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6 sm:mb-8 justify-items-center">
+            <!-- KPI cards restent inchangés -->
+            <div class="kpi-card bg-white rounded-lg sm:rounded-xl shadow-sm sm:shadow-md p-4 sm:p-6 border border-gray-100 w-full max-w-sm">
+                <div class="flex items-center justify-between">
+                    <div class="flex-1">
+                        <p class="text-gray-500 text-xs sm:text-sm font-medium">Overall Task Volume</p>
+                        <p class="text-2xl sm:text-3xl font-bold text-gray-900 mt-1 sm:mt-2">{{ total_tasks }}</p>
+                        <p class="text-xs text-gray-400 mt-2">Distinct tasks: {{ distinct_tasks }}</p>
+                        <p class="text-xs text-gray-400 mt-1">Distinct employees: {{ unique_employees }}</p>
+                    </div>
+                    <div class="bg-blue-100 p-2 sm:p-3 rounded-lg">
+                        <i class="fas fa-tasks text-blue-600 text-lg sm:text-xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="kpi-card bg-white rounded-lg sm:rounded-xl shadow-sm sm:shadow-md p-4 sm:p-6 border border-gray-100 w-full max-w-sm">
+                <div class="flex items-center justify-between">
+                    <div class="flex-1">
+                        <p class="text-gray-500 text-xs sm:text-sm font-medium">AI Relevant</p>
+                        <p class="text-2xl sm:text-3xl font-bold text-gray-900 mt-1 sm:mt-2">{{ ai_relevant_count }}</p>
+                        <p class="text-xs text-gray-400 mt-2">Distinct tasks: {{ distinct_ai_relevant_tasks }}</p>
+                        <p class="text-xs text-gray-400 mt-1">AI Relevance: {{ ai_exposure }}%</p>
+                    </div>
+                    <div class="bg-green-100 p-2 sm:p-3 rounded-lg">
+                        <i class="fas fa-robot text-green-600 text-lg sm:text-xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="kpi-card bg-white rounded-lg sm:rounded-xl shadow-sm sm:shadow-md p-4 sm:p-6 border border-gray-100 w-full max-w-sm">
+                <div class="flex items-center justify-between">
+                    <div class="flex-1">
+                        <p class="text-gray-500 text-xs sm:text-sm font-medium">Unchanged Tasks</p>
+                        <p class="text-2xl sm:text-3xl font-bold text-gray-900 mt-1 sm:mt-2">{{ unchanged_tasks_count }}</p>
+                        <p class="text-xs text-gray-400 mt-2">Distinct tasks: {{ distinct_unchanged_tasks }}</p>
+                    </div>
+                    <div class="bg-yellow-100 p-2 sm:p-3 rounded-lg">
+                        <i class="fas fa-tasks text-yellow-600 text-lg sm:text-xl"></i>
+                    </div>
+                </div>
+            </div>
+
+           <!--<div class="kpi-card bg-white rounded-lg sm:rounded-xl shadow-sm sm:shadow-md p-4 sm:p-6 border border-gray-100">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-500 text-xs sm:text-sm font-medium">AI Exposure</p>
+                        <p class="text-2xl sm:text-3xl font-bold text-gray-900 mt-1 sm:mt-2">{{ ai_exposure }}%</p>
+                    </div>
+                    <div class="bg-purple-100 p-2 sm:p-3 rounded-lg">
+                        <i class="fas fa-chart-pie text-purple-600 text-lg sm:text-xl"></i>
+                    </div>
+                </div>
+            </div>-->
+        </div>
+
+        <div class="flex flex-col lg:flex-row gap-4 sm:gap-6 lg:gap-8">
+            <!-- Filters Sidebar -->
+            <div class="lg:w-1/4">
+                <div class="bg-white rounded-lg sm:rounded-xl shadow-sm sm:shadow-md p-4 sm:p-6 border border-gray-100 sticky top-4 sm:top-8">
+                    <div class="flex justify-between items-center mb-4 sm:mb-6">
+                        <h2 class="text-base sm:text-lg font-semibold text-gray-900">Filters</h2>
+                        <button onclick="resetFilters()" class="text-xs sm:text-sm text-blue-600 hover:text-blue-800 transition duration-150">
+                            <i class="fas fa-redo-alt mr-1"></i> Reset
+                        </button>
+                    </div>
+
+                    <div class="space-y-4 sm:space-y-6">
+                        <div>
+                            <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">Role</label>
+                            <input type="text" id="roleFilter" list="roleOptions" 
+                                   value="{{ current_role }}" 
+                                   placeholder="Type or select a role..."
+                                   class="w-full border border-gray-300 rounded-lg px-3 sm:px-4 py-2 text-sm sm:text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500 filter-input">
+                            <datalist id="roleOptions">
+                                <option value="">All Roles</option>
+                                {% for role in roles %}
+                                <option value="{{ role }}">{{ role }}</option>
+                                {% endfor %}
+                            </datalist>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">Entity</label>
+                            <input type="text" id="entityFilter" list="entityOptions" 
+                                   value="{{ current_entity }}" 
+                                   placeholder="Type or select an entity..."
+                                   class="w-full border border-gray-300 rounded-lg px-3 sm:px-4 py-2 text-sm sm:text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500 filter-input">
+                            <datalist id="entityOptions">
+                                <option value="">All Entities</option>
+                                {% for entity in entities %}
+                                <option value="{{ entity }}">{{ entity }}</option>
+                                {% endfor %}
+                            </datalist>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">Team (Supervisor)</label>
+                            <input type="text" id="teamFilter" list="teamOptions" 
+                                   value="{{ current_team }}" 
+                                   placeholder="Type or select a team..."
+                                   class="w-full border border-gray-300 rounded-lg px-3 sm:px-4 py-2 text-sm sm:text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500 filter-input">
+                            <datalist id="teamOptions">
+                                <option value="">All Teams</option>
+                                {% for team in teams %}
+                                <option value="{{ team }}">{{ team }}</option>
+                                {% endfor %}
+                            </datalist>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">Employee</label>
+                            <input type="text" id="employeeFilter" list="employeeOptions" 
+                                   value="{{ current_employee }}" 
+                                   placeholder="Type or select an employee..."
+                                   class="w-full border border-gray-300 rounded-lg px-3 sm:px-4 py-2 text-sm sm:text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500 filter-input">
+                            <datalist id="employeeOptions">
+                                <option value="">All Employees</option>
+                                {% for emp in employees %}
+                                <option value="{{ emp }}">{{ emp }}</option>
+                                {% endfor %}
+                            </datalist>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">Category</label>
+                            <input type="text" id="categoryFilter" list="categoryOptions" 
+                                   value="{{ current_category }}" 
+                                   placeholder="Type or select a category..."
+                                   class="w-full border border-gray-300 rounded-lg px-3 sm:px-4 py-2 text-sm sm:text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500 filter-input">
+                            <datalist id="categoryOptions">
+                                <option value="">All Categories</option>
+                                {% for category in categories %}
+                                <option value="{{ category }}">{{ category }}</option>
+                                {% endfor %}
+                            </datalist>
+                        </div>
+
+                        <div class="pt-2">
+                            <p class="text-xs text-gray-500">
+                                <i class="fas fa-info-circle mr-1"></i>
+                                Filters are applied automatically when you make a selection
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Content avec Tabs -->
+            <div class="lg:w-3/4">
+                <!-- Tabs Navigation -->
+                <div class="mb-6">
+                    <div class="border-b border-gray-200">
+                        <nav class="-mb-px flex space-x-8" aria-label="Tabs">
+                            <button id="relevant-tab" onclick="switchTab('relevant')"
+                                    class="tab-button border-b-2 border-transparent py-4 px-1 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300 flex items-center transition duration-150 active-tab">
+                                <i class="fas fa-robot mr-2"></i>
+                                AI Relevant Tasks
+                                <span class="ml-2 bg-green-100 text-green-800 text-xs font-semibold px-2 py-0.5 rounded-full">
+                                    {{ relevant_tasks|length }}
+                                </span>
+                            </button>
+                            <button id="unchanged-tab" onclick="switchTab('unchanged')"
+                                    class="tab-button border-b-2 border-transparent py-4 px-1 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300 flex items-center transition duration-150">
+                                <i class="fas fa-tasks mr-2"></i>
+                                Unchanged Tasks
+                                <span class="ml-2 bg-gray-100 text-gray-800 text-xs font-semibold px-2 py-0.5 rounded-full">
+                                    {{ unchanged_tasks|length }}
+                                </span>
+                            </button>
+                        </nav>
+                    </div>
+                </div>
+
+                <!-- Tab Content -->
+                <div id="relevant-content" class="tab-content">
+                    {% include "relevant_tasks.html" %}
+                </div>
+
+                <div id="unchanged-content" class="tab-content hidden">
+                    <div class="table-section">
+                        <div class="bg-white rounded-lg sm:rounded-xl shadow-sm sm:shadow-md overflow-hidden border border-gray-100">
+                            <div class="fixed-height-table">
+                                <div class="min-w-full">
+                                    <table class="w-full table-auto sortable-table" data-table="unchanged">
+                                        <thead class="bg-gray-50 sticky-thead">
+                                            <tr>
+                                                <th class="px-2 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sortable" data-column="0" style="width: 12%;">
+                                                    <div class="flex items-center justify-between cursor-pointer hover:text-gray-700">
+                                                        <span>Task ID</span>
+                                                        <i class="fas fa-sort text-gray-400 ml-1"></i>
+                                                    </div>
+                                                </th>
+                                                <th class="px-2 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sortable" data-column="1" style="width: 12%;">
+                                                    <div class="flex items-center justify-between cursor-pointer hover:text-gray-700">
+                                                        <span>Category</span>
+                                                        <i class="fas fa-sort text-gray-400 ml-1"></i>
+                                                    </div>
+                                                </th>
+                                                <th class="px-2 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sortable" data-column="2" style="width: 35%;">
+                                                    <div class="flex items-center justify-between cursor-pointer hover:text-gray-700">
+                                                        <span>Task Title</span>
+                                                        <i class="fas fa-sort text-gray-400 ml-1"></i>
+                                                    </div>
+                                                </th>
+                                                <th class="px-2 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sortable" data-column="3" style="width: 35%;">
+                                                    <div class="flex items-center justify-between cursor-pointer hover:text-gray-700">
+                                                        <span>Strategic Reason</span>
+                                                        <i class="fas fa-sort text-gray-400 ml-1"></i>
+                                                    </div>
+                                                </th>
+                                                <th class="px-2 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sortable" data-column="4" style="width: 10%;">
+                                                    <div class="flex items-center justify-between cursor-pointer hover:text-gray-700">
+                                                        <span>Total FTE</span>
+                                                        <i class="fas fa-sort text-gray-400 ml-1"></i>
+                                                    </div>
+                                                </th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="divide-y divide-gray-200" id="unchanged-tasks-body">
+                                            {% for task in unchanged_tasks %}
+                                            <tr class="hover:bg-gray-50 transition duration-150" data-task-id="{{ task.task_id }}">
+                                                <td class="px-2 sm:px-4 py-3 sm:py-4" data-sort-value="{{ task.task_id or 0 }}">
+                                                    <div class="text-xs sm:text-sm font-medium text-gray-900">
+                                                        {{ task.task_id or 'N/A' }}
+                                                    </div>
+                                                </td>
+                                                <td class="px-2 sm:px-4 py-3 sm:py-4" data-sort-value="{{ task.task_l0 or '' }}">
+                                                    <div class="text-xs sm:text-sm font-medium text-gray-900">
+                                                        {{ task.task_l0 or 'N/A' }}
+                                                    </div>
+                                                </td>
+                                                <td class="px-2 sm:px-4 py-3 sm:py-4" data-sort-value="{{ task.task_l2 or '' }}">
+                                                    <div class="tooltip-container">
+                                                        <div class="text-xs sm:text-sm font-medium text-gray-900 line-clamp-2 cursor-help">
+                                                            {{ task.task_l2 or 'N/A' }}
+                                                        </div>
+                                                        {% if task.task_l2 and task.task_l2|length > 80 %}
+                                                        <div class="tooltip-content">
+                                                            <div class="font-semibold text-white mb-2 text-sm">Task Description:</div>
+                                                            <div class="text-gray-300 text-sm leading-relaxed">{{ task.task_l2 }}</div>
+                                                        </div>
+                                                        {% endif %}
+                                                    </div>
+                                                </td>
+                                                <td class="px-2 sm:px-4 py-3 sm:py-4" data-sort-value="{{ task.concise_strategic_reason or '' }}">
+                                                    {% if task.concise_strategic_reason %}
+                                                    <div class="tooltip-container">
+                                                        <div class="text-xs sm:text-sm text-gray-700 line-clamp-2 cursor-help">
+                                                            {{ task.concise_strategic_reason[:120] }}{% if task.concise_strategic_reason|length > 120 %}...{% endif %}
+                                                        </div>
+                                                        {% if task.concise_strategic_reason|length > 120 %}
+                                                        <div class="tooltip-content">
+                                                            <div class="font-semibold text-white mb-2 text-sm">Strategic Reason:</div>
+                                                            <div class="text-gray-300 text-sm leading-relaxed">{{ task.concise_strategic_reason }}</div>
+                                                        </div>
+                                                        {% endif %}
+                                                    </div>
+                                                    {% else %}
+                                                    <span class="text-gray-500 text-xs">No strategic reason provided</span>
+                                                    {% endif %}
+                                                </td>
+                                                <td class="px-2 sm:px-4 py-3 sm:py-4" data-sort-value="{{ task.task_total_fte or 0 }}">
+                                                    <div class="text-xs sm:text-sm text-gray-900">
+                                                        {{ "%.2f"|format(task.task_total_fte or 0) }}
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            {% else %}
+                                            <tr>
+                                                <td colspan="5" class="px-6 py-8 text-center text-gray-500">
+                                                    <i class="fas fa-inbox text-3xl text-gray-300 mb-2"></i>
+                                                    <p class="text-sm">No unchanged tasks found. Try adjusting your filters.</p>
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- Task Details Modal -->
+{% include "task_modal.html" %}
+
+<!-- Time Saving Modal -->
+<div id="timeSavingModal" class="hidden fixed inset-0 z-50 overflow-y-auto">
+    <div class="flex items-center justify-center min-h-screen px-2 sm:px-4 pt-4 pb-10 sm:pb-20 text-center sm:block sm:p-0">
+        <div class="fixed inset-0 transition-opacity modal-backdrop" aria-hidden="true" onclick="closeTimeSavingModal()"></div>
+
+        <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-3xl w-full max-w-[95vw] mx-2 sm:mx-0">
+            <div class="bg-white px-4 sm:px-6 py-4 sm:py-5">
+                <div class="sm:flex sm:items-start">
+                    <div class="mt-3 text-center sm:mt-0 sm:text-left w-full">
+                        <div class="flex justify-between items-start mb-4 sm:mb-6">
+                            <div class="pr-4">
+                                <h3 class="text-lg sm:text-2xl font-bold text-gray-900">Time Saving Details</h3>
+                            </div>
+                            <button onclick="closeTimeSavingModal()" class="text-gray-400 hover:text-gray-500 flex-shrink-0">
+                                <i class="fas fa-times text-xl sm:text-2xl"></i>
+                            </button>
+                        </div>
+
+                        <div class="space-y-6 sm:space-y-8">
+                            <!-- Source URL -->
+                            <div id="timeSavingSourceContainer" class="hidden">
+                                <h4 class="text-base sm:text-lg font-semibold text-gray-900 mb-2 sm:mb-3">Source</h4>
+                                <div class="bg-blue-50 border-l-4 border-blue-400 p-4 rounded-r-lg">
+                                    <a id="timeSavingSourceLink" href="#" target="_blank" rel="noopener noreferrer" 
+                                       class="text-blue-600 hover:text-blue-800 text-sm sm:text-base break-all underline">
+                                    </a>
+                                </div>
+                            </div>
+
+                            <!-- Time Reduction Breakdown -->
+                            <div>
+                                <h4 class="text-base sm:text-lg font-semibold text-gray-900 mb-2 sm:mb-3">Time Saving Breakdown</h4>
+                                <div id="timeSavingBreakdown" class="space-y-4">
+                                    <!-- Les éléments seront ajoutés dynamiquement -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-gray-50 px-4 sm:px-6 py-3 sm:flex sm:flex-row-reverse">
+                <button type="button" onclick="closeTimeSavingModal()" 
+                        class="w-full sm:w-auto inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:ml-3">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Styles pour les tabs */
+    .active-tab {
+        border-bottom-color: #3b82f6 !important;
+        color: #3b82f6 !important;
+    }
+
+    .tab-button {
+        position: relative;
+    }
+
+    .tab-button:after {
+        content: '';
+        position: absolute;
+        bottom: -1px;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background-color: #3b82f6;
+        transform: scaleX(0);
+        transition: transform 0.2s ease;
+    }
+
+    .active-tab:after {
+        transform: scaleX(1);
+    }
+
+    /*
+    .tooltip-container-time-saving {
+        position: relative;
+    }
+*/
+    /* Styles pour les tables à hauteur fixe */
+    .fixed-height-table {
+        max-height: 600px; /* Hauteur augmentée pour afficher plus d'informations */
+        overflow-y: auto;
+        position: relative;
+    }
+
+    /* Header flottant pour les tables */
+    .sticky-thead {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        background-color: #f9fafb;
+    }
+
+    /* Header de section flottant */
+    .sticky-header {
+        position: sticky;
+        top: 0;
+        z-index: 20;
+        background-color: white;
+    }
+
+    /* Amélioration du scroll */
+    .fixed-height-table::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
+
+    .fixed-height-table::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 4px;
+    }
+
+    .fixed-height-table::-webkit-scrollbar-thumb {
+        background: #c1c1c1;
+        border-radius: 4px;
+    }
+
+    .fixed-height-table::-webkit-scrollbar-thumb:hover {
+        background: #a8a8a8;
+    }
+
+    /* Ajustement pour les tooltips dans les tables à scroll */
+    .fixed-height-table .tooltip-content {
+        z-index: 1000;
+    }
+
+    /* Style pour le message "no data" dans les tables à hauteur fixe */
+    .fixed-height-table .text-center {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 100%;
+    }
+/*
+    .tooltip-time-saving {
+        position: absolute;
+        bottom: 125%;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 10000;
+        visibility: hidden;
+        opacity: 0;
+        transition: opacity 0.3s, visibility 0.3s;
+        min-width: 350px;
+        max-width: 450px;
+        width: max-content;
+        background-color: rgba(31, 41, 55, 0.95);
+        backdrop-filter: blur(4px);
+        color: #fff;
+        text-align: left;
+        border-radius: 8px;
+        padding: 12px 16px;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        pointer-events: none;
+    }
+
+    .tooltip-time-saving::after {
+        content: "";
+        position: absolute;
+        top: 100%;
+        left: 50%;
+        transform: translateX(-50%);
+        border-width: 6px;
+        border-style: solid;
+        border-color: rgba(31, 41, 55, 0.95) transparent transparent transparent;
+    }
+
+    .tooltip-container-time-saving:hover .tooltip-time-saving {
+        visibility: visible;
+        opacity: 1;
+        pointer-events: auto;
+    }
+
+    .tooltip-container-time-saving .tooltip-time-saving {
+        left: auto;
+        right: 0;
+        transform: translateX(0);
+    }
+
+    .tooltip-container-time-saving .tooltip-time-saving::after {
+        left: auto;
+        right: 20px;
+        transform: translateX(0);
+    }
+*/
+    /* Styles pour le tri */
+    .sortable {
+        cursor: pointer;
+        user-select: none;
+    }
+
+    .sortable:hover {
+        background-color: #f9fafb;
+    }
+
+    .sortable i.fa-sort {
+        transition: transform 0.2s ease;
+    }
+
+    .sortable.sort-asc i.fa-sort {
+        transform: rotate(180deg);
+        color: #3b82f6;
+    }
+
+    .sortable.sort-desc i.fa-sort {
+        color: #3b82f6;
+    }
+
+    .sortable.sort-asc .sort-text::after {
+        content: " ▲";
+        color: #3b82f6;
+        font-size: 0.75em;
+    }
+
+    .sortable.sort-desc .sort-text::after {
+        content: " ▼";
+        color: #3b82f6;
+        font-size: 0.75em;
+    }
+
+    /* Tooltip vers le bas pour les premières lignes */
+    .tooltip-bottom {
+        bottom: auto !important;
+        top: 100% !important;
+        margin-top: 8px;
+    }
+
+    /*
+    .tooltip-container-time-saving .tooltip-time-saving {
+        bottom: auto !important;
+        top: 100% !important;
+        margin-top: 8px;
+    }
+
+    .tooltip-container-time-saving .tooltip-time-saving::after {
+        top: -12px !important;
+        bottom: auto !important;
+        border-color: transparent transparent rgba(31, 41, 55, 0.95) transparent !important;
+    }
+*/
+    .tooltip-bottom::after {
+        top: -12px !important;
+        bottom: auto !important;
+        border-color: transparent transparent rgba(31, 41, 55, 0.95) transparent !important;
+    }
+
+    /* Styles pour permettre l'interaction avec le tooltip Time Saving */
+    .tooltip-container-time-saving {
+        position: relative;
+    }
+
+    .tooltip-time-saving {
+        pointer-events: none;
+        transition: opacity 0.2s ease, visibility 0.2s ease;
+    }
+
+    /* Ajouter un padding invisible pour créer un pont entre le conteneur et le tooltip */
+    .tooltip-time-saving::before {
+        content: "";
+        position: absolute;
+        bottom: -15px;
+        left: 0;
+        right: 0;
+        height: 15px;
+        background: transparent;
+    }
+
+    .tooltip-container-time-saving:hover .tooltip-time-saving,
+    .tooltip-time-saving:hover,
+    .tooltip-time-saving::before:hover {
+        pointer-events: auto;
+        visibility: visible !important;
+        opacity: 1 !important;
+    }
+</style>
+
+<script>
+    // Fonction pour changer d'onglet
+    function switchTab(tabName) {
+        // Mettre à jour les boutons d'onglet
+        document.getElementById('relevant-tab').classList.remove('active-tab');
+        document.getElementById('unchanged-tab').classList.remove('active-tab');
+
+        // Cacher tout le contenu
+        document.getElementById('relevant-content').classList.add('hidden');
+        document.getElementById('unchanged-content').classList.add('hidden');
+
+        // Afficher le contenu sélectionné et activer le bouton
+        document.getElementById(tabName + '-content').classList.remove('hidden');
+        document.getElementById(tabName + '-tab').classList.add('active-tab');
+
+        // Réinitialiser le tri pour la table active
+        initTableSortingForTab(tabName);
+
+        // Réinitialiser les event listeners pour les boutons après le changement d'onglet
+        setTimeout(() => {
+            setupTimeSavingButtons();
+            setupViewTaskButtons();
+        }, 100);
+    }
+
+    // Fonction pour configurer les boutons Time Saving
+    function setupTimeSavingButtons() {
+        // Supprimer les anciens event listeners
+        document.querySelectorAll('.time-saving-btn').forEach(btn => {
+            btn.replaceWith(btn.cloneNode(true));
+        });
+
+        // Ajouter les nouveaux event listeners
+        document.querySelectorAll('.time-saving-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const taskId = this.getAttribute('data-task-id');
+                if (taskId) {
+                    openTimeSavingModal(parseInt(taskId));
+                }
+            });
+        });
+    }
+
+    // Fonction pour configurer les boutons View Task
+    function setupViewTaskButtons() {
+        // Supprimer les anciens event listeners
+        document.querySelectorAll('.view-task-btn').forEach(btn => {
+            btn.replaceWith(btn.cloneNode(true));
+        });
+
+        // Ajouter les nouveaux event listeners
+        document.querySelectorAll('.view-task-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const taskId = this.getAttribute('data-task-id');
+                const roleTitle = this.getAttribute('data-role-title') || '';
+                if (taskId) {
+                    openTaskModal(parseInt(taskId), roleTitle);
+                }
+            });
+        });
+    }
+
+    // Initialiser le tri pour une table spécifique
+    function initTableSortingForTab(tabName) {
+        const table = document.querySelector(`#${tabName}-content .sortable-table`);
+        if (table) {
+            const tableId = table.getAttribute('data-table');
+            const headers = table.querySelectorAll('th.sortable');
+
+            headers.forEach((header, index) => {
+                // Supprimer les anciens écouteurs
+                header.replaceWith(header.cloneNode(true));
+
+                // Récupérer le nouveau header
+                const newHeader = table.querySelectorAll('th.sortable')[index];
+
+                // Ajouter le nouvel écouteur
+                newHeader.addEventListener('click', () => {
+                    sortTable(table, index, tableId);
+                });
+            });
+
+            // Restaurer l'état du tri si disponible
+            restoreSortStateForTable(tableId);
+        }
+    }
+
+    // Fonction pour initialiser le tri des tables
+    function initTableSorting() {
+        initTableSortingForTab('relevant');
+    }
+
+    // Fonction pour restaurer l'état du tri pour une table spécifique
+    function restoreSortStateForTable(tableId) {
+        const savedState = sessionStorage.getItem(`tableSort_${tableId}`);
+        if (savedState) {
+            const state = JSON.parse(savedState);
+            const table = document.querySelector(`[data-table="${tableId}"]`);
+            if (table) {
+                const header = table.querySelectorAll('th.sortable')[state.column];
+                if (header) {
+                    header.classList.remove('sort-asc', 'sort-desc');
+                    header.classList.add(`sort-${state.direction}`);
+
+                    // Appliquer le tri
+                    sortTable(table, state.column, tableId);
+                }
+            }
+        }
+    }
+
+    // Fonction pour trier une table (garder votre fonction existante)
+    function sortTable(table, columnIndex, tableId) {
+        const tbody = table.querySelector('tbody');
+        const rows = Array.from(tbody.querySelectorAll('tr'));
+        const header = table.querySelectorAll('th.sortable')[columnIndex];
+
+        // Déterminer la direction de tri
+        const isAsc = header.classList.contains('sort-asc');
+        const direction = isAsc ? 'desc' : 'asc';
+
+        // Réinitialiser les classes de tri sur tous les headers
+        table.querySelectorAll('th.sortable').forEach(h => {
+            h.classList.remove('sort-asc', 'sort-desc');
+        });
+
+        // Appliquer la classe de tri au header cliqué
+        header.classList.add(`sort-${direction}`);
+
+        // Trier les lignes
+        rows.sort((a, b) => {
+            const aCell = a.querySelector(`td:nth-child(${columnIndex + 1})`);
+            const bCell = b.querySelector(`td:nth-child(${columnIndex + 1})`);
+
+            let aValue = aCell ? (aCell.getAttribute('data-sort-value') || aCell.textContent.trim()) : '';
+            let bValue = bCell ? (bCell.getAttribute('data-sort-value') || bCell.textContent.trim()) : '';
+
+            // Conversion pour les nombres
+            if (columnIndex === 0) { // Colonne Task ID
+                aValue = parseInt(aValue) || 0;
+                bValue = parseInt(bValue) || 0;
+            } else if (columnIndex === 4) { // Colonne Time Saving (pourcentage) - maintenant colonne 4 après ajout de Task ID
+                aValue = parseFloat(aValue) || 0;
+                bValue = parseFloat(bValue) || 0;
+            } else if (columnIndex === 5) { // Colonne Total FTE
+                aValue = parseFloat(aValue) || 0;
+                bValue = parseFloat(bValue) || 0;
+            }
+
+            // Comparaison
+            if (direction === 'asc') {
+                return aValue > bValue ? 1 : aValue < bValue ? -1 : 0;
+            } else {
+                return aValue < bValue ? 1 : aValue > bValue ? -1 : 0;
+            }
+        });
+
+        // Réorganiser les lignes dans le tbody
+        rows.forEach(row => {
+            tbody.appendChild(row);
+        });
+
+        // Sauvegarder l'état du tri
+        saveSortState(tableId, columnIndex, direction);
+    }
+
+    // Fonction pour sauvegarder l'état du tri
+    function saveSortState(tableId, columnIndex, direction) {
+        const sortState = {
+            table: tableId,
+            column: columnIndex,
+            direction: direction
+        };
+        sessionStorage.setItem(`tableSort_${tableId}`, JSON.stringify(sortState));
+    }
+
+    function adjustTimeSavingTooltips() {
+        const timeSavingTooltips = document.querySelectorAll('.tooltip-container-time-saving');
+
+        timeSavingTooltips.forEach((container, index) => {
+            const tooltip = container.querySelector('.tooltip-time-saving');
+            if (tooltip) {
+                // Forcer tous les tooltips à s'afficher vers le bas dans les tables à hauteur fixe
+                tooltip.classList.add('tooltip-bottom');
+
+                // Vérifier si le tooltip dépasse à droite
+                const containerRect = container.getBoundingClientRect();
+                const tooltipWidth = tooltip.offsetWidth;
+                const tableContainer = container.closest('.fixed-height-table');
+
+                if (tableContainer) {
+                    const tableRect = tableContainer.getBoundingClientRect();
+
+                    // Position estimée du tooltip
+                    const estimatedLeft = containerRect.left + containerRect.width / 2 - tooltipWidth / 2;
+                    const estimatedRight = estimatedLeft + tooltipWidth;
+
+                    // Si le tooltip dépasse à droite, l'aligner à droite
+                    if (estimatedRight > tableRect.right - 10) {
+                        tooltip.style.left = 'auto';
+                        tooltip.style.right = '0';
+                        tooltip.style.transform = 'translateX(0)';
+                    }
+                    // Si le tooltip dépasse à gauche, l'aligner à gauche
+                    else if (estimatedLeft < tableRect.left + 10) {
+                        tooltip.style.left = '0';
+                        tooltip.style.right = 'auto';
+                        tooltip.style.transform = 'translateX(0)';
+                    }
+                }
+
+                // Gérer l'affichage/masquage avec délai pour permettre de cliquer
+                let hideTimeout;
+                
+                const showTooltip = () => {
+                    clearTimeout(hideTimeout);
+                    tooltip.style.visibility = 'visible';
+                    tooltip.style.opacity = '1';
+                    tooltip.style.pointerEvents = 'auto';
+                };
+
+                const hideTooltip = () => {
+                    hideTimeout = setTimeout(() => {
+                        tooltip.style.visibility = 'hidden';
+                        tooltip.style.opacity = '0';
+                        tooltip.style.pointerEvents = 'none';
+                    }, 200); // Délai de 200ms avant de cacher
+                };
+
+                // Événements sur le conteneur
+                container.addEventListener('mouseenter', showTooltip);
+                container.addEventListener('mouseleave', hideTooltip);
+
+                // Événements sur le tooltip lui-même
+                tooltip.addEventListener('mouseenter', showTooltip);
+                tooltip.addEventListener('mouseleave', hideTooltip);
+            }
+        });
+    }
+
+    // Fonction pour ouvrir la modal Time Saving
+    function openTimeSavingModal(taskId) {
+        const modal = document.getElementById('timeSavingModal');
+        const dataElement = document.getElementById(`time-saving-data-${taskId}`);
+        
+        if (!dataElement) {
+            console.error('Time saving data not found for task:', taskId);
+            return;
+        }
+
+        let urlFte = '';
+        let fteExplanation = [];
+        
+        try {
+            const data = JSON.parse(dataElement.textContent);
+            urlFte = data.url_fte || '';
+            fteExplanation = data.fte_explanation || [];
+        } catch (e) {
+            console.error('Error parsing time saving data:', e);
+            return;
+        }
+
+        // Afficher/masquer la source
+        const sourceContainer = document.getElementById('timeSavingSourceContainer');
+        const sourceLink = document.getElementById('timeSavingSourceLink');
+        if (urlFte) {
+            sourceContainer.classList.remove('hidden');
+            sourceLink.href = urlFte;
+            sourceLink.textContent = urlFte;
+        } else {
+            sourceContainer.classList.add('hidden');
+        }
+
+        // Remplir le breakdown
+        const breakdownContainer = document.getElementById('timeSavingBreakdown');
+        breakdownContainer.innerHTML = '';
+
+        if (fteExplanation && fteExplanation.length > 0) {
+            fteExplanation.forEach((item, index) => {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = `mb-4 pb-4 ${index < fteExplanation.length - 1 ? 'border-b border-gray-200' : ''}`;
+                
+                itemDiv.innerHTML = `
+                    <div class="flex justify-between items-start mb-2">
+                        <span class="font-medium text-gray-900 text-sm sm:text-base">${item.task || 'N/A'}</span>
+                        <span class="text-green-600 text-sm sm:text-base font-bold ml-2">
+                            ${item.time_reduction_percent || 0}%
+                        </span>
+                    </div>
+                    <div class="text-gray-700 text-sm sm:text-base leading-relaxed">
+                        ${item.explanation || 'No explanation provided'}
+                    </div>
+                `;
+                
+                breakdownContainer.appendChild(itemDiv);
+            });
+        } else {
+            breakdownContainer.innerHTML = '<p class="text-gray-500 text-sm">No time reduction breakdown available.</p>';
+        }
+
+        // Afficher la modal
+        modal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+    }
+
+    // Fonction pour fermer la modal Time Saving
+    function closeTimeSavingModal() {
+        const modal = document.getElementById('timeSavingModal');
+        modal.classList.add('hidden');
+        document.body.style.overflow = '';
+    }
+
+    // Fermer la modal avec la touche Escape
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape') {
+            closeTimeSavingModal();
+        }
+    });
+
+    // Initialiser au chargement
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialiser le tri pour l'onglet actif (relevant par défaut)
+        initTableSorting();
+
+        // Ajouter une classe pour indiquer que la table a un scroll
+        const fixedHeightTables = document.querySelectorAll('.fixed-height-table');
+        fixedHeightTables.forEach(table => {
+            const tbody = table.querySelector('tbody');
+            if (tbody && tbody.scrollHeight > table.clientHeight) {
+                table.classList.add('has-scroll');
+            }
+        });
+
+        // Configurer les boutons Time Saving et View Task
+        setupTimeSavingButtons();
+        setupViewTaskButtons();
+
+        // Ajouter les event listeners pour les filtres
+        const filters = ['employeeFilter', 'roleFilter', 'entityFilter', 'teamFilter', 'categoryFilter'];
+        filters.forEach(filterId => {
+            const element = document.getElementById(filterId);
+            if (element) {
+                element.addEventListener('input', updateFilters);
+                element.addEventListener('change', updateFilters);
+            }
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,508 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="min-h-screen">
+    <header class="bg-white shadow-sm border-b">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-2 sm:space-y-0">
+                <div>
+                    <h1 class="text-xl sm:text-2xl font-bold text-gray-900 font-['Inter']">Copilot Tasks</h1>
+                    <p class="text-gray-600 text-sm font-medium">Review AI-relevant tasks that use Copilot and their usefulness level</p>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <form action="/set_schema" method="post" class="flex items-center space-x-2">
+                        <input type="hidden" name="next" value="{{ request.full_path }}">
+                        <label class="text-sm font-medium text-gray-700" for="schemaKey">Data:</label>
+                        <select id="schemaKey" name="schema_key" class="border border-gray-300 rounded-lg px-2 py-1 text-sm" onchange="this.form.submit()">
+                            <option value="strategy" {% if schema_key == 'strategy' %}selected{% endif %}>Strategy</option>
+                            <option value="teamwill" {% if schema_key == 'teamwill' %}selected{% endif %}>Teamwill</option>
+                            <option value="teamwill_v2" {% if schema_key == 'teamwill_v2' %}selected{% endif %}>Teamwill v2</option>
+                            <option value="teamwill_v3" {% if schema_key == 'teamwill_v3' %}selected{% endif %}>Teamwill v3</option>
+                        </select>
+                    </form>
+                    <a href="/" class="text-gray-700 hover:text-blue-600 text-sm font-medium px-3 py-1.5 rounded-md hover:bg-gray-100 transition duration-150 border border-gray-200">
+                        <i class="fas fa-chart-pie mr-1.5"></i>  AI Augmentation Analysis
+                    </a>
+                    <a href="/dashboard" class="text-gray-700 hover:text-blue-600 text-sm font-medium px-3 py-1.5 rounded-md hover:bg-gray-100 transition duration-150 border border-gray-200">
+                        <i class="fas fa-tasks mr-1.5"></i>  Task-level AI Analysis
+                    </a>
+                    <a href="/expected_business_case" class="text-gray-700 hover:text-blue-600 text-sm font-medium px-3 py-1.5 rounded-md hover:bg-gray-100 transition duration-150 border border-gray-200">
+                        <i class="fas fa-briefcase mr-1.5"></i>  Potential Business Case
+                    </a>
+                    <a href="/productivity_scenarios" class="text-gray-700 hover:text-blue-600 text-sm font-medium px-3 py-1.5 rounded-md hover:bg-gray-100 transition duration-150 border border-gray-200">
+                        <i class="fas fa-chart-bar mr-1.5"></i>  Productivity Gain Scenarios
+                    </a>
+                    <a href="/copilot" class="text-gray-700 hover:text-blue-600 text-sm font-medium px-3 py-1.5 rounded-md hover:bg-gray-100 transition duration-150 border border-gray-200">
+                        <i class="fas fa-wand-magic-sparkles mr-1.5"></i>  AI Tools
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-6">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center">
+                <div>
+                    <h2 class="text-lg font-semibold text-gray-900 font-['Inter']">AI Tool</h2>
+                    <p class="text-gray-600 text-sm">Select an AI tool to view task breakdown</p>
+                </div>
+                <div class="mt-3 sm:mt-0">
+                    <form method="get" action="/copilot" class="flex items-center gap-2">
+                        <label class="text-sm font-medium text-gray-700" for="aiTool">AI tools</label>
+                        <select id="aiTool" name="ai_tool" class="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white" onchange="this.form.submit()">
+                            <option value="copilot" {% if ai_tool == 'copilot' %}selected{% endif %}>Copilot</option>
+                        </select>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-6">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
+                <h2 class="text-lg font-semibold text-gray-900 font-['Inter'] mb-2 sm:mb-0">Filters</h2>
+                <div class="flex items-center gap-2">
+                    <button onclick="applyCopilotFilters()" class="text-sm text-white bg-blue-600 hover:bg-blue-700 transition duration-150 px-3 py-1.5 rounded-lg">
+                        <i class="fas fa-filter mr-1.5 text-xs"></i> Apply
+                    </button>
+                    <button onclick="resetCopilotFilters()" class="text-sm text-gray-600 hover:text-blue-600 transition duration-150 px-3 py-1.5 border border-gray-200 rounded-lg hover:bg-gray-50">
+                        <i class="fas fa-redo-alt mr-1.5 text-xs"></i> Reset All
+                    </button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
+                <div class="relative" data-filter="employee">
+                    <label class="block text-xs font-medium text-gray-700 mb-1.5 font-['Inter']">Employee</label>
+                    <button type="button" onclick="toggleDropdown('employee')" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-left bg-white hover:bg-gray-50 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 font-['Inter']">
+                        <span data-filter-label>All</span>
+                    </button>
+                    <div class="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg hidden max-h-64 overflow-auto" data-filter-menu>
+                        <div class="p-2" data-filter-options>
+                            {% for emp in employees %}
+                            <div class="flex items-center gap-2 px-2 py-1">
+                                <input type="checkbox" id="employee-{{ loop.index0 }}" value="{{ emp }}" class="h-4 w-4" {% if current_employee and (emp in current_employee) %}checked{% endif %}>
+                                <label for="employee-{{ loop.index0 }}" class="text-sm text-gray-700">{{ emp }}</label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="relative" data-filter="role">
+                    <label class="block text-xs font-medium text-gray-700 mb-1.5 font-['Inter']">Role</label>
+                    <button type="button" onclick="toggleDropdown('role')" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-left bg-white hover:bg-gray-50 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 font-['Inter']">
+                        <span data-filter-label>All</span>
+                    </button>
+                    <div class="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg hidden max-h-64 overflow-auto" data-filter-menu>
+                        <div class="p-2" data-filter-options>
+                            {% for role in roles %}
+                            <div class="flex items-center gap-2 px-2 py-1">
+                                <input type="checkbox" id="role-{{ loop.index0 }}" value="{{ role }}" class="h-4 w-4" {% if current_role and (role in current_role) %}checked{% endif %}>
+                                <label for="role-{{ loop.index0 }}" class="text-sm text-gray-700">{{ role }}</label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="relative" data-filter="entity">
+                    <label class="block text-xs font-medium text-gray-700 mb-1.5 font-['Inter']">{% if is_teamwill_like %}Unit{% else %}Entity{% endif %}</label>
+                    <button type="button" onclick="toggleDropdown('entity')" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-left bg-white hover:bg-gray-50 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 font-['Inter']">
+                        <span data-filter-label>All</span>
+                    </button>
+                    <div class="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg hidden max-h-64 overflow-auto" data-filter-menu>
+                        <div class="p-2" data-filter-options>
+                            {% for entity in entities %}
+                            <div class="flex items-center gap-2 px-2 py-1">
+                                <input type="checkbox" id="entity-{{ loop.index0 }}" value="{{ entity }}" class="h-4 w-4" {% if current_entity and (entity in current_entity) %}checked{% endif %}>
+                                <label for="entity-{{ loop.index0 }}" class="text-sm text-gray-700">{{ entity }}</label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="relative" data-filter="team">
+                    <label class="block text-xs font-medium text-gray-700 mb-1.5 font-['Inter']">Team</label>
+                    <button type="button" onclick="toggleDropdown('team')" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-left bg-white hover:bg-gray-50 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 font-['Inter']">
+                        <span data-filter-label>All</span>
+                    </button>
+                    <div class="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg hidden max-h-64 overflow-auto" data-filter-menu>
+                        <div class="p-2" data-filter-options>
+                            {% for team in teams %}
+                            <div class="flex items-center gap-2 px-2 py-1">
+                                <input type="checkbox" id="team-{{ loop.index0 }}" value="{{ team }}" class="h-4 w-4" {% if current_team and (team in current_team) %}checked{% endif %}>
+                                <label for="team-{{ loop.index0 }}" class="text-sm text-gray-700">{{ team }}</label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="relative" data-filter="category">
+                    <label class="block text-xs font-medium text-gray-700 mb-1.5 font-['Inter']">{% if is_teamwill_like %}Country{% else %}Category{% endif %}</label>
+                    <button type="button" onclick="toggleDropdown('category')" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-left bg-white hover:bg-gray-50 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 font-['Inter']">
+                        <span data-filter-label>All</span>
+                    </button>
+                    <div class="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg hidden max-h-64 overflow-auto" data-filter-menu>
+                        <div class="p-2" data-filter-options>
+                            {% for category in categories %}
+                            <div class="flex items-center gap-2 px-2 py-1">
+                                <input type="checkbox" id="category-{{ loop.index0 }}" value="{{ category }}" class="h-4 w-4" {% if current_category and (category in current_category) %}checked{% endif %}>
+                                <label for="category-{{ loop.index0 }}" class="text-sm text-gray-700">{{ category }}</label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="relative" data-filter="sgacogs">
+                    <label class="block text-xs font-medium text-gray-700 mb-1.5 font-['Inter']">{% if is_teamwill_like %}Engagement{% else %}SGACOGS{% endif %}</label>
+                    <button type="button" onclick="toggleDropdown('sgacogs')" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-left bg-white hover:bg-gray-50 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 font-['Inter']">
+                        <span data-filter-label>All</span>
+                    </button>
+                    <div class="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg hidden max-h-64 overflow-auto" data-filter-menu>
+                        <div class="p-2" data-filter-options>
+                            {% for sgacogs in sgacogs_list %}
+                            <div class="flex items-center gap-2 px-2 py-1">
+                                <input type="checkbox" id="sgacogs-{{ loop.index0 }}" value="{{ sgacogs }}" class="h-4 w-4" {% if current_sgacogs and (sgacogs in current_sgacogs) %}checked{% endif %}>
+                                <label for="sgacogs-{{ loop.index0 }}" class="text-sm text-gray-700">{{ sgacogs }}</label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {% if no_data %}
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-8 text-center">
+            <div class="text-gray-700 font-semibold">No data available</div>
+            <div class="text-gray-500 text-sm mt-1">This dataset does not currently contain Copilot analysis fields.</div>
+        </div>
+        {% else %}
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+            <div class="border-b border-gray-200 mb-4">
+                <nav class="-mb-px flex flex-wrap gap-x-6 gap-y-2" aria-label="Tabs">
+                    <button type="button" class="copilot-tab active-tab text-sm font-medium py-2" data-tab="perfect">
+                        Ready to Go ({{ tasks_by_score['perfect']|length }})
+                    </button>
+                    <button type="button" class="copilot-tab text-sm font-medium py-2" data-tab="strong">
+                        Highly Applicable ({{ tasks_by_score['strong']|length }})
+                    </button>
+                    <button type="button" class="copilot-tab text-sm font-medium py-2" data-tab="mid">
+                        Moderately Applicable ({{ tasks_by_score['mid']|length }})
+                    </button>
+                    <button type="button" class="copilot-tab text-sm font-medium py-2" data-tab="weak">
+                        Partially Applicable ({{ tasks_by_score['weak']|length }})
+                    </button>
+                    <button type="button" class="copilot-tab text-sm font-medium py-2" data-tab="none">
+                        Not Applicable ({{ tasks_by_score['none']|length }})
+                    </button>
+                </nav>
+            </div>
+
+            <div id="copilot-perfect" class="copilot-tab-content">
+                {% set items = tasks_by_score['perfect'] %}
+                {% include 'copilot_task_list.html' %}
+            </div>
+
+            <div id="copilot-strong" class="copilot-tab-content hidden">
+                {% set items = tasks_by_score['strong'] %}
+                {% include 'copilot_task_list.html' %}
+            </div>
+
+            <div id="copilot-mid" class="copilot-tab-content hidden">
+                {% set items = tasks_by_score['mid'] %}
+                {% include 'copilot_task_list.html' %}
+            </div>
+
+            <div id="copilot-weak" class="copilot-tab-content hidden">
+                {% set items = tasks_by_score['weak'] %}
+                {% include 'copilot_task_list.html' %}
+            </div>
+
+            <div id="copilot-none" class="copilot-tab-content hidden">
+                {% set items = tasks_by_score['none'] %}
+                {% include 'copilot_task_list.html' %}
+            </div>
+        </div>
+        {% endif %}
+    </main>
+</div>
+
+<script type="application/json" id="copilotDetailsJson">{{ details_by_task_id|tojson }}</script>
+
+<script>
+    const COPILOT_DETAILS = JSON.parse(document.getElementById('copilotDetailsJson')?.textContent || '{}');
+
+    function applyCopilotFilters() {
+        closeAllDropdowns();
+        const employee = getSelectedValues('employee');
+        const role = getSelectedValues('role');
+        const entity = getSelectedValues('entity');
+        const team = getSelectedValues('team');
+        const category = getSelectedValues('category');
+        const sgacogs = getSelectedValues('sgacogs');
+
+        const params = new URLSearchParams();
+        const aiTool = document.getElementById('aiTool');
+        if (aiTool && aiTool.value) {
+            params.set('ai_tool', aiTool.value);
+        }
+
+        employee.forEach(v => params.append('employee', v));
+        role.forEach(v => params.append('role', v));
+        entity.forEach(v => params.append('entity', v));
+        team.forEach(v => params.append('team', v));
+        category.forEach(v => params.append('category', v));
+        sgacogs.forEach(v => params.append('sgacogs', v));
+
+        window.location.href = `/copilot?${params.toString()}`;
+    }
+
+    function resetCopilotFilters() {
+        const aiTool = document.getElementById('aiTool');
+        const tool = aiTool && aiTool.value ? aiTool.value : 'copilot';
+        window.location.href = `/copilot?ai_tool=${encodeURIComponent(tool)}`;
+    }
+
+    function openCopilotDetails(taskId) {
+        const key = String(taskId);
+        const data = COPILOT_DETAILS[key];
+        if (!data) return;
+
+        const titleEl = document.getElementById('copilotModalTitle');
+        const subtitleEl = document.getElementById('copilotModalSubtitle');
+        const listEl = document.getElementById('copilotHowItWorksList');
+        if (titleEl) {
+            titleEl.textContent = `Task ${key}`;
+        }
+        if (subtitleEl) {
+            subtitleEl.textContent = data.enhanced_task || '';
+        }
+        if (subtitleEl) {
+            subtitleEl.textContent = data.task_l2 || '';
+        }
+        if (listEl) {
+            listEl.innerHTML = '';
+            (data.how_it_works || []).forEach(step => {
+                const li = document.createElement('li');
+                li.className = 'text-sm text-gray-700 mb-2 flex items-start';
+                li.innerHTML = `<i class="fas fa-check text-blue-500 mt-1 mr-2"></i><span>${step}</span>`;
+                listEl.appendChild(li);
+            });
+        }
+
+        document.getElementById('copilotModal').classList.remove('hidden');
+    }
+
+    function closeCopilotDetails() {
+        document.getElementById('copilotModal').classList.add('hidden');
+    }
+
+    function openAiToolsModal(taskId) {
+        const key = String(taskId);
+        const data = COPILOT_DETAILS[key];
+        if (!data) return;
+
+        const titleEl = document.getElementById('aiToolsModalTitle');
+        const subtitleEl = document.getElementById('aiToolsModalSubtitle');
+        const scoreEl = document.getElementById('aiToolsModalScore');
+        const containerEl = document.getElementById('aiToolsEntries');
+
+        if (titleEl) titleEl.textContent = `Task ${key}`;
+        if (subtitleEl) subtitleEl.textContent = data.enhanced_task || '';
+        if (subtitleEl) subtitleEl.textContent = data.task_l2 || '';
+        if (scoreEl) scoreEl.textContent = data.ai_tools_score_label || '0/0';
+
+        if (containerEl) {
+            containerEl.innerHTML = '';
+            const entries = Array.isArray(data.ai_tools_entries) ? data.ai_tools_entries : [];
+
+            if (!entries.length) {
+                containerEl.innerHTML = '<div class="text-sm text-gray-600">No AI tools data.</div>';
+            } else {
+                entries.forEach((entry, idx) => {
+                    const approach = entry.ai_approach_name || 'AI approach';
+                    const feasibility = (entry.minimum_change_feasibility || '').toString();
+                    const isYes = feasibility.trim().toLowerCase() === 'yes';
+                    const copilotUsage = entry.copilot_usage || '';
+                    const steps = Array.isArray(entry.how_it_works) ? entry.how_it_works : [];
+
+                    const wrapper = document.createElement('div');
+                    wrapper.className = 'border border-gray-200 rounded-lg p-4 mb-3';
+
+                    if (!isYes) {
+                        wrapper.innerHTML = `
+                            <div class="flex items-start justify-between gap-4">
+                                <div>
+                                    <div class="font-semibold text-gray-900">${approach}</div>
+                                    <div class="text-sm text-gray-600 mt-1">Feasibility: <span class="font-semibold">No</span></div>
+                                </div>
+                            </div>
+                        `;
+                    } else {
+                        const sectionId = `ai-tools-how-${key}-${idx}`;
+                        wrapper.innerHTML = `
+                            <div class="flex items-start justify-between gap-4">
+                                <div class="min-w-0">
+                                    <div class="font-semibold text-gray-900">${approach}</div>
+                                    <div class="text-sm text-green-700 mt-2">${copilotUsage}</div>
+                                </div>
+                                <button type="button" class="text-blue-600 hover:text-blue-800" title="Show how it works" data-toggle="${sectionId}">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </div>
+                            <div id="${sectionId}" class="hidden mt-3 pt-3 border-t border-gray-200">
+                                <div class="text-sm font-semibold text-gray-900 mb-2">How it works</div>
+                                <ul class="list-none pl-0">
+                                    ${steps.map(s => `<li class="text-sm text-gray-700 mb-2 flex items-start"><i class=\"fas fa-check text-green-600 mt-1 mr-2\"></i><span>${s}</span></li>`).join('')}
+                                </ul>
+                            </div>
+                        `;
+                    }
+
+                    containerEl.appendChild(wrapper);
+                });
+
+                containerEl.querySelectorAll('[data-toggle]').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const id = btn.getAttribute('data-toggle');
+                        const section = document.getElementById(id);
+                        if (!section) return;
+                        const icon = btn.querySelector('i');
+                        const isHidden = section.classList.contains('hidden');
+                        if (isHidden) {
+                            section.classList.remove('hidden');
+                            if (icon) {
+                                icon.classList.remove('fa-plus');
+                                icon.classList.add('fa-minus');
+                            }
+                        } else {
+                            section.classList.add('hidden');
+                            if (icon) {
+                                icon.classList.remove('fa-minus');
+                                icon.classList.add('fa-plus');
+                            }
+                        }
+                    });
+                });
+            }
+        }
+
+        document.getElementById('aiToolsModal').classList.remove('hidden');
+    }
+
+    function closeAiToolsModal() {
+        document.getElementById('aiToolsModal').classList.add('hidden');
+    }
+
+    function setActiveCopilotTab(tab) {
+        document.querySelectorAll('.copilot-tab').forEach(btn => {
+            btn.classList.remove('active-tab');
+            btn.classList.remove('text-blue-600');
+            btn.classList.add('text-gray-600');
+            btn.classList.add('hover:text-blue-600');
+        });
+        const activeBtn = document.querySelector(`.copilot-tab[data-tab="${tab}"]`);
+        if (activeBtn) {
+            activeBtn.classList.add('active-tab');
+            activeBtn.classList.add('text-blue-600');
+        }
+
+        document.querySelectorAll('.copilot-tab-content').forEach(el => el.classList.add('hidden'));
+        const content = document.getElementById(`copilot-${tab}`);
+        if (content) content.classList.remove('hidden');
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        ['employee', 'role', 'entity', 'team', 'category', 'sgacogs'].forEach(setFilterLabel);
+
+        document.querySelectorAll('[data-filter] input[type="checkbox"]').forEach(el => {
+            el.addEventListener('change', () => {
+                const filterName = el.closest('[data-filter]')?.getAttribute('data-filter');
+                updateFilters(filterName || null);
+            });
+        });
+
+        document.querySelectorAll('.copilot-tab').forEach(btn => {
+            btn.classList.add('text-gray-600');
+            btn.classList.add('hover:text-blue-600');
+            btn.addEventListener('click', () => setActiveCopilotTab(btn.dataset.tab));
+        });
+
+        setActiveCopilotTab('perfect');
+
+        const modal = document.getElementById('copilotModal');
+        if (modal) {
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) closeCopilotDetails();
+            });
+        }
+
+        const toolsModal = document.getElementById('aiToolsModal');
+        if (toolsModal) {
+            toolsModal.addEventListener('click', (e) => {
+                if (e.target === toolsModal) closeAiToolsModal();
+            });
+        }
+    });
+</script>
+
+<div id="copilotModal" class="fixed inset-0 z-50 hidden overflow-y-auto">
+    <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+        <div class="fixed inset-0 bg-black bg-opacity-40 transition-opacity" aria-hidden="true" onclick="closeCopilotDetails()"></div>
+        <div class="inline-block align-bottom bg-white rounded-xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-3xl w-full">
+        <div class="flex items-center justify-between px-5 py-4 border-b">
+            <div class="min-w-0 pr-4">
+                <h3 id="copilotModalTitle" class="text-lg font-semibold text-gray-900">Details</h3>
+                <div id="copilotModalSubtitle" class="text-sm text-gray-600 mt-1 truncate"></div>
+            </div>
+            <button type="button" onclick="closeCopilotDetails()" class="text-gray-500 hover:text-gray-700">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="p-5 max-h-[70vh] overflow-y-auto">
+            <h4 class="text-sm font-semibold text-gray-900 mb-3">How it works</h4>
+            <ul id="copilotHowItWorksList" class="list-none pl-0"></ul>
+        </div>
+        <div class="px-5 py-4 border-t flex justify-end">
+            <button type="button" onclick="closeCopilotDetails()" class="text-sm text-gray-700 hover:text-blue-600 px-3 py-1.5 border border-gray-200 rounded-lg hover:bg-gray-50">
+                Close
+            </button>
+        </div>
+    </div>
+</div>
+</div>
+
+<div id="aiToolsModal" class="fixed inset-0 z-50 hidden overflow-y-auto">
+    <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+        <div class="fixed inset-0 bg-black bg-opacity-40 transition-opacity" aria-hidden="true" onclick="closeAiToolsModal()"></div>
+        <div class="inline-block align-bottom bg-white rounded-xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl w-full">
+        <div class="flex items-center justify-between px-5 py-4 border-b">
+            <div class="min-w-0 pr-4">
+                <h3 id="aiToolsModalTitle" class="text-lg font-semibold text-gray-900">AI tools details</h3>
+                <div id="aiToolsModalSubtitle" class="text-sm text-gray-600 mt-1 truncate"></div>
+            </div>
+            <button type="button" onclick="closeAiToolsModal()" class="text-gray-500 hover:text-gray-700">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="p-5 max-h-[70vh] overflow-y-auto">
+            <div class="flex items-center justify-between mb-4">
+                <div class="text-sm font-semibold text-gray-900">Score</div>
+                <div id="aiToolsModalScore" class="text-sm font-semibold text-gray-900">0/0</div>
+            </div>
+            <div id="aiToolsEntries"></div>
+        </div>
+        <div class="px-5 py-4 border-t flex justify-end">
+            <button type="button" onclick="closeAiToolsModal()" class="text-sm text-gray-700 hover:text-blue-600 px-3 py-1.5 border border-gray-200 rounded-lg hover:bg-gray-50">
+                Close
+            </button>
+        </div>
+    </div>
+</div>
+</div>
+{% endblock %}

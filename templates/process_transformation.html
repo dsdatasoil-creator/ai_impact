@@ -1,0 +1,913 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+  <header class="bg-white shadow-sm border-b">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-2 sm:space-y-0">
+        <div>
+          <h1 class="text-xl sm:text-2xl font-bold text-gray-900 font-['Inter']">Process Transformation</h1>
+          <p class="text-gray-600 text-sm font-medium">Before AI → After AI</p>
+        </div>
+        <div class="flex items-center space-x-3">
+          <a href="/" class="text-gray-700 hover:text-blue-600 text-sm font-medium px-3 py-1.5 rounded-md hover:bg-gray-100 transition duration-150 border border-gray-200">
+            <i class="fas fa-chart-pie mr-1.5"></i> AI Augmentation Analysis
+          </a>
+          <a href="/dashboard" class="text-gray-700 hover:text-blue-600 text-sm font-medium px-3 py-1.5 rounded-md hover:bg-gray-100 transition duration-150 border border-gray-200">
+            <i class="fas fa-layer-group mr-1.5"></i> Task-level AI Analysis
+          </a>
+          <a href="/process" class="text-gray-700 hover:text-blue-600 text-sm font-medium px-3 py-1.5 rounded-md hover:bg-gray-100 transition duration-150 border border-gray-200">
+            <i class="fas fa-diagram-project mr-1.5"></i> Process
+          </a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
+    <div id="process-transform-app"></div>
+  </main>
+</div>
+
+<style>
+  .glass {
+    background: rgba(255,255,255,0.85);
+    backdrop-filter: blur(10px);
+  }
+  .soft-shadow {
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+  }
+  .tab {
+    transition: all 160ms ease;
+  }
+  .tab-active {
+    background: white;
+    border-color: rgb(226 232 240);
+    color: rgb(15 23 42);
+    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.07);
+  }
+  .task-card {
+    transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
+  }
+  .task-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 14px 30px rgba(15, 23, 42, 0.10);
+    border-color: rgb(203 213 225);
+  }
+
+  .select {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%2394a3b8'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+  }
+</style>
+
+<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+<script type="text/babel">
+const { useMemo, useState, useEffect } = React;
+
+function getQueryParam(name) {
+  const url = new URL(window.location.href);
+  return (url.searchParams.get(name) || '').trim();
+}
+
+function setQueryParam(name, value) {
+  const url = new URL(window.location.href);
+  if (value === '' || value == null) {
+    url.searchParams.delete(name);
+  } else {
+    url.searchParams.set(name, String(value));
+  }
+  window.history.replaceState({}, '', url.toString());
+}
+
+async function fetchJson(url) {
+  const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
+  const data = await res.json();
+  if (!res.ok) {
+    const msg = data && data.error ? data.error : `Request failed (${res.status})`;
+    throw new Error(msg);
+  }
+  return data;
+}
+
+function parseDurationToMinutes(value) {
+  if (value == null) return null;
+
+  if (typeof value === 'number' && !Number.isNaN(value)) {
+    // Back-end comment: process_tasks.estimated_duration is numeric; assume minutes
+    return value;
+  }
+
+  const s = String(value).trim().toLowerCase();
+  if (!s) return null;
+
+  const m = s.match(/([0-9]+(\.[0-9]+)?)/);
+  if (!m) return null;
+  const n = parseFloat(m[1]);
+  if (Number.isNaN(n)) return null;
+
+  if (s.includes('min')) return n;
+  if (s.includes('h') || s.includes('hour')) return n * 60;
+  if (s.includes('d') || s.includes('day')) return n * 60 * 24;
+
+  // default to minutes
+  return n;
+}
+
+function parseDurationToHours(value) {
+  const minutes = parseDurationToMinutes(value);
+  if (minutes == null) return null;
+  return minutes / 60;
+}
+
+function formatHoursH(hours) {
+  if (hours == null) return '-';
+  const n = Number(hours);
+  if (Number.isNaN(n)) return '-';
+  return `${n.toFixed(1)}h`;
+}
+
+function humanizeAiTypeLabel(value) {
+  const s = String(value || '').trim();
+  const key = s.toLowerCase();
+  if (key === 'quick_wins') return 'Quick Wins';
+  if (key === 'added_value') return 'Added Value';
+  if (key === 'strategic_initiatives') return 'Strategic Initiatives';
+  return s;
+}
+
+function cn(...xs) { return xs.filter(Boolean).join(' '); }
+
+function Badge({ tone = "slate", children, title }) {
+  const map = {
+    before: "bg-orange-50 text-orange-700 border-orange-100",
+    after: "bg-purple-50 text-purple-700 border-purple-100",
+    green: "bg-emerald-50 text-emerald-700 border-emerald-100",
+    slate: "bg-slate-50 text-slate-700 border-slate-200",
+    indigo: "bg-indigo-50 text-indigo-700 border-indigo-100",
+    amber: "bg-amber-50 text-amber-700 border-amber-100",
+    cyan: "bg-cyan-50 text-cyan-700 border-cyan-100",
+  };
+  return (
+    <span title={title} className={cn("inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-semibold leading-none", map[tone] || map.slate)}>
+      {children}
+    </span>
+  );
+}
+
+function KpiCard({ label, value, sub, tone = "slate", icon }) {
+  const top = {
+    before: "from-orange-50 via-white to-white border-orange-100",
+    after: "from-purple-50 via-white to-white border-purple-100",
+    green: "from-emerald-50 via-white to-white border-emerald-100",
+    slate: "from-slate-50 via-white to-white border-slate-200",
+  };
+  return (
+    <div className={cn("rounded-2xl border bg-gradient-to-br p-4 soft-shadow", top[tone] || top.slate)}>
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <div className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide font-['Inter']">{label}</div>
+          <div className="mt-1 text-2xl font-bold text-slate-900 font-['Inter']">{value}</div>
+          {sub ? <div className="mt-1 text-xs text-slate-500 font-['Inter']">{sub}</div> : null}
+        </div>
+        {icon ? (
+          <div className="h-10 w-10 rounded-xl border border-slate-200 bg-white flex items-center justify-center text-slate-700">
+            <i className={icon}></i>
+          </div>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+function SectionHeader({ title, subtitle, right }) {
+  return (
+    <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-3">
+      <div>
+        <div className="text-lg font-semibold text-slate-900 font-['Inter']">{title}</div>
+        {subtitle ? <div className="mt-1 text-sm text-slate-500 font-['Inter']">{subtitle}</div> : null}
+      </div>
+      {right ? <div>{right}</div> : null}
+    </div>
+  );
+}
+
+function KeyValue({ k, v }) {
+  return (
+    <div className="flex items-start justify-between gap-3">
+      <div className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide font-['Inter']">{k}</div>
+      <div className="text-sm text-slate-700 text-right font-['Inter']">{v || "-"}</div>
+    </div>
+  );
+}
+
+function IOList({ label, items, tone = "slate" }) {
+  if (!items || items.length === 0) return null;
+  return (
+    <div>
+      <div className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide font-['Inter']">{label}</div>
+      <div className="mt-2 flex flex-wrap gap-2">
+        {items.map((it, idx) => {
+          if (typeof it === 'string') {
+            return <Badge key={idx} tone={tone}>{it}</Badge>;
+          }
+
+          const name = it.input_name || it.output_name || it.ai_approach_name || it.name || it.title || it.label;
+          const desc = it.input_description || it.output_description || it.description;
+          const typ = it.input_type || it.output_type || it.type;
+
+          const text = name || JSON.stringify(it);
+          const tooltip = [typ, desc].filter(Boolean).join(' — ');
+          return <Badge key={idx} tone={tone} title={tooltip || undefined}>{text}</Badge>;
+        })}
+      </div>
+    </div>
+  );
+}
+
+function TaskCardBefore({ index, task }) {
+  const durationHours = useMemo(() => parseDurationToHours(task.duration), [task.duration]);
+  return (
+    <div className="task-card rounded-2xl border border-slate-200 bg-white p-4">
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex items-start gap-3">
+          <div className="h-8 w-8 rounded-xl bg-orange-50 border border-orange-100 flex items-center justify-center text-orange-700 font-bold text-sm">
+            {index}
+          </div>
+          <div>
+            <div className="text-sm font-semibold text-slate-900 font-['Inter']">{task.task_name}</div>
+            <div className="mt-1 text-xs text-slate-500 font-['Inter']">{task.task_description}</div>
+          </div>
+        </div>
+        <Badge tone="before">{task.tag || "Manual"}</Badge>
+      </div>
+
+      <div className="mt-4 grid grid-cols-1 gap-2">
+        <KeyValue k="Duration (h)" v={task.duration} />
+        <KeyValue k="Role" v={task.role_title || (task.assigned_role && (task.assigned_role.role_title || task.assigned_role.role || ''))} />
+        <KeyValue k="Department" v={task.department_name || (task.assigned_role && (task.assigned_role.department_name || task.assigned_role.department_name || ''))} />
+      </div>
+
+      <div className="mt-4 space-y-4">
+        <IOList label="Inputs" items={task.inputs} tone="slate" />
+        <IOList label="Outputs" items={task.outputs} tone="slate" />
+      </div>
+    </div>
+  );
+}
+
+function TaskCardAfter({ index, task, beforeDuration }) {
+  const reduction = useMemo(() => {
+    const b = parseDurationToHours(beforeDuration);
+    const a = task.estimated_duration_after_ai_hours != null ? Number(task.estimated_duration_after_ai_hours) : parseDurationToHours(task.estimated_duration_after_ai);
+    if (b == null || a == null || b === 0) return null;
+    const pct = Math.round(((b - a) / b) * 100);
+    return pct;
+  }, [beforeDuration, task.estimated_duration_after_ai, task.estimated_duration_after_ai_hours]);
+
+  const afterHours = useMemo(() => {
+    if (task.estimated_duration_after_ai_hours != null && String(task.estimated_duration_after_ai_hours).trim() !== '') {
+      const n = Number(task.estimated_duration_after_ai_hours);
+      return Number.isNaN(n) ? null : n;
+    }
+    return parseDurationToHours(task.estimated_duration_after_ai);
+  }, [task.estimated_duration_after_ai, task.estimated_duration_after_ai_hours]);
+
+  return (
+    <div className="task-card rounded-2xl border border-slate-200 bg-white p-4 relative">
+      <div className="premium-cta-overlay absolute inset-0 z-50 flex items-center justify-center hidden">
+        <div className="premium-badge">
+          <i className="fas fa-lock mr-1"></i> Premium
+        </div>
+      </div>
+      <div className="premium-locked-container">
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex items-start gap-3">
+            <div className="h-8 w-8 rounded-xl bg-purple-50 border border-purple-100 flex items-center justify-center text-purple-700 font-bold text-sm">
+              {index}
+            </div>
+            <div>
+              <div className="text-sm font-semibold text-slate-900 font-['Inter']">{task.task_name}</div>
+              <div className="mt-1 text-xs text-slate-500 font-['Inter']">{task.task_description}</div>
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-2 justify-end">
+            {task.status ? (
+              <Badge tone={task.status === 'unchanged' ? 'slate' : 'green'}>
+                {task.status === 'unchanged' ? 'Unchanged' : 'Enhanced'}
+              </Badge>
+            ) : null}
+            {(task.time_reduction_percent_calc != null) ? <Badge tone="green">-{Number(task.time_reduction_percent_calc)}%</Badge> : (reduction != null ? <Badge tone="green">-{reduction}%</Badge> : null)}
+          </div>
+        </div>
+
+        {(task.ai_type && task.ai_type.length) ? (
+          <div className="mt-3 flex flex-wrap gap-2">
+            {(task.ai_type || []).map((t, idx) => (
+              <Badge key={idx} tone="indigo" title={t}>{humanizeAiTypeLabel(t)}</Badge>
+            ))}
+          </div>
+        ) : null}
+
+        <div className="mt-4 grid grid-cols-1 gap-2">
+          <KeyValue k="New duration (h)" v={task.estimated_duration_after_ai_hours} />
+          <KeyValue k="Role" v={task.role_title || (task.assigned_role && (task.assigned_role.role_title || task.assigned_role.role || ''))} />
+          <KeyValue k="Department" v={task.department_name || (task.assigned_role && (task.assigned_role.department_name || task.assigned_role.department_name || ''))} />
+        </div>
+
+        <div className="mt-4 space-y-4">
+          <IOList label="Inputs" items={task.inputs} tone="slate" />
+          <IOList label="Outputs" items={task.outputs} tone="slate" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Tabs({ value, onChange }) {
+  const items = [
+    { k: "side", label: "Side-by-Side" },
+    { k: "before", label: "Before AI" },
+    { k: "after", label: "After AI" },
+  ];
+  return (
+    <div className="inline-flex rounded-2xl border border-slate-200 bg-slate-100 p-1">
+      {items.map((it) => (
+        <button
+          key={it.k}
+          type="button"
+          onClick={() => onChange(it.k)}
+          className={cn(
+            "tab px-3 py-2 text-sm font-semibold rounded-xl font-['Inter']",
+            value === it.k ? "tab-active" : "text-slate-600 hover:text-slate-900"
+          )}
+        >
+          {it.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function SummaryTable({ tasks }) {
+  return (
+    <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden soft-shadow relative">
+      <div className="premium-cta-overlay absolute inset-0 z-50 flex items-center justify-center hidden">
+        <div className="premium-cta-card">
+          <div class="premium-badge mb-3">
+            <i class="fas fa-lock mr-1"></i> Premium
+          </div>
+          <h3 class="text-lg font-bold text-gray-900 mb-2">Unlock Transformation Summary</h3>
+          <p class="text-sm text-gray-600 mb-4">Toggle the payment simulation switch at the top of the page to unlock this strategic data.</p>
+        </div>
+      </div>
+      <div className="premium-locked-container">
+        <div className="px-4 py-3 border-b border-slate-200 bg-gradient-to-r from-slate-50 to-white">
+          <div className="text-sm font-semibold text-slate-900 font-['Inter']">Task Impact Summary</div>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="min-w-full text-sm">
+            <thead className="bg-slate-50">
+              <tr className="text-left text-xs text-slate-500">
+                <th className="px-4 py-3 font-semibold">#</th>
+                <th className="px-4 py-3 font-semibold">Original Task</th>
+                <th className="px-4 py-3 font-semibold">AI-Enhanced Task</th>
+                <th className="px-4 py-3 font-semibold">AI Type</th>
+                <th className="px-4 py-3 font-semibold">View details</th>
+              </tr>
+            </thead>
+            <tbody>
+              {tasks.map((t) => {
+                const i = t.task_order;
+                return (
+                  <tr key={t.task_id} className="border-t border-slate-100">
+                    <td className="px-4 py-3 text-slate-600 font-semibold">{i}</td>
+                    <td className="px-4 py-3 text-slate-900">{t.before.task_name || '-'}</td>
+                    <td className="px-4 py-3 text-slate-900">{t.after.task_name || '-'}</td>
+                    <td className="px-4 py-3">
+                      <div className="flex flex-wrap gap-2">
+                        {(t.after.ai_type || []).map((x, idx) => (
+                          <Badge key={idx} tone="indigo">{humanizeAiTypeLabel(x)}</Badge>
+                        ))}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3">
+                      {t.before && t.before.task_id ? (
+                        <button
+                          type="button"
+                          className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:border-slate-300 hover:text-slate-900"
+                          onClick={() => window.openProcessTaskModal && window.openProcessTaskModal(t.before.task_id)}
+                        >
+                          <i className="fas fa-eye" />
+                          Details
+                        </button>
+                      ) : (
+                        <span className="text-xs text-slate-400">-</span>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function TaskFlow({ tasks, view }) {
+  const grouped = useMemo(() => {
+    const map = new Map();
+    (tasks || []).forEach((t) => {
+      const k = (t.parallel_order != null ? Number(t.parallel_order) : 0);
+      if (!map.has(k)) map.set(k, []);
+      map.get(k).push(t);
+    });
+    const phases = Array.from(map.keys()).sort((a, b) => a - b);
+    return phases.map((k) => ({
+      phase: k,
+      items: (map.get(k) || []).slice().sort((a, b) => (Number(a.task_order) || 0) - (Number(b.task_order) || 0))
+    }));
+  }, [tasks]);
+
+  return (
+    <div className="space-y-6">
+      {grouped.map((g, gi) => (
+        <div key={g.phase}>
+          <div className="flex items-center justify-between">
+            <div className="text-sm font-semibold text-slate-900 font-['Inter']">{g.phase ? `Phase ${g.phase}` : 'Phase'}</div>
+            <Badge tone="slate">{g.items.length} tasks</Badge>
+          </div>
+          <div className="mt-3">
+            <div className={cn(
+              "grid gap-5",
+              view === "side" ? "grid-cols-1 lg:grid-cols-2" : "grid-cols-1"
+            )}>
+              {g.items.map((t) => {
+                const i = t.task_order;
+                const before = (
+                  <div key={t.task_id + "-b"}>
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide font-['Inter']">Before AI</div>
+                    </div>
+                    <TaskCardBefore index={i} task={t.before} />
+                  </div>
+                );
+                const after = (
+                  <div key={t.task_id + "-a"}>
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide font-['Inter']">After AI</div>
+                    </div>
+                    <TaskCardAfter index={i} task={t.after} beforeDuration={t.before.duration} />
+                  </div>
+                );
+
+                if (view === "before") return before;
+                if (view === "after") return after;
+
+                return (
+                  <React.Fragment key={t.task_id}>
+                    {before}
+                    {after}
+                  </React.Fragment>
+                );
+              })}
+            </div>
+          </div>
+          {gi < grouped.length - 1 ? <div className="mt-6 border-t border-slate-200" /> : null}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function App() {
+  const [view, setView] = useState("side");
+
+  const [processes, setProcesses] = useState([]);
+  const [selectedProcessId, setSelectedProcessId] = useState(getQueryParam('process_id'));
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [infoOpen, setInfoOpen] = useState(false);
+
+  useEffect(() => {
+    let mounted = true;
+    fetchJson('/api/process_transformation/processes')
+      .then((d) => {
+        if (!mounted) return;
+        setProcesses(d.items || []);
+        if (!selectedProcessId && d.items && d.items.length) {
+          const firstId = d.items[0].process_id;
+          setSelectedProcessId(String(firstId));
+          setQueryParam('process_id', firstId);
+        }
+      })
+      .catch((e) => mounted && setError(e.message || String(e)));
+    return () => { mounted = false; };
+  }, []);
+
+  useEffect(() => {
+    const pid = (selectedProcessId || '').trim();
+    if (!pid) return;
+    let mounted = true;
+    setLoading(true);
+    setError('');
+    fetchJson(`/api/process_transformation?process_id=${encodeURIComponent(pid)}`)
+      .then((d) => mounted && setData(d))
+      .catch((e) => mounted && setError(e.message || String(e)))
+      .finally(() => mounted && setLoading(false));
+    return () => { mounted = false; };
+  }, [selectedProcessId]);
+
+  const p = data ? data.process : null;
+  const tasks = data ? (data.tasks || []).map((t) => ({
+    ...t,
+    before: { ...t.before, phase: t.before.phase },
+  })) : [];
+
+  const metrics = data ? data.metrics : null;
+  const employeeNav = data && data.comparison ? data.comparison.employee_navigation : null;
+
+  const phasesLabel = metrics && metrics.phases_count != null ? `${metrics.phases_count} phases` : null;
+
+  return (
+    <div className="space-y-6">
+      <div className="rounded-2xl p-6 bg-gradient-to-r from-orange-50 via-white to-purple-50 border border-slate-200 soft-shadow">
+        <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-2">
+              <div className="text-2xl font-bold text-slate-900 font-['Inter']">{p ? p.process_name : 'Select a process'}</div>
+              {p && p.description ? (
+                <button
+                  type="button"
+                  onClick={() => setInfoOpen(true)}
+                  className="h-8 w-8 rounded-xl border border-slate-200 bg-white text-slate-600 hover:text-slate-900 hover:border-slate-300 flex items-center justify-center"
+                  aria-label="Process description"
+                  title="Show process description"
+                >
+                  <i className="fas fa-info" />
+                </button>
+              ) : null}
+            </div>
+            <div className="mt-2 text-sm text-slate-600 leading-relaxed font-['Inter']">{p ? (p.process_summary || '—') : '—'}</div>
+          </div>
+          <div className="flex items-center gap-3">
+            <Tabs value={view} onChange={setView} />
+          </div>
+        </div>
+
+        <div className="mt-4 flex flex-col md:flex-row md:items-end md:justify-between gap-3">
+          <div className="max-w-xl w-full">
+            <div className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide font-['Inter']">Process</div>
+            <select
+              className="select mt-1 w-full border border-slate-200 rounded-xl px-3 py-2 text-sm bg-white focus:ring-1 focus:ring-blue-500 focus:border-blue-500 font-['Inter']"
+              value={selectedProcessId}
+              onChange={(e) => {
+                const v = e.target.value;
+                setSelectedProcessId(v);
+                setQueryParam('process_id', v);
+              }}
+            >
+              {(processes || []).map((x) => (
+                <option key={x.process_id} value={x.process_id}>{x.process_name || `Process #${x.process_id}`}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="text-xs text-slate-500 font-['Inter']">
+            {loading ? 'Loading…' : (error ? error : '')}
+          </div>
+        </div>
+
+        <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-3">
+          <KpiCard
+            tone="before"
+            icon="fas fa-hourglass-start"
+            label="Before AI"
+            value={(() => {
+              if (!metrics) return '-';
+              const h = metrics.total_duration_before_hours != null ? Number(metrics.total_duration_before_hours) : parseDurationToHours(metrics.total_duration_before);
+              return h != null && !Number.isNaN(h) ? formatHoursH(h) : (metrics.total_duration_before || '-');
+            })()}
+            sub="Total cycle time"
+          />
+          <KpiCard
+            tone="after"
+            icon="fas fa-wand-magic-sparkles"
+            label="After AI"
+            value={(() => {
+              if (!metrics) return '-';
+              const h = metrics.total_duration_after_hours != null ? Number(metrics.total_duration_after_hours) : parseDurationToHours(metrics.total_duration_after);
+              return h != null && !Number.isNaN(h) ? formatHoursH(h) : (metrics.total_duration_after || '-');
+            })()}
+            sub="Total cycle time"
+          />
+          <KpiCard tone="green" icon="fas fa-chart-line" label="Time Saved" value={metrics && metrics.time_saved_percentage != null ? `${metrics.time_saved_percentage}%` : '-'} sub="Estimated reduction" />
+          <KpiCard tone="slate" icon="fas fa-list-check" label="Tasks" value={metrics ? `${metrics.tasks_before}` : '-'} sub={phasesLabel ? phasesLabel : "Count before → after"} />
+          <KpiCard tone="green" icon="fas fa-bolt" label="Enhanced tasks" value={metrics ? (metrics.tasks_enhanced ?? '-') : '-'}  />
+          <KpiCard tone="slate" icon="fas fa-equals" label="Unchanged tasks" value={metrics ? (metrics.tasks_unchanged ?? '-') : '-'}  />
+          <KpiCard tone="slate" icon="fas fa-sitemap" label="Org coverage" value={metrics ? `${metrics.departments_count ?? 0} depts ${metrics.roles_count ?? 0} roles` : '-'} sub="Distinct in process" />
+        </div>
+      </div>
+
+      {infoOpen && p ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-900/40" onClick={() => setInfoOpen(false)} />
+          <div className="relative w-full max-w-2xl rounded-2xl border border-slate-200 bg-white soft-shadow overflow-hidden">
+            <div className="px-5 py-4 border-b border-slate-200 bg-gradient-to-r from-slate-50 to-white flex items-center justify-between">
+              <div className="text-sm font-semibold text-slate-900 font-['Inter']">Process description</div>
+              <button
+                type="button"
+                onClick={() => setInfoOpen(false)}
+                className="h-8 w-8 rounded-xl border border-slate-200 bg-white text-slate-600 hover:text-slate-900 hover:border-slate-300 flex items-center justify-center"
+                aria-label="Close"
+              >
+                <i className="fas fa-xmark" />
+              </button>
+            </div>
+            <div className="p-5 text-sm text-slate-700 leading-relaxed font-['Inter'] whitespace-pre-line">
+              {p.description || '—'}
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      <div className="bg-white rounded-2xl border border-slate-200 p-5 soft-shadow">
+        <SectionHeader
+          title="Process Visualization"
+          subtitle="Task-by-task comparison across roles, inputs/outputs and AI technologies."
+          right={null}
+        />
+        <div className="mt-5">
+          {error ? (
+            <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 font-['Inter']">{error}</div>
+          ) : (
+            <TaskFlow tasks={tasks} view={view} />
+          )}
+        </div>
+      </div>
+
+      {employeeNav ? (
+        <div className="bg-white rounded-2xl border border-slate-200 p-5 soft-shadow">
+          <SectionHeader
+            title="People & Adoption"
+            subtitle="How day-to-day work, mindset and training needs evolve with AI-enabled onboarding." 
+            right={null}
+          />
+
+          <div className="mt-5 grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+              <div className="text-sm font-semibold text-slate-900 font-['Inter']">Key mindset shifts</div>
+              <div className="mt-2 space-y-2">
+                {(employeeNav.key_mindset_shifts || []).map((x, idx) => (
+                  <div key={idx} className="flex gap-2 text-sm text-slate-700 font-['Inter']">
+                    <div className="mt-0.5 h-5 w-5 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-slate-500 text-xs">{idx + 1}</div>
+                    <div className="leading-relaxed">{x}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+              <div className="text-sm font-semibold text-slate-900 font-['Inter']">Risks if not addressed</div>
+              <div className="mt-2 space-y-2">
+                {(employeeNav.risks_if_not_addressed || []).map((x, idx) => (
+                  <div key={idx} className="flex gap-2 text-sm text-slate-700 font-['Inter']">
+                    <div className="mt-0.5 h-5 w-5 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-slate-500 text-xs">{idx + 1}</div>
+                    <div className="leading-relaxed">{x}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+              <div className="text-sm font-semibold text-slate-900 font-['Inter']">Critical training areas</div>
+              <div className="mt-2 space-y-2">
+                {(employeeNav.critical_training_areas || []).map((x, idx) => (
+                  <div key={idx} className="flex gap-2 text-sm text-slate-700 font-['Inter']">
+                    <div className="mt-0.5 h-5 w-5 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-slate-500 text-xs">{idx + 1}</div>
+                    <div className="leading-relaxed">{x}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+              <div className="text-sm font-semibold text-slate-900 font-['Inter']">Quick Wins</div>
+              <div className="mt-2 space-y-2">
+                {(employeeNav.quick_wins_for_adoption || []).map((x, idx) => (
+                  <div key={idx} className="flex gap-2 text-sm text-slate-700 font-['Inter']">
+                    <div className="mt-0.5 h-5 w-5 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-slate-500 text-xs">{idx + 1}</div>
+                    <div className="leading-relaxed">{x}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      <SummaryTable tasks={tasks} />
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('process-transform-app')).render(<App />);
+
+window.openProcessTaskModal = function(processTaskId) {
+  if (!processTaskId) return;
+  const modalEl = document.getElementById('taskModal');
+  const titleEl = document.getElementById('modalTaskTitle');
+  if (!modalEl || !titleEl) {
+    console.error('Process task modal DOM not found. Ensure task_modal.html is included.');
+    return;
+  }
+
+  fetch(`/api/process_transformation/task/${encodeURIComponent(processTaskId)}`)
+    .then(r => r.json().then(d => ({ ok: r.ok, data: d })))
+    .then(({ ok, data }) => {
+      if (!ok) throw new Error(data && data.error ? data.error : 'Failed to load');
+
+      titleEl.textContent = data.task_title || '';
+
+      const categoryEl = document.getElementById('modalCategory');
+      const employeeCountEl = document.getElementById('modalEmployeeCount');
+      const roleCountEl = document.getElementById('modalRoleCount');
+      const teamCountEl = document.getElementById('modalTeamCount');
+      const entityCountEl = document.getElementById('modalEntityCount');
+      const fteSavingEl = document.getElementById('modalFteSaving');
+      const globalProdGainEl = document.getElementById('modalGlobalProdGain');
+      const automationContainer = document.getElementById('modalAutomationTypeContainer');
+      const aiTaskNatureEl = document.getElementById('modalAiTaskNature');
+
+      if (categoryEl) categoryEl.textContent = data.task_category || '';
+      if (employeeCountEl) employeeCountEl.textContent = (data.employee_count != null ? data.employee_count : 0);
+      if (roleCountEl) roleCountEl.textContent = (data.role_count != null ? data.role_count : 0);
+      if (teamCountEl) teamCountEl.textContent = (data.team_count != null ? data.team_count : 0);
+      if (entityCountEl) entityCountEl.textContent = (data.entity_count != null ? data.entity_count : 0);
+
+      if (fteSavingEl) {
+        const fteSaving = (data.fte_saving != null ? Number(data.fte_saving) : 0);
+        fteSavingEl.textContent = `${fteSaving.toFixed(2)} FTE`;
+      }
+      if (globalProdGainEl) {
+        const gpg = (data.prod_gain_global != null ? Number(data.prod_gain_global) : 0);
+        globalProdGainEl.textContent = `${gpg.toFixed(3)}%`;
+      }
+
+      if (automationContainer && aiTaskNatureEl) {
+        if (data.ai_task_nature && String(data.ai_task_nature).trim() !== '') {
+          aiTaskNatureEl.textContent = data.ai_task_nature;
+          if (data.automation_justification && String(data.automation_justification).trim() !== '') {
+            aiTaskNatureEl.setAttribute('title', data.automation_justification);
+          } else {
+            aiTaskNatureEl.removeAttribute('title');
+          }
+          automationContainer.classList.remove('hidden');
+        } else {
+          aiTaskNatureEl.textContent = '';
+          aiTaskNatureEl.removeAttribute('title');
+          automationContainer.classList.add('hidden');
+        }
+      }
+
+      const strategicEl = document.getElementById('modalStrategicReason');
+      if (strategicEl) strategicEl.textContent = data.strategic_reason || '';
+
+      const enhancedTaskContainer = document.getElementById('modalEnhancedTaskContainer');
+      const enhancedTaskElement = document.getElementById('modalEnhancedTask');
+      if (enhancedTaskContainer && enhancedTaskElement) {
+        if (data.enhanced_task && String(data.enhanced_task).trim() !== '') {
+          enhancedTaskElement.textContent = data.enhanced_task;
+          enhancedTaskContainer.classList.remove('hidden');
+        } else {
+          enhancedTaskContainer.classList.add('hidden');
+        }
+      }
+
+      const aiApproachesContainer = document.getElementById('modalAiApproaches');
+      if (aiApproachesContainer) {
+        aiApproachesContainer.innerHTML = '';
+        const approaches = Array.isArray(data.ai_approaches) ? data.ai_approaches : [];
+        if (approaches.length > 0) {
+          approaches.forEach((approach, index) => {
+            const card = document.createElement('div');
+            card.className = 'bg-blue-50 p-4 rounded-lg border border-blue-100';
+
+            if (typeof approach === 'object' && approach) {
+              const approachId = `proc-approach-${index}`;
+              const hasAssists = approach.what_ai_assists_with && approach.what_ai_assists_with.length > 0;
+              const hasAddedValue = approach.added_value && approach.added_value.length > 0;
+
+              let assistsHtml = '';
+              if (hasAssists) {
+                const assistsList = approach.what_ai_assists_with.map(item =>
+                  `<li class="text-sm text-blue-700 mb-1.5 flex items-start">
+                      <i class="fas fa-check-circle text-blue-500 mr-2 mt-0.5 flex-shrink-0"></i>
+                      <span>${item}</span>
+                  </li>`
+                ).join('');
+                assistsHtml = `
+                    <div class="mt-3 pt-3 border-t border-blue-200">
+                        <button type="button" onclick="toggleSection('${approachId}-assists')"
+                                class="flex items-center justify-between w-full text-left text-sm font-semibold text-blue-800 hover:text-blue-900 transition duration-150 py-1">
+                            <span class="flex items-center">
+                                <i class="fas fa-hand-sparkles mr-2 text-blue-600"></i>
+                                What AI Assists With
+                            </span>
+                            <i id="${approachId}-assists-icon" class="fas fa-plus text-blue-600 ml-2"></i>
+                        </button>
+                        <ul id="${approachId}-assists" class="mt-2 space-y-1.5 list-none pl-0 hidden">
+                            ${assistsList}
+                        </ul>
+                    </div>
+                `;
+              }
+
+              let addedValueHtml = '';
+              if (hasAddedValue) {
+                const valueList = approach.added_value.map(item =>
+                  `<li class="text-sm text-green-700 mb-1.5 flex items-start">
+                      <i class="fas fa-star text-green-500 mr-2 mt-0.5 flex-shrink-0"></i>
+                      <span>${item}</span>
+                  </li>`
+                ).join('');
+                addedValueHtml = `
+                    <div class="mt-3 pt-3 border-t border-blue-200">
+                        <button type="button" onclick="toggleSection('${approachId}-value')"
+                                class="flex items-center justify-between w-full text-left text-sm font-semibold text-green-800 hover:text-green-900 transition duration-150 py-1">
+                            <span class="flex items-center">
+                                <i class="fas fa-chart-line mr-2 text-green-600"></i>
+                                Added Value
+                            </span>
+                            <i id="${approachId}-value-icon" class="fas fa-plus text-green-600 ml-2"></i>
+                        </button>
+                        <ul id="${approachId}-value" class="mt-2 space-y-1.5 list-none pl-0 hidden">
+                            ${valueList}
+                        </ul>
+                    </div>
+                `;
+              }
+
+              card.innerHTML = `
+                  <h4 class="font-semibold text-blue-800 mb-2">${approach.ai_approach_name || 'Approach'}</h4>
+                  <p class="text-blue-600 text-sm mb-3">${approach.description || ''}</p>
+                  ${assistsHtml}
+                  ${addedValueHtml}
+              `;
+            } else {
+              card.innerHTML = `
+                  <h4 class="font-semibold text-blue-800 mb-2">AI Approach</h4>
+                  <p class="text-blue-600 text-sm">${String(approach)}</p>
+              `;
+            }
+            aiApproachesContainer.appendChild(card);
+          });
+        } else {
+          aiApproachesContainer.innerHTML = '<p class="text-gray-500">No AI approaches defined</p>';
+        }
+      }
+
+      const skillsContainer = document.getElementById('modalSkills');
+      if (skillsContainer) {
+        skillsContainer.innerHTML = '';
+        (data.required_skills || []).forEach(skill => {
+          const badge = document.createElement('span');
+          badge.className = 'bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm mr-2 mb-2 inline-block';
+          badge.textContent = skill;
+          skillsContainer.appendChild(badge);
+        });
+        if (!skillsContainer.innerHTML) skillsContainer.innerHTML = '<p class="text-gray-500">No skills defined</p>';
+      }
+
+      const competenciesContainer = document.getElementById('modalCompetencies');
+      if (competenciesContainer) {
+        competenciesContainer.innerHTML = '';
+        (data.competency_requirements || []).forEach(c => {
+          const item = document.createElement('li');
+          item.className = 'flex items-start mb-2';
+          item.innerHTML = `<i class="fas fa-check text-green-500 mt-1 mr-2"></i><span>${c}</span>`;
+          competenciesContainer.appendChild(item);
+        });
+        if (!competenciesContainer.innerHTML) competenciesContainer.innerHTML = '<p class="text-gray-500">No competency requirements defined</p>';
+      }
+
+      modalEl.classList.remove('hidden');
+    })
+    .catch(err => {
+      console.error('openProcessTaskModal error:', err);
+      alert('Error loading task details');
+    });
+};
+</script>
+
+<!-- Task Details Modal (reused) -->
+{% include "task_modal.html" %}
+{% endblock %}

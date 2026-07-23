@@ -1,0 +1,1140 @@
+<!-- templates/dashboard.html -->
+{% extends "base.html" %}
+
+{% block content %}
+<div class="min-h-screen">
+    <!-- Header -->
+    <header class="bg-white shadow-sm border-b">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-2 sm:space-y-0">
+                <div>
+                    <h1 class="text-xl sm:text-2xl font-bold text-gray-900 font-['Inter']">Task-level AI Analysis</h1>
+                    <p class="text-gray-600 text-sm font-medium">Monitor and analyze AI impact on tasks</p>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <form action="/set_schema" method="post" class="flex items-center space-x-2">
+                        <input type="hidden" name="next" value="{{ request.full_path }}">
+                        <label class="text-sm font-medium text-gray-700" for="schemaKey">Data:</label>
+                        <select id="schemaKey" name="schema_key" class="border border-gray-300 rounded-lg px-2 py-1 text-sm" onchange="this.form.submit()">
+                            <option value="strategy" {% if schema_key == 'strategy' %}selected{% endif %}>Strategy</option>
+                            <option value="teamwill" {% if schema_key == 'teamwill' %}selected{% endif %}>Banking</option>
+                            <option value="teamwill_v2" {% if schema_key == 'teamwill_v2' %}selected{% endif %}>Teamwill v2</option>
+                            <option value="teamwill_v3" {% if schema_key == 'teamwill_v3' %}selected{% endif %}>Teamwill v3</option>
+                        </select>
+                    </form>
+                    <a href="/" class="text-gray-700 hover:text-blue-600 text-sm font-medium px-3 py-1.5 rounded-md hover:bg-gray-100 transition duration-150 border border-gray-200">
+                        <i class="fas fa-chart-pie mr-1.5"></i>  AI Augmentation Analysis
+                    </a>
+                    <a href="/expected_business_case" class="text-gray-700 hover:text-blue-600 text-sm font-medium px-3 py-1.5 rounded-md hover:bg-gray-100 transition duration-150 border border-gray-200">
+                        <i class="fas fa-briefcase mr-1.5"></i>  Expected Business Case
+                    </a>
+                    <a href="/productivity_scenarios" class="text-gray-700 hover:text-blue-600 text-sm font-medium px-3 py-1.5 rounded-md hover:bg-gray-100 transition duration-150 border border-gray-200">
+                        <i class="fas fa-chart-bar mr-1.5"></i>  Productivity Gain Scenarios
+                    </a>
+                    <a href="/ai_tools" class="text-gray-700 hover:text-blue-600 text-sm font-medium px-3 py-1.5 rounded-md hover:bg-gray-100 transition duration-150 border border-gray-200">
+                        <i class="fas fa-wand-magic-sparkles mr-1.5"></i>  AI Tools
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
+        <!-- Filters Section - Horizontal -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-6">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
+                <h2 class="text-lg font-semibold text-gray-900 font-['Inter'] mb-2 sm:mb-0">Filters</h2>
+                <div class="flex items-center gap-2">
+                    <button onclick="applyDashboardFilters()" class="text-sm text-white bg-blue-600 hover:bg-blue-700 transition duration-150 px-3 py-1.5 rounded-lg">
+                        <i class="fas fa-filter mr-1.5 text-xs"></i> Apply
+                    </button>
+                    <button onclick="resetFilters()" class="text-sm text-gray-600 hover:text-blue-600 transition duration-150 px-3 py-1.5 border border-gray-200 rounded-lg hover:bg-gray-50">
+                        <i class="fas fa-redo-alt mr-1.5 text-xs"></i> Reset All
+                    </button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
+                <div class="relative" data-filter="employee">
+                    <label class="block text-xs font-medium text-gray-700 mb-1.5 font-['Inter']">Employee</label>
+                    <button type="button" onclick="toggleDropdown('employee')" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-left bg-white hover:bg-gray-50 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 font-['Inter']">
+                        <span data-filter-label>All</span>
+                    </button>
+                    <div class="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg hidden max-h-64 overflow-auto" data-filter-menu>
+                        <div class="p-2" data-filter-options>
+                            {% for emp in employees %}
+                            <div class="flex items-center gap-2 px-2 py-1">
+                                <input type="checkbox" id="employee-{{ loop.index0 }}" value="{{ emp }}" class="h-4 w-4" {% if current_employee and (emp in current_employee) %}checked{% endif %}>
+                                <label for="employee-{{ loop.index0 }}" class="text-sm text-gray-700">{{ emp }}</label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="relative" data-filter="role">
+                    <label class="block text-xs font-medium text-gray-700 mb-1.5 font-['Inter']">Role</label>
+                    <button type="button" onclick="toggleDropdown('role')" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-left bg-white hover:bg-gray-50 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 font-['Inter']">
+                        <span data-filter-label>All</span>
+                    </button>
+                    <div class="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg hidden max-h-64 overflow-auto" data-filter-menu>
+                        <div class="p-2" data-filter-options>
+                            {% for role in roles %}
+                            <div class="flex items-center gap-2 px-2 py-1">
+                                <input type="checkbox" id="role-{{ loop.index0 }}" value="{{ role }}" class="h-4 w-4" {% if current_role and (role in current_role) %}checked{% endif %}>
+                                <label for="role-{{ loop.index0 }}" class="text-sm text-gray-700">{{ role }}</label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="relative" data-filter="entity">
+                    <label class="block text-xs font-medium text-gray-700 mb-1.5 font-['Inter']">{% if is_teamwill_like %}Unit{% else %}Entity{% endif %}</label>
+                    <button type="button" onclick="toggleDropdown('entity')" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-left bg-white hover:bg-gray-50 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 font-['Inter']">
+                        <span data-filter-label>All</span>
+                    </button>
+                    <div class="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg hidden max-h-64 overflow-auto" data-filter-menu>
+                        <div class="p-2" data-filter-options>
+                            {% for entity in entities %}
+                            <div class="flex items-center gap-2 px-2 py-1">
+                                <input type="checkbox" id="entity-{{ loop.index0 }}" value="{{ entity }}" class="h-4 w-4" {% if current_entity and (entity in current_entity) %}checked{% endif %}>
+                                <label for="entity-{{ loop.index0 }}" class="text-sm text-gray-700">{{ entity }}</label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="relative" data-filter="team">
+                    <label class="block text-xs font-medium text-gray-700 mb-1.5 font-['Inter']">Team</label>
+                    <button type="button" onclick="toggleDropdown('team')" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-left bg-white hover:bg-gray-50 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 font-['Inter']">
+                        <span data-filter-label>All</span>
+                    </button>
+                    <div class="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg hidden max-h-64 overflow-auto" data-filter-menu>
+                        <div class="p-2" data-filter-options>
+                            {% for team in teams %}
+                            <div class="flex items-center gap-2 px-2 py-1">
+                                <input type="checkbox" id="team-{{ loop.index0 }}" value="{{ team }}" class="h-4 w-4" {% if current_team and (team in current_team) %}checked{% endif %}>
+                                <label for="team-{{ loop.index0 }}" class="text-sm text-gray-700">{{ team }}</label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="relative" data-filter="category">
+                    <label class="block text-xs font-medium text-gray-700 mb-1.5 font-['Inter']">{% if is_teamwill_like %}Country{% else %}Category{% endif %}</label>
+                    <button type="button" onclick="toggleDropdown('category')" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-left bg-white hover:bg-gray-50 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 font-['Inter']">
+                        <span data-filter-label>All</span>
+                    </button>
+                    <div class="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg hidden max-h-64 overflow-auto" data-filter-menu>
+                        <div class="p-2" data-filter-options>
+                            {% for category in categories %}
+                            <div class="flex items-center gap-2 px-2 py-1">
+                                <input type="checkbox" id="category-{{ loop.index0 }}" value="{{ category }}" class="h-4 w-4" {% if current_category and (category in current_category) %}checked{% endif %}>
+                                <label for="category-{{ loop.index0 }}" class="text-sm text-gray-700">{{ category }}</label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="relative" data-filter="sgacogs">
+                    <label class="block text-xs font-medium text-gray-700 mb-1.5 font-['Inter']">{% if is_teamwill_like %}Engagement{% else %}SGACOGS{% endif %}</label>
+                    <button type="button" onclick="toggleDropdown('sgacogs')" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-left bg-white hover:bg-gray-50 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 font-['Inter']">
+                        <span data-filter-label>All</span>
+                    </button>
+                    <div class="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg hidden max-h-64 overflow-auto" data-filter-menu>
+                        <div class="p-2" data-filter-options>
+                            {% for sgacogs in sgacogs_list %}
+                            <div class="flex items-center gap-2 px-2 py-1">
+                                <input type="checkbox" id="sgacogs-{{ loop.index0 }}" value="{{ sgacogs }}" class="h-4 w-4" {% if current_sgacogs and (sgacogs in current_sgacogs) %}checked{% endif %}>
+                                <label for="sgacogs-{{ loop.index0 }}" class="text-sm text-gray-700">{{ sgacogs }}</label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- KPI Cards - Reduced Height -->
+        <div class="grid mobile-kpi-grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-6 justify-items-center">
+            <!-- Overall Task Volume -->
+            <div class="kpi-card bg-white rounded-xl shadow-sm p-4 border border-gray-100 w-full max-w-sm">
+                <div class="flex items-center justify-between">
+                    <div class="flex-1">
+                        <p class="text-gray-500 text-xs font-medium font-['Inter']">Task Volume</p>
+                        <p class="text-2xl font-bold text-gray-900 mt-1 font-['Inter']">{{ total_tasks }}</p>
+                        <p class="text-xs text-gray-400 mt-0.5">Tasks: {{ distinct_tasks }}</p>
+                        <p class="text-xs text-gray-400 mt-0.5">Employees: {{ unique_employees }}</p>
+                    </div>
+                    <div class="bg-blue-50 p-2 rounded-lg">
+                        <i class="fas fa-layer-group text-blue-500 text-base"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AI Relevant -->
+            <div class="kpi-card bg-white rounded-xl shadow-sm p-4 border border-gray-100 w-full max-w-sm">
+                <div class="flex items-center justify-between">
+                    <div class="flex-1">
+                        <p class="text-gray-500 text-xs font-medium font-['Inter']">AI Relevant</p>
+                        <p class="text-2xl font-bold text-gray-900 mt-1 font-['Inter']">{{ ai_relevant_count }}</p>
+                        <p class="text-xs text-gray-400 mt-0.5">Tasks: {{ distinct_ai_relevant_tasks }}</p>
+                        <p class="text-xs text-gray-400 mt-0.5">Exposure: {{ ai_exposure }}%</p>
+                    </div>
+                    <div class="bg-green-50 p-2 rounded-lg">
+                        <i class="fas fa-robot text-green-500 text-base"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Unchanged Tasks -->
+            <div class="kpi-card bg-white rounded-xl shadow-sm p-4 border border-gray-100 w-full max-w-sm">
+                <div class="flex items-center justify-between">
+                    <div class="flex-1">
+                        <p class="text-gray-500 text-xs font-medium font-['Inter']">Unchanged</p>
+                        <p class="text-2xl font-bold text-gray-900 mt-1 font-['Inter']">{{ unchanged_tasks_count }}</p>
+                        <p class="text-xs text-gray-400 mt-0.5">Tasks: {{ distinct_unchanged_tasks }}</p>
+                    </div>
+                    <div class="bg-yellow-50 p-2 rounded-lg">
+                        <i class="fas fa-pause-circle text-yellow-500 text-base"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabs Navigation -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 mb-6">
+            <div class="border-b border-gray-200 px-6">
+                <nav class="-mb-px flex space-x-6" aria-label="Tabs">
+                    <button id="relevant-tab" onclick="switchTab('relevant')"
+                            class="tab-button border-b-2 border-blue-500 py-4 px-2 text-sm font-medium text-blue-600 flex items-center transition duration-150 font-['Inter'] active-tab">
+                        <i class="fas fa-robot mr-2.5 text-sm"></i>
+                        AI Relevant
+                        <span class="ml-2 bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded-full">
+                            {{ relevant_tasks|length }}
+                        </span>
+                    </button>
+                    <button id="unchanged-tab" onclick="switchTab('unchanged')"
+                            class="tab-button border-b-2 border-transparent py-4 px-2 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300 flex items-center transition duration-150 font-['Inter']">
+                        <i class="fas fa-pause-circle mr-2.5 text-sm"></i>
+                        Unchanged
+                        <span class="ml-2 bg-gray-100 text-gray-800 text-xs font-semibold px-2.5 py-0.5 rounded-full">
+                            {{ unchanged_tasks|length }}
+                        </span>
+                    </button>
+                    <button id="ai-forced-unchanged-tab" onclick="switchTab('ai-forced-unchanged')"
+                            class="tab-button border-b-2 border-transparent py-4 px-2 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300 flex items-center transition duration-150 font-['Inter']">
+                        <i class="fas fa-user-edit mr-2.5 text-sm"></i>
+                        Unchanged (Forced)
+                        <span class="ml-2 bg-gray-100 text-gray-800 text-xs font-semibold px-2.5 py-0.5 rounded-full">
+                            {{ ai_forced_unchanged_tasks|length }}
+                        </span>
+                    </button>
+                </nav>
+            </div>
+        </div>
+
+        <!-- Tab Content -->
+        <div id="relevant-content" class="tab-content">
+            {% include "relevant_tasks.html" %}
+        </div>
+
+        <div id="unchanged-content" class="tab-content hidden">
+            <div class="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100">
+                <div class="fixed-height-table">
+                    <div class="min-w-full">
+                        <table class="w-full compact-table sortable-table" data-table="unchanged" data-initial-sort-column="3" data-initial-sort-direction="desc">
+                            <thead class="bg-gray-50 sticky-thead">
+                                <tr>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sortable" data-column="0">
+                                        <div class="flex items-center justify-between cursor-pointer hover:text-gray-700 font-['Inter']">
+                                            <span>Task ID</span>
+                                            <i class="fas fa-sort text-gray-400 ml-1 text-xs"></i>
+                                        </div>
+                                    </th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sortable" data-column="1">
+                                        <div class="flex items-center justify-between cursor-pointer hover:text-gray-700 font-['Inter']">
+                                            <span>Task Title</span>
+                                            <i class="fas fa-sort text-gray-400 ml-1 text-xs"></i>
+                                        </div>
+                                    </th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sortable" data-column="2">
+                                        <div class="flex items-center justify-between cursor-pointer hover:text-gray-700 font-['Inter']">
+                                            <span>Strategic Reason</span>
+                                            <i class="fas fa-sort text-gray-400 ml-1 text-xs"></i>
+                                        </div>
+                                    </th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sortable sort-desc" data-column="3">
+                                        <div class="flex items-center justify-between cursor-pointer hover:text-gray-700 font-['Inter']">
+                                            <span>Total FTE</span>
+                                            <i class="fas fa-sort text-gray-400 ml-1 text-xs"></i>
+                                        </div>
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200" id="unchanged-tasks-body">
+                                {% for task in unchanged_tasks|sort(attribute='task_total_fte', reverse=True) %}
+                                <tr class="hover:bg-gray-50 transition duration-150" data-task-id="{{ task.task_id }}">
+                                    <td class="px-4 py-3" data-sort-value="{{ task.task_id or 0 }}">
+                                        <div class="text-sm font-medium text-gray-900 font-['Inter']">
+                                            {{ task.task_id or 'N/A' }}
+                                        </div>
+                                    </td>
+                                    <td class="px-4 py-3" data-sort-value="{{ task.task_l2 or '' }}">
+                                        <div class="tooltip-container">
+                                            <div class="text-sm font-medium text-gray-900 line-clamp-2 cursor-help font-['Inter']">
+                                                {{ task.task_l2 or 'N/A' }}
+                                                {% if task.already_include_ai %}
+                                                <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-indigo-100 text-indigo-800 align-middle">Already AI</span>
+                                                {% endif %}
+                                            </div>
+                                            {% if task.task_l2 and task.task_l2|length > 80 %}
+                                            <div class="tooltip-content">
+                                                <div class="font-semibold text-white mb-2 text-sm">Task Description:</div>
+                                                <div class="text-gray-300 text-sm leading-relaxed">{{ task.task_l2 }}</div>
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                    <td class="px-4 py-3" data-sort-value="{{ task.concise_strategic_reason or '' }}">
+                                        {% if task.concise_strategic_reason %}
+                                        <div class="tooltip-container">
+                                            <div class="text-sm text-gray-700 line-clamp-2 cursor-help font-['Inter']">
+                                                {{ task.concise_strategic_reason[:120] }}{% if task.concise_strategic_reason|length > 120 %}...{% endif %}
+                                            </div>
+                                            {% if task.concise_strategic_reason|length > 120 %}
+                                            <div class="tooltip-content">
+                                                <div class="font-semibold text-white mb-2 text-sm">Strategic Reason:</div>
+                                                <div class="text-gray-300 text-sm leading-relaxed">{{ task.concise_strategic_reason }}</div>
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                        {% else %}
+                                        <span class="text-gray-500 text-xs font-['Inter']">No strategic reason</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="px-4 py-3" data-sort-value="{{ task.task_total_fte or 0 }}">
+                                        <div class="text-sm text-gray-900 font-medium font-['Inter']">
+                                            {{ "%.2f"|format(task.task_total_fte or 0) }}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="4" class="px-6 py-8 text-center text-gray-500">
+                                        <i class="fas fa-inbox text-2xl text-gray-300 mb-2"></i>
+                                        <p class="text-sm font-['Inter']">No unchanged tasks found</p>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="ai-forced-unchanged-content" class="tab-content hidden">
+            <div class="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100">
+                <div class="fixed-height-table">
+                    <div class="min-w-full">
+                        <table class="w-full compact-table sortable-table" data-table="ai-forced-unchanged" data-initial-sort-column="4" data-initial-sort-direction="desc">
+                            <thead class="bg-gray-50 sticky-thead">
+                                <tr>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sortable" data-column="0">
+                                        <div class="flex items-center justify-between cursor-pointer hover:text-gray-700 font-['Inter']">
+                                            <span>Task ID</span>
+                                            <i class="fas fa-sort text-gray-400 ml-1 text-xs"></i>
+                                        </div>
+                                    </th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sortable" data-column="1">
+                                        <div class="flex items-center justify-between cursor-pointer hover:text-gray-700 font-['Inter']">
+                                            <span>AI Enhanced</span>
+                                            <i class="fas fa-sort text-gray-400 ml-1 text-xs"></i>
+                                        </div>
+                                    </th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sortable" data-column="2">
+                                        <div class="flex items-center justify-between cursor-pointer hover:text-gray-700 font-['Inter']">
+                                            <span>Task Title</span>
+                                            <i class="fas fa-sort text-gray-400 ml-1 text-xs"></i>
+                                        </div>
+                                    </th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sortable" data-column="3">
+                                        <div class="flex items-center justify-between cursor-pointer hover:text-gray-700 font-['Inter']">
+                                            <span>Strategic Reason</span>
+                                            <i class="fas fa-sort text-gray-400 ml-1 text-xs"></i>
+                                        </div>
+                                    </th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sortable sort-desc" data-column="4">
+                                        <div class="flex items-center justify-between cursor-pointer hover:text-gray-700 font-['Inter']">
+                                            <span>Total FTE</span>
+                                            <i class="fas fa-sort text-gray-400 ml-1 text-xs"></i>
+                                        </div>
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200" id="ai-forced-unchanged-tasks-body">
+                                {% for task in ai_forced_unchanged_tasks|sort(attribute='task_total_fte', reverse=True) %}
+                                <tr class="hover:bg-gray-50 transition duration-150" data-task-id="{{ task.task_id }}">
+                                    <td class="px-4 py-3" data-sort-value="{{ task.task_id or 0 }}">
+                                        <div class="text-sm font-medium text-gray-900 font-['Inter']">
+                                            {{ task.task_id or 'N/A' }}
+                                        </div>
+                                    </td>
+                                    <td class="px-4 py-3" data-sort-value="{{ 'No' }}">
+                                        <label class="relative inline-flex items-center cursor-pointer select-none">
+                                            <input type="checkbox" class="sr-only peer ai-reactivate-toggle"
+                                                   aria-label="AI Enhanced"
+                                                   data-task-id="{{ task.task_id }}">
+                                            <div class="w-10 h-5 bg-gray-300 rounded-full transition-colors peer-checked:bg-green-500 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-green-300"></div>
+                                            <div class="absolute left-0.5 top-0.5 w-4 h-4 bg-white rounded-full shadow transform transition-transform peer-checked:translate-x-5"></div>
+                                            <span class="ml-2 text-xs text-gray-700"></span>
+                                        </label>
+                                    </td>
+                                    <td class="px-4 py-3" data-sort-value="{{ task.task_l2 or '' }}">
+                                        <div class="tooltip-container">
+                                            <div class="text-sm font-medium text-gray-900 line-clamp-2 cursor-help font-['Inter']">
+                                                {{ task.task_l2 or 'N/A' }}
+                                            </div>
+                                            {% if task.task_l2 and task.task_l2|length > 80 %}
+                                            <div class="tooltip-content">
+                                                <div class="font-semibold text-white mb-2 text-sm">Task Description:</div>
+                                                <div class="text-gray-300 text-sm leading-relaxed">{{ task.task_l2 }}</div>
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                    <td class="px-4 py-3" data-sort-value="{{ task.concise_strategic_reason or '' }}">
+                                        {% if task.concise_strategic_reason %}
+                                        <div class="tooltip-container">
+                                            <div class="text-sm text-gray-700 line-clamp-2 cursor-help font-['Inter']">
+                                                {{ task.concise_strategic_reason[:120] }}{% if task.concise_strategic_reason|length > 120 %}...{% endif %}
+                                            </div>
+                                            {% if task.concise_strategic_reason|length > 120 %}
+                                            <div class="tooltip-content">
+                                                <div class="font-semibold text-white mb-2 text-sm">Strategic Reason:</div>
+                                                <div class="text-gray-300 text-sm leading-relaxed">{{ task.concise_strategic_reason }}</div>
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                        {% else %}
+                                        <span class="text-gray-500 text-xs font-['Inter']">No strategic reason</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="px-4 py-3" data-sort-value="{{ task.task_total_fte or 0 }}">
+                                        <div class="text-sm text-gray-900 font-medium font-['Inter']">
+                                            {{ "%.2f"|format(task.task_total_fte or 0) }}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="5" class="px-6 py-8 text-center text-gray-500">
+                                        <i class="fas fa-inbox text-2xl text-gray-300 mb-2"></i>
+                                        <p class="text-sm font-['Inter']">No forced unchanged tasks found</p>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- Task Details Modal -->
+{% include "task_modal.html" %}
+
+<!-- Time Saving Modal -->
+<div id="timeSavingModal" class="hidden fixed inset-0 z-50 overflow-y-auto">
+    <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+        <div class="fixed inset-0 transition-opacity bg-black bg-opacity-30" aria-hidden="true" onclick="closeTimeSavingModal()"></div>
+
+        <div class="inline-block align-bottom bg-white rounded-xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-3xl w-full mx-4 sm:mx-0">
+            <div class="bg-white px-6 py-5">
+                <div class="sm:flex sm:items-start">
+                    <div class="mt-3 text-center sm:mt-0 sm:text-left w-full">
+                        <div class="flex justify-between items-start mb-6">
+                            <div class="pr-4">
+                                <h3 class="text-xl font-bold text-gray-900 font-['Inter']">Time Saving Details</h3>
+                            </div>
+                            <button onclick="closeTimeSavingModal()" class="text-gray-400 hover:text-gray-500 flex-shrink-0">
+                                <i class="fas fa-times text-xl"></i>
+                            </button>
+                        </div>
+
+                        <div class="space-y-6">
+                            <!-- Source URL -->
+                            <div id="timeSavingSourceContainer" class="hidden">
+                                <h4 class="text-base font-semibold text-gray-900 mb-3 font-['Inter']">Source</h4>
+                                <div class="bg-blue-50 border-l-4 border-blue-400 p-4 rounded-r-lg">
+                                    <a id="timeSavingSourceLink" href="#" target="_blank" rel="noopener noreferrer"
+                                       class="text-blue-600 hover:text-blue-800 text-sm break-all underline font-['Inter']">
+                                    </a>
+                                </div>
+                            </div>
+
+                            <!-- Time Reduction Breakdown -->
+                            <div>
+                                <h4 class="text-base font-semibold text-gray-900 mb-3 font-['Inter']">Time Saving Breakdown</h4>
+                                <div id="timeSavingBreakdown" class="space-y-4">
+                                    <!-- Les éléments seront ajoutés dynamiquement -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-gray-50 px-6 py-4 sm:flex sm:flex-row-reverse">
+                <button type="button" onclick="closeTimeSavingModal()"
+                        class="w-full sm:w-auto inline-flex justify-center rounded-lg border border-gray-300 shadow-sm px-4 py-2.5 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-1 focus:ring-blue-500 font-['Inter']">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Add Inter font family */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+    /* Compact table styles */
+    .compact-table th, .compact-table td {
+        padding: 0.75rem 1rem !important;
+        font-size: 0.8125rem !important;
+        font-family: 'Inter', sans-serif;
+    }
+
+    .compact-table .wrap {
+        white-space: normal !important;
+        word-break: break-word;
+    }
+
+    .compact-table .nowrap {
+        white-space: nowrap;
+    }
+
+    /* Improved KPI card height */
+    .kpi-card {
+        min-height: auto;
+        height: 100%;
+        transition: all 0.2s ease;
+    }
+
+    .kpi-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+
+    /* Tab improvements */
+    .tab-button {
+        padding-left: 1rem;
+        padding-right: 1rem;
+        white-space: nowrap;
+    }
+
+    /* Active tab styling */
+    .active-tab {
+        border-bottom-color: #3b82f6 !important;
+        color: #3b82f6 !important;
+    }
+
+    .tab-button {
+        position: relative;
+    }
+
+    .tab-button:after {
+        content: '';
+        position: absolute;
+        bottom: -1px;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background-color: #3b82f6;
+        transform: scaleX(0);
+        transition: transform 0.2s ease;
+    }
+
+    .active-tab:after {
+        transform: scaleX(1);
+    }
+
+    /* Fixed height table */
+    .fixed-height-table {
+        max-height: 600px;
+        overflow-y: auto;
+        position: relative;
+    }
+
+    /* Sticky table header */
+    .sticky-thead {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        background-color: #f9fafb;
+    }
+
+    /* Scrollbar styling */
+    .fixed-height-table::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .fixed-height-table::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 3px;
+    }
+
+    .fixed-height-table::-webkit-scrollbar-thumb {
+        background: #c1c1c1;
+        border-radius: 3px;
+    }
+
+    .fixed-height-table::-webkit-scrollbar-thumb:hover {
+        background: #a8a8a8;
+    }
+
+    /* Sorting styles */
+    .sortable {
+        cursor: pointer;
+        user-select: none;
+    }
+
+    .sortable:hover {
+        background-color: #f9fafb;
+    }
+
+    .sortable i.fa-sort {
+        transition: transform 0.2s ease;
+    }
+
+    .sortable.sort-asc i.fa-sort {
+        transform: rotate(180deg);
+        color: #3b82f6;
+    }
+
+    .sortable.sort-desc i.fa-sort {
+        color: #3b82f6;
+    }
+
+    /* Tooltip improvements */
+    .tooltip-content {
+        font-family: 'Inter', sans-serif;
+        font-size: 0.8125rem;
+    }
+
+    /* Filter improvements */
+    .filter-input {
+        font-size: 0.875rem;
+        height: 2.5rem;
+    }
+
+    /* Better spacing */
+    .space-x-6 > * + * {
+        margin-left: 1.5rem;
+    }
+
+    /* AI Toggle styling */
+    .ai-toggle + label {
+        background-color: #e5e7eb;
+    }
+
+    .ai-toggle:checked + label {
+        background-color: #10b981;
+    }
+
+    .ai-toggle:checked + label span {
+        transform: translateX(1rem);
+    }
+
+    .ai-toggle:disabled + label {
+        cursor: not-allowed;
+        opacity: 0.6;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 1024px) {
+        .tab-button {
+            padding-left: 0.75rem;
+            padding-right: 0.75rem;
+            font-size: 0.8125rem;
+        }
+
+        .compact-table th, .compact-table td {
+            padding: 0.625rem 0.75rem !important;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .mobile-kpi-grid {
+            grid-template-columns: 1fr !important;
+            gap: 0.75rem;
+        }
+
+        .kpi-card {
+            max-width: 100% !important;
+        }
+
+        .tab-button span:last-child {
+            display: none;
+        }
+
+        .ai-toggle + label {
+            transform: scale(0.8);
+            transform-origin: left center;
+        }
+    }
+
+    @media (max-width: 640px) {
+        .compact-table th, .compact-table td {
+            padding: 0.5rem 0.625rem !important;
+            font-size: 0.75rem !important;
+        }
+
+        .fixed-height-table {
+            max-height: 500px;
+        }
+    }
+</style>
+
+<script>
+    // Fonction pour initialiser le tri initial
+    function initializeTableSorting() {
+        const tables = document.querySelectorAll('.sortable-table');
+
+        tables.forEach(table => {
+            const tableId = table.getAttribute('data-table');
+            const initialSortColumn = table.getAttribute('data-initial-sort-column');
+            const initialSortDirection = table.getAttribute('data-initial-sort-direction');
+
+            // Vérifier si un tri est déjà sauvegardé
+            const savedState = sessionStorage.getItem(`tableSort_${tableId}`);
+
+            if (!savedState && initialSortColumn !== null) {
+                // Appliquer le tri initial
+                const columnIndex = parseInt(initialSortColumn);
+                const direction = initialSortDirection || 'desc';
+
+                const header = table.querySelectorAll('th.sortable')[columnIndex];
+                if (header) {
+                    header.classList.add(`sort-${direction}`);
+
+                    // Trier la table
+                    sortTable(table, columnIndex, tableId);
+
+                    // Sauvegarder l'état initial
+                    saveSortState(tableId, columnIndex, direction);
+                }
+            } else if (savedState) {
+                // Restaurer l'état sauvegardé
+                const state = JSON.parse(savedState);
+                const header = table.querySelectorAll('th.sortable')[state.column];
+                if (header) {
+                    header.classList.remove('sort-asc', 'sort-desc');
+                    header.classList.add(`sort-${state.direction}`);
+                    sortTable(table, state.column, tableId);
+                }
+            }
+        });
+    }
+
+    // Fonction pour changer d'onglet
+    function switchTab(tabName) {
+        // Mettre à jour les boutons d'onglet
+        const tabs = ['relevant', 'unchanged', 'ai-forced-unchanged'];
+        tabs.forEach(tab => {
+            const tabElement = document.getElementById(`${tab}-tab`);
+            const contentElement = document.getElementById(`${tab}-content`);
+
+            if (tabElement) {
+                tabElement.classList.remove('active-tab');
+                tabElement.classList.remove('border-blue-500', 'text-blue-600');
+                tabElement.classList.add('border-transparent', 'text-gray-500');
+            }
+
+            if (contentElement) {
+                contentElement.classList.add('hidden');
+            }
+        });
+
+        // Activer l'onglet sélectionné
+        const activeTab = document.getElementById(`${tabName}-tab`);
+        const activeContent = document.getElementById(`${tabName}-content`);
+
+        if (activeTab) {
+            activeTab.classList.add('active-tab');
+            activeTab.classList.remove('border-transparent', 'text-gray-500');
+            activeTab.classList.add('border-blue-500', 'text-blue-600');
+        }
+
+        if (activeContent) {
+            activeContent.classList.remove('hidden');
+        }
+
+        // Réinitialiser les event listeners après le changement d'onglet
+        setTimeout(() => {
+            setupTimeSavingButtons();
+            setupViewTaskButtons();
+            setupAiToggles();
+            setupAiReactivateToggles();
+
+            // Initialiser le tri pour la table active
+            const table = document.querySelector(`#${tabName}-content .sortable-table`);
+            if (table) {
+                const tableId = table.getAttribute('data-table');
+                restoreSortStateForTable(tableId);
+            }
+        }, 100);
+    }
+
+    function setupAiReactivateToggles() {
+        document.querySelectorAll('.ai-reactivate-toggle').forEach(input => {
+            input.replaceWith(input.cloneNode(true));
+        });
+
+        document.querySelectorAll('.ai-reactivate-toggle').forEach(input => {
+            input.addEventListener('change', async function() {
+                if (!this.checked) {
+                    return;
+                }
+
+                const confirmed = window.confirm('Reactivate AI for this task?');
+                if (!confirmed) {
+                    this.checked = false;
+                    return;
+                }
+
+                const taskId = this.getAttribute('data-task-id');
+                try {
+                    const resp = await fetch('/api/ai_task_refined/reactivate_ai', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ task_id: taskId })
+                    });
+                    const data = await resp.json();
+                    if (!resp.ok || !data.success) {
+                        alert('Failed to reactivate AI. Please try again.');
+                        this.checked = false;
+                    } else {
+                        window.location.reload();
+                    }
+                } catch (e) {
+                    console.error(e);
+                    alert('Network error. Please try again.');
+                    this.checked = false;
+                }
+            });
+        });
+    }
+
+    // Fonction pour configurer les boutons Time Saving
+    function setupTimeSavingButtons() {
+        // Supprimer les anciens event listeners
+        document.querySelectorAll('.time-saving-btn').forEach(btn => {
+            btn.replaceWith(btn.cloneNode(true));
+        });
+
+        // Ajouter les nouveaux event listeners
+        document.querySelectorAll('.time-saving-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const taskId = this.getAttribute('data-task-id');
+                if (taskId) {
+                    openTimeSavingModal(parseInt(taskId));
+                }
+            });
+        });
+    }
+
+    // Configurer les toggles "AI Enhanced"
+    function setupAiToggles() {
+        // Supprimer les anciens event listeners en clonant les éléments
+        document.querySelectorAll('.ai-toggle:not(:disabled)').forEach(input => {
+            input.replaceWith(input.cloneNode(true));
+        });
+
+        // Ajouter les nouveaux event listeners
+        document.querySelectorAll('.ai-toggle:not(:disabled)').forEach(input => {
+            input.addEventListener('change', async function() {
+                if (!this.checked) {
+                    const confirmed = window.confirm('Move this task from AI Enhanced to Unchanged?');
+                    if (!confirmed) {
+                        this.checked = true;
+                        return;
+                    }
+
+                    const taskId = this.getAttribute('data-task-id');
+
+                    try {
+                        const resp = await fetch('/api/ai_task_refined/mark_unchanged', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ task_id: taskId })
+                        });
+                        const data = await resp.json();
+                        if (!resp.ok || !data.success) {
+                            alert('Failed to move task. Please try again.');
+                            this.checked = true;
+                        } else {
+                            window.location.reload();
+                        }
+                    } catch (e) {
+                        console.error(e);
+                        alert('Network error. Please try again.');
+                        this.checked = true;
+                    }
+                }
+            });
+        });
+    }
+
+    // Fonction pour configurer les boutons View Task
+    function setupViewTaskButtons() {
+        // Supprimer les anciens event listeners
+        document.querySelectorAll('.view-task-btn').forEach(btn => {
+            btn.replaceWith(btn.cloneNode(true));
+        });
+
+        // Ajouter les nouveaux event listeners
+        document.querySelectorAll('.view-task-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const taskId = this.getAttribute('data-task-id');
+                const roleTitle = this.getAttribute('data-role-title') || '';
+                if (taskId) {
+                    openTaskModal(parseInt(taskId), roleTitle);
+                }
+            });
+        });
+    }
+
+    // Initialiser le tri pour une table spécifique
+    function initTableSortingForTab(tabName) {
+        const table = document.querySelector(`#${tabName}-content .sortable-table`);
+        if (table) {
+            const tableId = table.getAttribute('data-table');
+            const headers = table.querySelectorAll('th.sortable');
+
+            headers.forEach((header, index) => {
+                // Supprimer les anciens écouteurs
+                header.replaceWith(header.cloneNode(true));
+
+                // Récupérer le nouveau header
+                const newHeader = table.querySelectorAll('th.sortable')[index];
+
+                // Ajouter le nouvel écouteur
+                newHeader.addEventListener('click', () => {
+                    sortTable(table, index, tableId);
+                });
+            });
+
+            // Restaurer l'état du tri si disponible
+            restoreSortStateForTable(tableId);
+        }
+    }
+
+    // Fonction pour trier une table
+    function sortTable(table, columnIndex, tableId) {
+        const tbody = table.querySelector('tbody');
+        const rows = Array.from(tbody.querySelectorAll('tr'));
+        const header = table.querySelectorAll('th.sortable')[columnIndex];
+
+        // Déterminer la direction de tri
+        const isAsc = header.classList.contains('sort-asc');
+        const direction = isAsc ? 'desc' : 'asc';
+
+        // Réinitialiser les classes de tri sur tous les headers
+        table.querySelectorAll('th.sortable').forEach(h => {
+            h.classList.remove('sort-asc', 'sort-desc');
+        });
+
+        // Appliquer la classe de tri au header cliqué
+        header.classList.add(`sort-${direction}`);
+
+        // Trier les lignes
+        rows.sort((a, b) => {
+            const aCell = a.querySelector(`td:nth-child(${columnIndex + 1})`);
+            const bCell = b.querySelector(`td:nth-child(${columnIndex + 1})`);
+
+            let aValue = aCell ? (aCell.getAttribute('data-sort-value') || aCell.textContent.trim()) : '';
+            let bValue = bCell ? (bCell.getAttribute('data-sort-value') || bCell.textContent.trim()) : '';
+
+            // Conversion pour les nombres
+            if (columnIndex === 0) { // Task ID
+                aValue = parseInt(aValue) || 0;
+                bValue = parseInt(bValue) || 0;
+            } else if (columnIndex === 1) { // AI Enhanced (tri par texte "Yes"/"No")
+                aValue = aValue.toLowerCase();
+                bValue = bValue.toLowerCase();
+            } else if (columnIndex === 4) { // Total FTE
+                aValue = parseFloat(aValue) || 0;
+                bValue = parseFloat(bValue) || 0;
+            }
+
+            // Comparaison
+            if (direction === 'asc') {
+                if (columnIndex === 1) {
+                    // Pour AI Enhanced, "No" vient avant "Yes"
+                    if (aValue === 'no' && bValue === 'yes') return -1;
+                    if (aValue === 'yes' && bValue === 'no') return 1;
+                }
+                return aValue > bValue ? 1 : aValue < bValue ? -1 : 0;
+            } else {
+                if (columnIndex === 1) {
+                    // Pour AI Enhanced, "Yes" vient avant "No"
+                    if (aValue === 'yes' && bValue === 'no') return -1;
+                    if (aValue === 'no' && bValue === 'yes') return 1;
+                }
+                return aValue < bValue ? 1 : aValue > bValue ? -1 : 0;
+            }
+        });
+
+        // Réorganiser les lignes
+        rows.forEach(row => {
+            tbody.appendChild(row);
+        });
+
+        // Sauvegarder l'état du tri
+        saveSortState(tableId, columnIndex, direction);
+    }
+
+    // Fonction pour sauvegarder l'état du tri
+    function saveSortState(tableId, columnIndex, direction) {
+        const sortState = {
+            table: tableId,
+            column: columnIndex,
+            direction: direction
+        };
+        sessionStorage.setItem(`tableSort_${tableId}`, JSON.stringify(sortState));
+    }
+
+    // Fonction pour restaurer l'état du tri pour une table
+    function restoreSortStateForTable(tableId) {
+        const savedState = sessionStorage.getItem(`tableSort_${tableId}`);
+        if (savedState) {
+            const state = JSON.parse(savedState);
+            const table = document.querySelector(`[data-table="${tableId}"]`);
+            if (table) {
+                const header = table.querySelectorAll('th.sortable')[state.column];
+                if (header) {
+                    header.classList.remove('sort-asc', 'sort-desc');
+                    header.classList.add(`sort-${state.direction}`);
+                    sortTable(table, state.column, tableId);
+                }
+            }
+        }
+    }
+
+    // Fonction pour ouvrir la modal Time Saving
+    function openTimeSavingModal(taskId) {
+        const modal = document.getElementById('timeSavingModal');
+        const dataElement = document.getElementById(`time-saving-data-${taskId}`);
+
+        if (!dataElement) {
+            console.error('Time saving data not found for task:', taskId);
+            return;
+        }
+
+        let urlFte = '';
+        let fteExplanation = [];
+
+        try {
+            const data = JSON.parse(dataElement.textContent);
+            urlFte = data.url_fte || '';
+            fteExplanation = data.fte_explanation || [];
+        } catch (e) {
+            console.error('Error parsing time saving data:', e);
+            return;
+        }
+
+        // Afficher/masquer la source
+        const sourceContainer = document.getElementById('timeSavingSourceContainer');
+        const sourceLink = document.getElementById('timeSavingSourceLink');
+        if (urlFte) {
+            sourceContainer.classList.remove('hidden');
+            sourceLink.href = urlFte;
+            sourceLink.textContent = urlFte;
+        } else {
+            sourceContainer.classList.add('hidden');
+        }
+
+        // Remplir le breakdown
+        const breakdownContainer = document.getElementById('timeSavingBreakdown');
+        breakdownContainer.innerHTML = '';
+
+        if (fteExplanation && fteExplanation.length > 0) {
+            fteExplanation.forEach((item, index) => {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = `mb-4 pb-4 ${index < fteExplanation.length - 1 ? 'border-b border-gray-200' : ''}`;
+
+                itemDiv.innerHTML = `
+                    <div class="flex justify-between items-start mb-2">
+                        <span class="font-medium text-gray-900 text-sm font-['Inter']">${item.task || 'N/A'}</span>
+                        <span class="text-green-600 text-sm font-bold ml-2 font-['Inter']">
+                            ${item.time_reduction_percent || 0}%
+                        </span>
+                    </div>
+                    <div class="text-gray-700 text-sm leading-relaxed font-['Inter']">
+                        ${item.explanation || 'No explanation provided'}
+                    </div>
+                `;
+
+                breakdownContainer.appendChild(itemDiv);
+            });
+        } else {
+            breakdownContainer.innerHTML = '<p class="text-gray-500 text-sm font-[\'Inter\']">No time reduction breakdown available.</p>';
+        }
+
+        // Afficher la modal
+        modal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+    }
+
+    // Fonction pour fermer la modal Time Saving
+    function closeTimeSavingModal() {
+        const modal = document.getElementById('timeSavingModal');
+        modal.classList.add('hidden');
+        document.body.style.overflow = '';
+    }
+
+    // Fermer la modal avec la touche Escape
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape') {
+            closeTimeSavingModal();
+        }
+    });
+
+    // Initialiser au chargement
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialiser le tri initial pour toutes les tables
+        initializeTableSorting();
+
+        // Initialiser le tri pour l'onglet actif
+        initTableSortingForTab('relevant');
+
+        // Configurer les boutons
+        setupTimeSavingButtons();
+        setupViewTaskButtons();
+        setupAiToggles();
+        setupAiReactivateToggles();
+
+        ['employee', 'role', 'entity', 'team', 'category', 'sgacogs'].forEach(setFilterLabel);
+
+        document.querySelectorAll('[data-filter] input[type="checkbox"]').forEach(el => {
+            el.addEventListener('change', () => {
+                const filterName = el.closest('[data-filter]')?.getAttribute('data-filter');
+                updateFilters(filterName || null);
+            });
+        });
+    });
+
+    function applyDashboardFilters() {
+        closeAllDropdowns();
+        applyFilters();
+    }
+</script>
+{% endblock %}

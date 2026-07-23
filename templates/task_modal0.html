@@ -1,0 +1,115 @@
+<!-- templates/task_modal.html -->
+<!-- Task Details Modal -->
+<div id="taskModal" class="hidden fixed inset-0 z-50 overflow-y-auto">
+    <div class="flex items-center justify-center min-h-screen px-2 sm:px-4 pt-4 pb-10 sm:pb-20 text-center sm:block sm:p-0">
+        <div class="fixed inset-0 transition-opacity bg-black bg-opacity-30" aria-hidden="true" onclick="closeTaskModal()"></div>
+
+        <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl w-full max-w-[95vw] mx-2 sm:mx-0">
+            <div class="bg-white px-4 sm:px-6 py-4 sm:py-5">
+                <div class="sm:flex sm:items-start">
+                    <div class="mt-3 text-center sm:mt-0 sm:text-left w-full">
+                        <div class="flex justify-between items-start mb-4 sm:mb-6">
+                            <div class="pr-4">
+                                <h3 id="modalTaskTitle" class="text-lg sm:text-2xl font-bold text-gray-900 break-words"></h3>
+                                <div class="mt-2 flex flex-wrap items-center gap-2 sm:gap-4">
+                                    <span class="text-gray-600 text-sm">
+                                        {% if is_teamwill_like %}
+                                        Units: <span id="modalEntityCount" class="font-medium"></span>
+                                        {% else %}
+                                        Category: <span id="modalCategory" class="font-medium"></span>
+                                        - Entities: <span id="modalEntityCount" class="font-medium"></span>
+                                        {% endif %}
+
+                                        - Roles: <span id="modalRoleCount" class="font-medium"></span>
+                                        - Teams: <span id="modalTeamCount" class="font-medium"></span>
+                                        - Employees: <span id="modalEmployeeCount" class="font-medium"></span>
+                                    </span>
+                                </div>
+                                <div class="mt-2 flex flex-wrap items-center gap-2 sm:gap-4">
+                                    <span class="text-gray-600 text-sm">
+                                        FTE Saving: <span id="modalFteSaving" class="font-medium"></span>
+                                        - Global Productivity Gain: <span id="modalGlobalProdGain" class="font-medium"></span>
+                                    </span>
+                                </div>
+                                {% if show_cost %}
+                                <div class="mt-2 flex flex-wrap items-center gap-2 sm:gap-4 border-t border-gray-100 pt-2 hidden">
+                                    <div class="flex items-center gap-4">
+                                        <div class="flex flex-col">
+                                            <span class="text-[10px] uppercase text-gray-400 font-bold">Current Cost</span>
+                                            <span id="modalCurrentCost" class="text-sm font-semibold text-gray-900"></span>
+                                        </div>
+                                        <div class="flex flex-col">
+                                            <span class="text-[10px] uppercase text-gray-400 font-bold">Savings</span>
+                                            <span id="modalSavings" class="text-sm font-semibold text-green-600"></span>
+                                        </div>
+                                        <div class="flex flex-col">
+                                            <span class="text-[10px] uppercase text-gray-400 font-bold">AI Cost</span>
+                                            <span id="modalAiCost" class="text-sm font-semibold text-purple-600"></span>
+                                        </div>
+                                        <div class="flex flex-col">
+                                            <span class="text-[10px] uppercase text-gray-400 font-bold">Infra Cost</span>
+                                            <span id="modalInfraCost" class="text-sm font-semibold text-indigo-600"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endif %}
+                            </div>
+                            <button onclick="closeTaskModal()" class="text-gray-400 hover:text-gray-500 flex-shrink-0">
+                                <i class="fas fa-times text-xl sm:text-2xl"></i>
+                            </button>
+                        </div>
+
+                        <div class="space-y-6 sm:space-y-8">
+                            <!-- Enhanced Task -->
+                            <div id="modalEnhancedTaskContainer" class="hidden">
+                                <div class="flex items-center justify-between mb-1 sm:mb-2">
+                                    <h4 class="text-base sm:text-lg font-semibold text-gray-900">
+                                        Enhanced Task
+                                    </h4>
+                                    <div id="modalAutomationTypeContainer" class="hidden ml-3">
+                                        <span id="modalAiTaskNature"
+                                              class="inline-flex items-center px-2.5 py-1 rounded-full bg-indigo-50 text-indigo-700 text-xs font-medium border border-indigo-200"
+                                              title="">
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="bg-green-50 border-l-4 border-green-400 p-4 rounded-r-lg">
+                                    <p id="modalEnhancedTask" class="text-gray-800 text-sm sm:text-base"></p>
+                                </div>
+                            </div>
+
+                            <!-- Strategic Reason -->
+                            <div>
+                                <h4 class="text-base sm:text-lg font-semibold text-gray-900 mb-2 sm:mb-3">Reason</h4>
+                                <p id="modalStrategicReason" class="text-gray-700 bg-gray-50 p-3 sm:p-4 rounded-lg text-sm sm:text-base"></p>
+                            </div>
+
+                            <!-- AI Approaches -->
+                            <div>
+                                <h4 class="text-base sm:text-lg font-semibold text-gray-900 mb-2 sm:mb-3">AI Approaches</h4>
+                                <div id="modalAiApproaches" class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4"></div>
+                            </div>
+
+                            <!-- Required Skills -->
+                            <div>
+                                <h4 class="text-base sm:text-lg font-semibold text-gray-900 mb-2 sm:mb-3">Required Skills</h4>
+                                <div id="modalSkills" class="flex flex-wrap gap-2"></div>
+                            </div>
+
+                            <!-- Competency Requirements -->
+                            <div>
+                                <h4 class="text-base sm:text-lg font-semibold text-gray-900 mb-2 sm:mb-3">Competency Requirements</h4>
+                                <ul id="modalCompetencies" class="space-y-2"></ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-gray-50 px-4 sm:px-6 py-3 sm:flex sm:flex-row-reverse">
+                <button type="button" onclick="closeTaskModal()" class="w-full sm:w-auto inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:ml-3">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

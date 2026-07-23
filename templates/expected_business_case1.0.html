@@ -1,0 +1,983 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="min-h-screen">
+    <header class="bg-white shadow-sm border-b">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-2 sm:space-y-0">
+                <div>
+                    <h1 class="text-xl sm:text-2xl font-bold text-gray-900 font-['Inter']">Expected Business Case</h1>
+                    <p class="text-gray-600 text-sm font-medium">KPIs and phased delivery timeline</p>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <form action="/set_schema" method="post" class="flex items-center space-x-2">
+                        <input type="hidden" name="next" value="{{ request.full_path }}">
+                        <label class="text-sm font-medium text-gray-700" for="schemaKey">Data:</label>
+                        <select id="schemaKey" name="schema_key" class="border border-gray-300 rounded-lg px-2 py-1 text-sm" onchange="this.form.submit()">
+                            <option value="strategy" {% if schema_key == 'strategy' %}selected{% endif %}>Strategy</option>
+                            <option value="teamwill" {% if schema_key == 'teamwill' %}selected{% endif %}>Teamwill</option>
+                            <option value="teamwill_v2" {% if schema_key == 'teamwill_v2' %}selected{% endif %}>Teamwill v2</option>
+                        </select>
+                    </form>
+                    <a href="/" class="text-gray-700 hover:text-blue-600 text-sm font-medium px-3 py-1.5 rounded-md hover:bg-gray-100 transition duration-150 border border-gray-200">
+                        <i class="fas fa-chart-pie mr-1.5"></i>  AI Augmentation Analysis
+                    </a>
+                    <a href="/dashboard" class="text-gray-700 hover:text-blue-600 text-sm font-medium px-3 py-1.5 rounded-md hover:bg-gray-100 transition duration-150 border border-gray-200">
+                        <i class="fas fa-tasks mr-1.5"></i>  Task-level AI Analysis
+                    </a>
+                    <a href="/productivity_scenarios" class="text-gray-700 hover:text-blue-600 text-sm font-medium px-3 py-1.5 rounded-md hover:bg-gray-100 transition duration-150 border border-gray-200">
+                        <i class="fas fa-chart-bar mr-1.5"></i>  Productivity Gain Scenarios
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-6">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
+                <h2 class="text-lg font-semibold text-gray-900 font-['Inter'] mb-2 sm:mb-0">Filters</h2>
+                <div class="flex items-center gap-2">
+                    <button onclick="applyEbcFilters()" class="text-sm text-white bg-blue-600 hover:bg-blue-700 transition duration-150 px-3 py-1.5 rounded-lg">
+                        <i class="fas fa-filter mr-1.5 text-xs"></i> Apply
+                    </button>
+                    <button onclick="resetEbcFilters()" class="text-sm text-gray-600 hover:text-blue-600 transition duration-150 px-3 py-1.5 border border-gray-200 rounded-lg hover:bg-gray-50">
+                        <i class="fas fa-redo-alt mr-1.5 text-xs"></i> Reset All
+                    </button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
+                <div class="relative" data-filter="employee">
+                    <label class="block text-xs font-medium text-gray-700 mb-1.5 font-['Inter']">Employee</label>
+                    <button type="button" onclick="toggleDropdown('employee')" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-left bg-white hover:bg-gray-50 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 font-['Inter']">
+                        <span data-filter-label>ALL</span>
+                    </button>
+                    <div class="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg hidden max-h-64 overflow-auto" data-filter-menu>
+                        <div class="p-2" data-filter-options>
+                            {% for emp in employees %}
+                            <div class="flex items-center gap-2 px-2 py-1">
+                                <input type="checkbox" id="employee-{{ loop.index0 }}" value="{{ emp }}" class="h-4 w-4" {% if current_employee and (emp in current_employee) %}checked{% endif %}>
+                                <label for="employee-{{ loop.index0 }}" class="text-sm text-gray-700">{{ emp }}</label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="relative" data-filter="role">
+                    <label class="block text-xs font-medium text-gray-700 mb-1.5 font-['Inter']">Role</label>
+                    <button type="button" onclick="toggleDropdown('role')" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-left bg-white hover:bg-gray-50 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 font-['Inter']">
+                        <span data-filter-label>ALL</span>
+                    </button>
+                    <div class="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg hidden max-h-64 overflow-auto" data-filter-menu>
+                        <div class="p-2" data-filter-options>
+                            {% for role in roles %}
+                            <div class="flex items-center gap-2 px-2 py-1">
+                                <input type="checkbox" id="role-{{ loop.index0 }}" value="{{ role }}" class="h-4 w-4" {% if current_role and (role in current_role) %}checked{% endif %}>
+                                <label for="role-{{ loop.index0 }}" class="text-sm text-gray-700">{{ role }}</label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="relative" data-filter="entity">
+                    <label class="block text-xs font-medium text-gray-700 mb-1.5 font-['Inter']">{% if is_teamwill_like %}Unit{% else %}Entity{% endif %}</label>
+                    <button type="button" onclick="toggleDropdown('entity')" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-left bg-white hover:bg-gray-50 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 font-['Inter']">
+                        <span data-filter-label>ALL</span>
+                    </button>
+                    <div class="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg hidden max-h-64 overflow-auto" data-filter-menu>
+                        <div class="p-2" data-filter-options>
+                            {% for entity in entities %}
+                            <div class="flex items-center gap-2 px-2 py-1">
+                                <input type="checkbox" id="entity-{{ loop.index0 }}" value="{{ entity }}" class="h-4 w-4" {% if current_entity and (entity in current_entity) %}checked{% endif %}>
+                                <label for="entity-{{ loop.index0 }}" class="text-sm text-gray-700">{{ entity }}</label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="relative" data-filter="team">
+                    <label class="block text-xs font-medium text-gray-700 mb-1.5 font-['Inter']">Team</label>
+                    <button type="button" onclick="toggleDropdown('team')" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-left bg-white hover:bg-gray-50 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 font-['Inter']">
+                        <span data-filter-label>ALL</span>
+                    </button>
+                    <div class="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg hidden max-h-64 overflow-auto" data-filter-menu>
+                        <div class="p-2" data-filter-options>
+                            {% for team in teams %}
+                            <div class="flex items-center gap-2 px-2 py-1">
+                                <input type="checkbox" id="team-{{ loop.index0 }}" value="{{ team }}" class="h-4 w-4" {% if current_team and (team in current_team) %}checked{% endif %}>
+                                <label for="team-{{ loop.index0 }}" class="text-sm text-gray-700">{{ team }}</label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="relative" data-filter="category">
+                    <label class="block text-xs font-medium text-gray-700 mb-1.5 font-['Inter']">{% if is_teamwill_like %}Country{% else %}Category{% endif %}</label>
+                    <button type="button" onclick="toggleDropdown('category')" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-left bg-white hover:bg-gray-50 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 font-['Inter']">
+                        <span data-filter-label>ALL</span>
+                    </button>
+                    <div class="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg hidden max-h-64 overflow-auto" data-filter-menu>
+                        <div class="p-2" data-filter-options>
+                            {% for category in categories %}
+                            <div class="flex items-center gap-2 px-2 py-1">
+                                <input type="checkbox" id="category-{{ loop.index0 }}" value="{{ category }}" class="h-4 w-4" {% if current_category and (category in current_category) %}checked{% endif %}>
+                                <label for="category-{{ loop.index0 }}" class="text-sm text-gray-700">{{ category }}</label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="relative" data-filter="sgacogs">
+                    <label class="block text-xs font-medium text-gray-700 mb-1.5 font-['Inter']">{% if is_teamwill_like %}Engagement{% else %}SGACOGS{% endif %}</label>
+                    <button type="button" onclick="toggleDropdown('sgacogs')" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-left bg-white hover:bg-gray-50 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 font-['Inter']">
+                        <span data-filter-label>ALL</span>
+                    </button>
+                    <div class="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg hidden max-h-64 overflow-auto" data-filter-menu>
+                        <div class="p-2" data-filter-options>
+                            {% for sgacogs in sgacogs_list %}
+                            <div class="flex items-center gap-2 px-2 py-1">
+                                <input type="checkbox" id="sgacogs-{{ loop.index0 }}" value="{{ sgacogs }}" class="h-4 w-4" {% if current_sgacogs and (sgacogs in current_sgacogs) %}checked{% endif %}>
+                                <label for="sgacogs-{{ loop.index0 }}" class="text-sm text-gray-700">{{ sgacogs }}</label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <div class="kpi-card bg-white rounded-xl shadow-sm p-4 border border-gray-100" title="SG&A tasks wrongly allocated to value creation FTEs">
+                <div class="flex items-center justify-between">
+                    <div class="flex-1">
+                        <p class="text-gray-500 text-xs font-medium font-['Inter']">Resource Misalignment</p>
+                        <p class="text-2xl font-bold text-gray-900 mt-1 font-['Inter']" id="kpi-resource-misalignment">Not applicable</p>
+                        <p class="text-[10px] leading-tight text-gray-500 mt-0.5">
+                            Misaligned total: <span id="kpi-rm-fte-ratio">Not applicable</span>
+                        </p>
+                        <p class="text-[10px] leading-tight text-gray-500 mt-0.5">
+                            Potential FTE savings: <span id="kpi-rm-potential-fte-savings">Not applicable</span>
+                            <!--Current <span id="kpi-rm-current-fte">Not applicable</span>
+                            -> New <span id="kpi-rm-new-fte">Not applicable</span>-->
+                            <br>
+                            Global productivity gain: <span id="kpi-rm-global-prod-gain">Not applicable</span>
+                        </p>
+                    </div>
+                    <div class="bg-blue-50 p-2 rounded-lg">
+                        <i class="fas fa-sitemap text-blue-500 text-base"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="kpi-card bg-white rounded-xl shadow-sm p-4 border border-gray-100">
+                <div class="flex items-center justify-between">
+                    <div class="flex-1">
+                        <p class="text-gray-500 text-xs font-medium font-['Inter']">AI Automation Potential</p>
+                        <p class="text-2xl font-bold text-gray-900 mt-1 font-['Inter']" id="kpi-automation-potential">0.0%</p>
+                        <p class="text-[10px] leading-tight text-gray-500 mt-0.5">Percentage of tasks ready for automation and augmentation </p>
+                    </div>
+                    <div class="bg-green-50 p-2 rounded-lg">
+                        <i class="fas fa-robot text-green-500 text-base"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="kpi-card bg-white rounded-xl shadow-sm p-4 border border-gray-100">
+                <div class="flex items-center justify-between">
+                    <div class="flex-1">
+                        <p class="text-gray-500 text-xs font-medium font-['Inter']">Cost Reduction Potential</p>
+                        <p class="text-2xl font-bold text-gray-900 mt-1 font-['Inter']" id="kpi-cost-reduction">0.0%</p>
+                        <p class="text-[10px] leading-tight text-gray-500 mt-0.5">
+                            FTEs: Current <span id="kpi-cost-current-fte">Not applicable</span>
+                            -> New <span id="kpi-cost-new-fte">Not applicable</span>
+                            <br>
+                            FTE savings: <span id="kpi-cost-fte-savings">Not applicable</span>
+                        </p>
+                    </div>
+                    <div class="bg-purple-50 p-2 rounded-lg">
+                        <i class="fas fa-piggy-bank text-purple-500 text-base"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="kpi-card bg-white rounded-xl shadow-sm p-4 border border-gray-100">
+                <div class="flex items-center justify-between">
+                    <div class="flex-1">
+                        <p class="text-gray-500 text-xs font-medium font-['Inter']">Productivity Boost</p>
+                        <p class="text-2xl font-bold text-gray-900 mt-1 font-['Inter']" id="kpi-productivity-boost">0.0%</p>
+                        <p class="text-[10px] leading-tight text-gray-500 mt-0.5">
+                            Effective net working time in core functions
+                        </p>
+                    </div>
+                    <div class="bg-indigo-50 p-2 rounded-lg">
+                        <i class="fas fa-rocket text-indigo-500 text-base"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+            <div class="kpi-card bg-white rounded-xl shadow-sm p-4 border border-gray-100">
+                <div class="flex items-center justify-between">
+                    <div class="flex-1">
+                        <p class="text-gray-500 text-xs font-medium font-['Inter']">Productivity Gain: Support processes</p>
+                        <p class="text-2xl font-bold text-gray-900 mt-1 font-['Inter']" id="kpi-cat-support-prod">Not applicable</p>
+                        <p class="text-[10px] leading-tight text-gray-500 mt-0.5">
+                            Current FTEs: <span id="kpi-cat-support-current">Not applicable</span>
+                            <br>
+                            FTE savings: <span id="kpi-cat-support-saving">Not applicable</span>
+                        </p>
+                    </div>
+                    <div class="bg-purple-50 p-2 rounded-lg">
+                        <i class="fas fa-hands-helping text-purple-500 text-base"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="kpi-card bg-white rounded-xl shadow-sm p-4 border border-gray-100">
+                <div class="flex items-center justify-between">
+                    <div class="flex-1">
+                        <p class="text-gray-500 text-xs font-medium font-['Inter']">Productivity Gain: Management processes</p>
+                        <p class="text-2xl font-bold text-gray-900 mt-1 font-['Inter']" id="kpi-cat-management-prod">Not applicable</p>
+                        <p class="text-[10px] leading-tight text-gray-500 mt-0.5">
+                            Current FTEs: <span id="kpi-cat-management-current">Not applicable</span>
+                            <br>
+                            FTE savings: <span id="kpi-cat-management-saving">Not applicable</span>
+                        </p>
+                    </div>
+                    <div class="bg-blue-50 p-2 rounded-lg">
+                        <i class="fas fa-briefcase text-blue-500 text-base"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="kpi-card bg-white rounded-xl shadow-sm p-4 border border-gray-100">
+                <div class="flex items-center justify-between">
+                    <div class="flex-1">
+                        <p class="text-gray-500 text-xs font-medium font-['Inter']">Productivity Gain: Value creation processes (Core)</p>
+                        <p class="text-2xl font-bold text-gray-900 mt-1 font-['Inter']" id="kpi-cat-core-prod">Not applicable</p>
+                        <p class="text-[10px] leading-tight text-gray-500 mt-0.5">
+                            Current FTEs: <span id="kpi-cat-core-current">Not applicable</span>
+                            <br>
+                            FTE savings: <span id="kpi-cat-core-saving">Not applicable</span>
+                        </p>
+                    </div>
+                    <div class="bg-green-50 p-2 rounded-lg">
+                        <i class="fas fa-bullseye text-green-500 text-base"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-lg font-semibold text-gray-900 font-['Inter']">18-month transformation timeline (Quick Wins, Support Processes)</h2>
+                <p class="text-xs text-gray-500">Click a group to see Quick Wins transformed tasks</p>
+            </div>
+
+            <div class="text-xs text-gray-600 mb-3">
+                <span id="ebc-summary-tasks">0</span> AI Impacted tasks | Employees: <span id="ebc-summary-employees">0</span> | Roles: <span id="ebc-summary-roles">0</span> | Teams: <span id="ebc-summary-teams">0</span> | Entities: <span id="ebc-summary-entities">0</span> | Global productivity gain: <span id="ebc-summary-prod">0.000%</span>
+            </div>
+
+            <div class="flex items-center justify-end mb-2">
+                <label for="top-roles-select" class="text-xs text-gray-600 mr-2">Top roles:</label>
+                <select id="top-roles-select" class="border border-gray-300 rounded-lg px-2 py-1 text-xs bg-white">
+                    <option value="">ALL</option>
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5" selected>5</option>
+                    <option value="10">10</option>
+                    <option value="20">20</option>
+                </select>
+            </div>
+
+            <div class="relative">
+                <div class="absolute left-0 right-0 top-4 h-0.5 bg-orange-200"></div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
+                    <div class="relative">
+                        <div class="w-3 h-3 rounded-full bg-orange-500 mx-auto relative z-10"></div>
+                        <div class="mt-3 text-center">
+                            <div class="text-xs text-gray-500">Month 0</div>
+                            <div class="text-sm font-semibold text-blue-600">Project kickoff</div>
+                        </div>
+                    </div>
+                    <button id="qw-bottom" type="button" class="relative group" onclick="loadQuickWinsGroup('bottom')">
+                        <div class="w-3 h-3 rounded-full bg-orange-500 mx-auto relative z-10 group-hover:scale-110 transition"></div>
+                        <div class="mt-3 text-center">
+                            <div class="text-xs text-gray-500">Month 6</div>
+                            <div class="text-sm font-semibold text-blue-600">Phase 1</div>
+                            <div class="text-xs text-gray-600 mt-1">Tasks: <span id="qw-bottom-count">0</span></div>
+                            <div class="text-[11px] text-gray-600">Cost savings: <span id="qw-bottom-cost">0.0%</span></div>
+                            <div class="text-[11px] text-gray-600">Prod. gain: <span id="qw-bottom-prod">0.000%</span></div>
+                        </div>
+                    </button>
+
+                    <button id="qw-middle" type="button" class="relative group" onclick="loadQuickWinsGroup('middle')">
+                        <div class="w-3 h-3 rounded-full bg-orange-500 mx-auto relative z-10 group-hover:scale-110 transition"></div>
+                        <div class="mt-3 text-center">
+                            <div class="text-xs text-gray-500">Month 12</div>
+                            <div class="text-sm font-semibold text-blue-600">Phase 2</div>
+                            <div class="text-xs text-gray-600 mt-1">Tasks: <span id="qw-middle-count">0</span></div>
+                            <div class="text-[11px] text-gray-600">Cost savings: <span id="qw-middle-cost">0.0%</span></div>
+                            <div class="text-[11px] text-gray-600">Prod. gain: <span id="qw-middle-prod">0.000%</span></div>
+                        </div>
+                    </button>
+
+                    <button id="qw-top" type="button" class="relative group" onclick="loadQuickWinsGroup('top')">
+                        <div class="w-3 h-3 rounded-full bg-orange-500 mx-auto relative z-10 group-hover:scale-110 transition"></div>
+                        <div class="mt-3 text-center">
+                            <div class="text-xs text-gray-500">Month 18</div>
+                            <div class="text-sm font-semibold text-blue-600">Phase 3</div>
+                            <div class="text-xs text-gray-600 mt-1">Tasks: <span id="qw-top-count">0</span></div>
+                            <div class="text-[11px] text-gray-600">Cost savings: <span id="qw-top-cost">0.0%</span></div>
+                            <div class="text-[11px] text-gray-600">Prod. gain: <span id="qw-top-prod">0.000%</span></div>
+                        </div>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Nouveau Timeline 2 - Distribution Équitable -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6 mt-8">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-lg font-semibold text-gray-900 font-['Inter']">18-month transformation timeline (Quick Wins, Support Processes)</h2>
+                <p class="text-xs text-gray-500">Click a group to see tasks transformed with equal productivity distribution</p>
+            </div>
+
+            <div class="text-xs text-gray-600 mb-3">
+                <span id="ebc-summary-tasks11">0</span> AI Impacted tasks | Employees: <span id="ebc-summary-employees11">0</span> | Roles: <span id="ebc-summary-roles11">0</span> | Teams: <span id="ebc-summary-teams11">0</span> | Entities: <span id="ebc-summary-entities11">0</span> | Global productivity gain: <span id="ebc-summary-prod11">0.000%</span>
+            </div>
+
+            <div class="relative">
+                <div class="absolute left-0 right-0 top-4 h-0.5 bg-purple-200"></div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
+                    <div class="relative">
+                        <div class="w-3 h-3 rounded-full bg-purple-500 mx-auto relative z-10"></div>
+                        <div class="mt-3 text-center">
+                            <div class="text-xs text-gray-500">Month 0</div>
+                            <div class="text-sm font-semibold text-purple-600">Project kickoff</div>
+                        </div>
+                    </div>
+                    <button id="qw-bottom2" type="button" class="relative group" onclick="loadQuickWinsGroup2('bottom')">
+                        <div class="w-3 h-3 rounded-full bg-purple-500 mx-auto relative z-10 group-hover:scale-110 transition"></div>
+                        <div class="mt-3 text-center">
+                            <div class="text-xs text-gray-500">Month 6</div>
+                            <div class="text-sm font-semibold text-purple-600">Phase 1</div>
+                            <div class="text-xs text-gray-600 mt-1">Tasks: <span id="qw-bottom-count2">0</span></div>
+                            <div class="text-[11px] text-gray-600">Cost savings: <span id="qw-bottom-cost2">0.0%</span></div>
+                            <div class="text-[11px] text-gray-600">Prod. gain: <span id="qw-bottom-prod2">0.000%</span></div>
+                        </div>
+                    </button>
+
+                    <button id="qw-middle2" type="button" class="relative group" onclick="loadQuickWinsGroup2('middle')">
+                        <div class="w-3 h-3 rounded-full bg-purple-500 mx-auto relative z-10 group-hover:scale-110 transition"></div>
+                        <div class="mt-3 text-center">
+                            <div class="text-xs text-gray-500">Month 12</div>
+                            <div class="text-sm font-semibold text-purple-600">Phase 2</div>
+                            <div class="text-xs text-gray-600 mt-1">Tasks: <span id="qw-middle-count2">0</span></div>
+                            <div class="text-[11px] text-gray-600">Cost savings: <span id="qw-middle-cost2">0.0%</span></div>
+                            <div class="text-[11px] text-gray-600">Prod. gain: <span id="qw-middle-prod2">0.000%</span></div>
+                        </div>
+                    </button>
+
+                    <button id="qw-top2" type="button" class="relative group" onclick="loadQuickWinsGroup2('top')">
+                        <div class="w-3 h-3 rounded-full bg-purple-500 mx-auto relative z-10 group-hover:scale-110 transition"></div>
+                        <div class="mt-3 text-center">
+                            <div class="text-xs text-gray-500">Month 18</div>
+                            <div class="text-sm font-semibold text-purple-600">Phase 3</div>
+                            <div class="text-xs text-gray-600 mt-1">Tasks: <span id="qw-top-count2">0</span></div>
+                            <div class="text-[11px] text-gray-600">Cost savings: <span id="qw-top-cost2">0.0%</span></div>
+                            <div class="text-[11px] text-gray-600">Prod. gain: <span id="qw-top-prod2">0.000%</span></div>
+                        </div>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-6">
+            <div class="border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+                <div>
+                    <h2 class="text-base font-semibold text-gray-900 font-['Inter']">Roles</h2>
+                    <p class="text-xs text-gray-500">Ranked roles (Top roles filter applied)</p>
+                </div>
+            </div>
+            <div class="fixed-height-table">
+                <div class="min-w-full">
+                    <table class="w-full compact-table">
+                        <thead class="bg-gray-50 sticky-thead">
+                            <tr>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rank</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Employees</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Impacted FTEs</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">New FTEs</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">FTE Savings</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Global Productivity Gain</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ebc-roles-body" class="divide-y divide-gray-200">
+                            <tr>
+                                <td colspan="7" class="px-6 py-8 text-center text-gray-500">Loading...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div class="border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+                <div>
+                    <h2 class="text-base font-semibold text-gray-900 font-['Inter']">Tasks</h2>
+                    <p class="text-xs text-gray-500" id="tasks-subtitle">Select a Quick Wins group to list tasks</p>
+                </div>
+            </div>
+            <div class="fixed-height-table">
+                <div class="min-w-full">
+                    <table class="w-full compact-table sortable-table" data-table="ebc-tasks" data-initial-sort-column="6" data-initial-sort-direction="desc">
+                        <thead class="bg-gray-50 sticky-thead">
+                            <tr>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rank</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Task</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Employees</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Roles</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Current FTEs</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">New FTEs</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">FTE Savings</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Prod. Gain</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Details</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200" id="ebc-tasks-body">
+                            <tr>
+                                <td colspan="9" class="px-6 py-8 text-center text-gray-500">Select a phase to view tasks</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script>
+    function toggleDropdown(filterName) {
+        const container = document.querySelector(`[data-filter="${filterName}"]`);
+        if (!container) return;
+        const menu = container.querySelector('[data-filter-menu]');
+        if (!menu) return;
+
+        const isHidden = menu.classList.contains('hidden');
+        document.querySelectorAll('[data-filter-menu]').forEach(m => m.classList.add('hidden'));
+        if (isHidden) menu.classList.remove('hidden');
+    }
+
+    document.addEventListener('click', function (event) {
+        if (!event.target.closest('[data-filter]')) {
+            document.querySelectorAll('[data-filter-menu]').forEach(m => m.classList.add('hidden'));
+        }
+    });
+
+    function getSelectedValues(filterName) {
+        const container = document.querySelector(`[data-filter="${filterName}"]`);
+        if (!container) return [];
+        const inputs = container.querySelectorAll('input[type="checkbox"]');
+        return Array.from(inputs).filter(i => i.checked).map(i => i.value);
+    }
+
+    function buildQueryString(extraParams = {}) {
+        const employee = getSelectedValues('employee');
+        const role = getSelectedValues('role');
+        const entity = getSelectedValues('entity');
+        const team = getSelectedValues('team');
+        const category = getSelectedValues('category');
+        const sgacogs = getSelectedValues('sgacogs');
+        const topRolesSelect = document.getElementById('top-roles-select');
+
+        const params = new URLSearchParams();
+        employee.forEach(v => params.append('employee', v));
+        role.forEach(v => params.append('role', v));
+        entity.forEach(v => params.append('entity', v));
+        team.forEach(v => params.append('team', v));
+        category.forEach(v => params.append('category', v));
+        sgacogs.forEach(v => params.append('sgacogs', v));
+        if (topRolesSelect && topRolesSelect.value) params.set('top_roles', topRolesSelect.value);
+
+        Object.keys(extraParams || {}).forEach(k => {
+            if (extraParams[k] !== undefined && extraParams[k] !== null && String(extraParams[k]).length) {
+                params.set(k, extraParams[k]);
+            }
+        });
+
+        return params.toString();
+    }
+
+    let ebcGlobalCurrentFte = 0;
+
+    function formatPercent(v) {
+        if (v === null || v === undefined || Number.isNaN(Number(v))) return 'Not applicable';
+        return `${Number(v).toFixed(1)}%`;
+    }
+
+    function formatPercent1(v) {
+        if (v === null || v === undefined || Number.isNaN(Number(v))) return 'Not applicable';
+        return `${Number(v).toFixed(0)}%`;
+    }
+
+    function formatMaybeNotApplicable(entry) {
+        if (!entry || entry.applicable === false) return 'Not applicable';
+        return formatPercent(entry.value);
+    }
+
+    function formatFte(v) {
+        if (v === null || v === undefined || Number.isNaN(Number(v))) return 'Not applicable';
+        return Number(v).toFixed(0);
+    }
+
+    function formatFte1(v) {
+        if (v === null || v === undefined || Number.isNaN(Number(v))) return 'Not applicable';
+        return Number(v).toFixed(1);
+    }
+
+    function formatFtePrecise(v) {
+        if (v === null || v === undefined || Number.isNaN(Number(v))) return 'Not applicable';
+        return Number(v).toFixed(2);
+    }
+
+    function safeNumber(v) {
+        const n = Number(v);
+        return Number.isFinite(n) ? n : 0;
+    }
+
+    function computeGlobalProdGainFromSaving(globalCurrentFte, saving) {
+        const total = Number(globalCurrentFte);
+        const s = Number(saving);
+        if (!Number.isFinite(total) || total <= 0) return null;
+        if (!Number.isFinite(s) || s <= 0) return 0;
+        if ((total - s) <= 0) return null;
+        return Math.abs(100 - 100 * (total / (total - s)));
+    }
+
+    function formatProdGainGlobal(v) {
+        if (v === null || v === undefined || Number.isNaN(Number(v))) return 'Not applicable';
+        return `${Number(v).toFixed(3)}%`;
+    }
+    function formatProdGainGlobal2(v) {
+        if (v === null || v === undefined || Number.isNaN(Number(v))) return 'Not applicable';
+        return `${Number(v).toFixed(2)}%`;
+    }
+
+    function formatProdGainGlobal1(v) {
+        if (v === null || v === undefined || Number.isNaN(Number(v))) return 'Not applicable';
+        return `${Number(v).toFixed(1)}%`;
+    }
+
+    function formatPercentPrecise(v) {
+        if (v === null || v === undefined || Number.isNaN(Number(v))) return 'Not applicable';
+        return `${Number(v).toFixed(3)}%`;
+    }
+
+    function renderRolesTable(rows) {
+        const tbody = document.getElementById('ebc-roles-body');
+        if (!tbody) return;
+
+        const list = Array.isArray(rows) ? rows : [];
+        if (!list.length) {
+            tbody.innerHTML = '<tr><td colspan="7" class="px-6 py-8 text-center text-gray-500">No roles found</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = list.map((r) => {
+            const rank = r.rank ?? '';
+            const role = r.role_title ?? '';
+            const employees = r.employee_count ?? 0;
+            const currentFte = Number(r.current_fte ?? 0).toFixed(2);
+            const newFte = Number(r.new_fte ?? 0).toFixed(2);
+            const saving = Number(r.saving ?? 0).toFixed(2);
+            const prod = formatProdGainGlobal(r.global_prod_gain ?? 0);
+
+            return `
+                <tr class="hover:bg-gray-50 transition duration-150">
+                    <td class="px-4 py-3 text-sm text-gray-700 font-['Inter']">${rank}</td>
+                    <td class="px-4 py-3 text-sm text-gray-900 font-['Inter']">${role}</td>
+                    <td class="px-4 py-3 text-sm text-gray-700 font-['Inter']">${employees}</td>
+                    <td class="px-4 py-3 text-sm text-gray-700 font-['Inter']">${currentFte}</td>
+                    <td class="px-4 py-3 text-sm text-gray-700 font-['Inter']">${newFte}</td>
+                    <td class="px-4 py-3 text-sm text-gray-700 font-['Inter']">${saving}</td>
+                    <td class="px-4 py-3 text-sm text-gray-700 font-['Inter']">${prod}</td>
+                </tr>
+            `;
+        }).join('');
+    }
+
+    async function loadEbcData(extraParams = {}) {
+        const qs = buildQueryString(extraParams);
+        const res = await fetch(`/api/expected_business_case_data?${qs}`);
+        const data = await res.json();
+        if (data.error) {
+            console.error(data.error);
+            return;
+        }
+
+        ebcGlobalCurrentFte = data.global_current_fte || 0;
+
+        const kpis = data.kpis || {};
+        const resMis = kpis.resource_misalignment;
+
+        const rmCurrentEl = document.getElementById('kpi-rm-current-fte');
+        const rmNewEl = document.getElementById('kpi-rm-new-fte');
+        const rmPotentialSavingsEl = document.getElementById('kpi-rm-potential-fte-savings');
+        const rmGlobalProdGainEl = document.getElementById('kpi-rm-global-prod-gain');
+        const rmFteRatioEl = document.getElementById('kpi-rm-fte-ratio');
+        const costCurrentEl = document.getElementById('kpi-cost-current-fte');
+        const costNewEl = document.getElementById('kpi-cost-new-fte');
+        const costSavingsEl = document.getElementById('kpi-cost-fte-savings');
+        const prodCurrentEl = document.getElementById('kpi-prod-current-fte');
+        const prodNewEl = document.getElementById('kpi-prod-new-fte');
+
+        const catSupportProdEl = document.getElementById('kpi-cat-support-prod');
+        const catSupportCurrentEl = document.getElementById('kpi-cat-support-current');
+        const catSupportSavingEl = document.getElementById('kpi-cat-support-saving');
+        const catMgmtProdEl = document.getElementById('kpi-cat-management-prod');
+        const catMgmtCurrentEl = document.getElementById('kpi-cat-management-current');
+        const catMgmtSavingEl = document.getElementById('kpi-cat-management-saving');
+        const catCoreProdEl = document.getElementById('kpi-cat-core-prod');
+        const catCoreCurrentEl = document.getElementById('kpi-cat-core-current');
+        const catCoreSavingEl = document.getElementById('kpi-cat-core-saving');
+
+        if (resMis && resMis.applicable) {
+            const coreCurrentForMain = safeNumber(resMis.core_current_fte);
+            const coreSgaForMain = safeNumber(resMis.core_sga_current_fte);
+            const rmMainPercent = (coreCurrentForMain > 0) ? (100.0 * coreSgaForMain / coreCurrentForMain) : null;
+            document.getElementById('kpi-resource-misalignment').textContent = (rmMainPercent === null ? 'Not applicable' : formatPercent(rmMainPercent));
+
+            const rmCurrent = safeNumber(resMis.support_current_fte) + safeNumber(resMis.management_current_fte);
+            const rmNew = safeNumber(resMis.support_new_fte) + safeNumber(resMis.management_new_fte);
+            if (rmCurrentEl) rmCurrentEl.textContent = formatFte(Math.round(rmCurrent));
+            if (rmNewEl) rmNewEl.textContent = formatFte(Math.round(rmNew));
+
+            const rmDenom = rmCurrent + safeNumber(resMis.core_current_fte);
+
+            const coreSgaCurrent = safeNumber(resMis.core_sga_current_fte);
+            const coreSgaNew = safeNumber(resMis.core_sga_new_fte);
+            const potentialSaving = coreSgaCurrent - coreSgaNew;
+            if (rmPotentialSavingsEl) rmPotentialSavingsEl.textContent = `${formatFte1(potentialSaving)} FTEs`;
+            if (rmFteRatioEl) rmFteRatioEl.textContent = `${formatFte1(coreSgaCurrent)} FTEs`;
+
+            const denomNewAll = safeNumber(data.global_new_fte_all_tasks);
+            const denomFallback = safeNumber(data.global_current_fte);
+            const denom = denomNewAll > 0 ? denomNewAll : denomFallback;
+            const rmGlobalProdGain = denom > 0 ? (100.0 * potentialSaving / denom) : null;
+            if (rmGlobalProdGainEl) rmGlobalProdGainEl.textContent = (rmGlobalProdGain === null ? 'Not applicable' : formatPercent1(rmGlobalProdGain));
+
+            const costCurrent = safeNumber(resMis.support_current_fte) + safeNumber(resMis.management_current_fte) + safeNumber(resMis.core_current_fte);
+            const costNew = safeNumber(resMis.support_new_fte) + safeNumber(resMis.management_new_fte) + safeNumber(resMis.core_new_fte);
+            const costSavings = costCurrent - costNew;
+            if (costCurrentEl) costCurrentEl.textContent = formatFte(Math.round(costCurrent));
+            if (costNewEl) costNewEl.textContent = formatFte(Math.round(costNew));
+            if (costSavingsEl) costSavingsEl.textContent = formatFte(Math.round(costSavings));
+
+            document.getElementById('kpi-productivity-boost').textContent = formatPercent(resMis.prod_boost);
+            const prodCurrent = rmCurrent + safeNumber(resMis.core_current_fte);
+            const prodNew = safeNumber(resMis.support_current_fte) + safeNumber(resMis.management_current_fte) + safeNumber(resMis.core_new_fte);
+            if (prodCurrentEl) prodCurrentEl.textContent = formatFte(Math.round(prodCurrent));
+            if (prodNewEl) prodNewEl.textContent = formatFte(Math.round(prodNew));
+        } else {
+            document.getElementById('kpi-resource-misalignment').textContent = 'Not applicable';
+            if (rmCurrentEl) rmCurrentEl.textContent = 'Not applicable';
+            if (rmNewEl) rmNewEl.textContent = 'Not applicable';
+            if (rmPotentialSavingsEl) rmPotentialSavingsEl.textContent = 'Not applicable';
+            if (rmGlobalProdGainEl) rmGlobalProdGainEl.textContent = 'Not applicable';
+            if (rmFteRatioEl) rmFteRatioEl.textContent = 'Not applicable';
+            if (costCurrentEl) costCurrentEl.textContent = 'Not applicable';
+            if (costNewEl) costNewEl.textContent = 'Not applicable';
+            if (costSavingsEl) costSavingsEl.textContent = 'Not applicable';
+            if (prodCurrentEl) prodCurrentEl.textContent = 'Not applicable';
+            if (prodNewEl) prodNewEl.textContent = 'Not applicable';
+            document.getElementById('kpi-productivity-boost').textContent = formatMaybeNotApplicable(kpis.productivity_boost);
+        }
+
+        const catCards = (kpis.category_cards || {});
+        const supportCard = catCards.support || {};
+        const mgmtCard = catCards.management || {};
+        const coreCard = catCards.core || {};
+
+        if (supportCard.applicable) {
+            if (catSupportProdEl) catSupportProdEl.textContent = formatPercent(supportCard.prod_gain ?? 0);
+            if (catSupportCurrentEl) catSupportCurrentEl.textContent = formatFtePrecise(supportCard.current_fte ?? 0);
+            if (catSupportSavingEl) catSupportSavingEl.textContent = formatFtePrecise(supportCard.saving ?? 0);
+        } else {
+            if (catSupportProdEl) catSupportProdEl.textContent = 'Not applicable';
+            if (catSupportCurrentEl) catSupportCurrentEl.textContent = 'Not applicable';
+            if (catSupportSavingEl) catSupportSavingEl.textContent = 'Not applicable';
+        }
+
+        if (mgmtCard.applicable) {
+            if (catMgmtProdEl) catMgmtProdEl.textContent = formatPercent(mgmtCard.prod_gain ?? 0);
+            if (catMgmtCurrentEl) catMgmtCurrentEl.textContent = formatFtePrecise(mgmtCard.current_fte ?? 0);
+            if (catMgmtSavingEl) catMgmtSavingEl.textContent = formatFtePrecise(mgmtCard.saving ?? 0);
+        } else {
+            if (catMgmtProdEl) catMgmtProdEl.textContent = 'Not applicable';
+            if (catMgmtCurrentEl) catMgmtCurrentEl.textContent = 'Not applicable';
+            if (catMgmtSavingEl) catMgmtSavingEl.textContent = 'Not applicable';
+        }
+
+        if (coreCard.applicable) {
+            if (catCoreProdEl) catCoreProdEl.textContent = formatPercent(coreCard.prod_gain ?? 0);
+            if (catCoreCurrentEl) catCoreCurrentEl.textContent = formatFtePrecise(coreCard.current_fte ?? 0);
+            if (catCoreSavingEl) catCoreSavingEl.textContent = formatFtePrecise(coreCard.saving ?? 0);
+        } else {
+            if (catCoreProdEl) catCoreProdEl.textContent = 'Not applicable';
+            if (catCoreCurrentEl) catCoreCurrentEl.textContent = 'Not applicable';
+            if (catCoreSavingEl) catCoreSavingEl.textContent = 'Not applicable';
+        }
+
+        const auto = kpis.automation_potential;
+        document.getElementById('kpi-automation-potential').textContent = formatMaybeNotApplicable(auto);
+
+        const cost = kpis.cost_reduction;
+        document.getElementById('kpi-cost-reduction').textContent = formatMaybeNotApplicable(cost);
+
+        if (!(resMis && resMis.applicable)) {
+            const prod = kpis.productivity_boost;
+            document.getElementById('kpi-productivity-boost').textContent = formatMaybeNotApplicable(prod);
+        }
+
+        const qwt = data.quickwins_timeline || {};
+        if (qwt.bottom) {
+            document.getElementById('qw-bottom-count').textContent = qwt.bottom.task_count || 0;
+            document.getElementById('qw-bottom-cost').textContent = formatPercent(qwt.bottom.cost_saving_percent ?? 0);
+            document.getElementById('qw-bottom-prod').textContent = formatProdGainGlobal(qwt.bottom.prod_gain);
+        }
+        if (qwt.middle) {
+            document.getElementById('qw-middle-count').textContent = qwt.middle.task_count || 0;
+            document.getElementById('qw-middle-cost').textContent = formatPercent(qwt.middle.cost_saving_percent ?? 0);
+            document.getElementById('qw-middle-prod').textContent = formatProdGainGlobal(qwt.middle.prod_gain);
+        }
+        if (qwt.top) {
+            document.getElementById('qw-top-count').textContent = qwt.top.task_count || 0;
+            document.getElementById('qw-top-cost').textContent = formatPercent(qwt.top.cost_saving_percent ?? 0);
+            document.getElementById('qw-top-prod').textContent = formatProdGainGlobal(qwt.top.prod_gain);
+        }
+
+        // Timeline équitable (nouveau)
+        const qwt2 = data.quickwins_timeline_equitable || {};
+        if (qwt2.bottom) {
+            document.getElementById('qw-bottom-count2').textContent = qwt2.bottom.task_count || 0;
+            document.getElementById('qw-bottom-cost2').textContent = formatPercent(qwt2.bottom.cost_saving_percent ?? 0);
+            document.getElementById('qw-bottom-prod2').textContent = formatProdGainGlobal(qwt2.bottom.prod_gain);
+        }
+        if (qwt2.middle) {
+            document.getElementById('qw-middle-count2').textContent = qwt2.middle.task_count || 0;
+            document.getElementById('qw-middle-cost2').textContent = formatPercent(qwt2.middle.cost_saving_percent ?? 0);
+            document.getElementById('qw-middle-prod2').textContent = formatProdGainGlobal(qwt2.middle.prod_gain);
+        }
+        if (qwt2.top) {
+            document.getElementById('qw-top-count2').textContent = qwt2.top.task_count || 0;
+            document.getElementById('qw-top-cost2').textContent = formatPercent(qwt2.top.cost_saving_percent ?? 0);
+            document.getElementById('qw-top-prod2').textContent = formatProdGainGlobal(qwt2.top.prod_gain);
+        }
+
+        const summary = data.summary || {};
+        const sTasks = document.getElementById('ebc-summary-tasks');
+        const sEmp = document.getElementById('ebc-summary-employees');
+        const sRoles = document.getElementById('ebc-summary-roles');
+        const sTeams = document.getElementById('ebc-summary-teams');
+        const sEntities = document.getElementById('ebc-summary-entities');
+        const sProd = document.getElementById('ebc-summary-prod');
+        if (sTasks) sTasks.textContent = summary.ai_impacted_tasks ?? 0;
+        if (sEmp) sEmp.textContent = summary.employees ?? 0;
+        if (sRoles) sRoles.textContent = summary.roles ?? 0;
+        if (sTeams) sTeams.textContent = summary.teams ?? 0;
+        if (sEntities) sEntities.textContent = summary.entities ?? 0;
+        if (sProd) sProd.textContent = formatProdGainGlobal1(summary.global_prod_gain ?? 0);
+
+        const summary2 = data.summary_equitable || data.summary || {}; // Utiliser summary_equitable si disponible, sinon summary
+const sTasks11 = document.getElementById('ebc-summary-tasks11');
+const sEmp11 = document.getElementById('ebc-summary-employees11');
+const sRoles11 = document.getElementById('ebc-summary-roles11');
+const sTeams11 = document.getElementById('ebc-summary-teams11');
+const sEntities11 = document.getElementById('ebc-summary-entities11');
+const sProd11 = document.getElementById('ebc-summary-prod11');
+
+if (sTasks11) sTasks11.textContent = summary2.ai_impacted_tasks ?? 0;
+if (sEmp11) sEmp11.textContent = summary2.employees ?? 0;
+if (sRoles11) sRoles11.textContent = summary2.roles ?? 0;
+if (sTeams11) sTeams11.textContent = summary2.teams ?? 0;
+if (sEntities11) sEntities11.textContent = summary2.entities ?? 0;
+if (sProd11) sProd11.textContent = formatProdGainGlobal1(summary2.global_prod_gain ?? 0);
+
+        renderRolesTable(data.roles_ranking || []);
+
+        const timelineType = extraParams.timeline_type || 'standard';
+
+        if (timelineType === 'equitable' && Array.isArray(data.quickwins_tasks_equitable) && extraParams.quickwins_group) {
+            renderTasksTable(data.quickwins_tasks_equitable);
+            document.getElementById('tasks-subtitle').textContent = `Timeline - Groupe: ${extraParams.quickwins_group}`;
+
+
+        } else if (Array.isArray(data.quickwins_tasks) && extraParams.quickwins_group) {
+            renderTasksTable(data.quickwins_tasks);
+            document.getElementById('tasks-subtitle').textContent = `Timeline Standard - Groupe: ${extraParams.quickwins_group}`;
+        }
+    }
+
+    function renderTasksTable(rows) {
+        const tbody = document.getElementById('ebc-tasks-body');
+        if (!tbody) return;
+
+        const list = Array.isArray(rows) ? rows : [];
+        if (!list.length) {
+            tbody.innerHTML = '<tr><td colspan="9" class="px-6 py-8 text-center text-gray-500">No tasks found</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = list.map((r, idx) => {
+            const taskId = r.task_id ?? '';
+            const title = r.task_l2 ?? '';
+            const employees = r.employee_id ?? 0;
+            const roles = r.role_count ?? 0;
+            const currentFte = Number(r.full_time_equivalent ?? 0).toFixed(2);
+            const newFte = Number(r.new_fte ?? 0).toFixed(2);
+            const saving = Number(r.saving ?? 0).toFixed(2);
+            const prodGainGlobal = computeGlobalProdGainFromSaving(ebcGlobalCurrentFte, r.saving ?? 0);
+            const prodGainTxt = formatProdGainGlobal(prodGainGlobal);
+            return `
+                <tr class="hover:bg-gray-50 transition duration-150" data-task-id="${taskId}">
+                    <td class="px-4 py-3 text-sm text-gray-700 font-['Inter']">${idx + 1}</td>
+                    <td class="px-4 py-3 text-sm text-gray-900 font-['Inter']">
+                        <div class="font-medium text-gray-900">${title}</div>
+                        <div class="text-xs text-gray-500">${taskId}</div>
+                    </td>
+                    <td class="px-4 py-3 text-sm text-gray-700 font-['Inter']">${employees}</td>
+                    <td class="px-4 py-3 text-sm text-gray-700 font-['Inter']">${roles}</td>
+                    <td class="px-4 py-3 text-sm text-gray-700 font-['Inter']">${currentFte}</td>
+                    <td class="px-4 py-3 text-sm text-gray-700 font-['Inter']">${newFte}</td>
+                    <td class="px-4 py-3 text-sm text-gray-700 font-['Inter']">${saving}</td>
+                    <td class="px-4 py-3 text-sm text-gray-700 font-['Inter']">${prodGainTxt}</td>
+                    <td class="px-4 py-3 text-sm font-['Inter']">
+                        <button type="button"
+                                class="view-task-btn inline-flex items-center text-blue-600 hover:text-blue-800 transition duration-150 text-xs sm:text-sm font-['Inter']"
+                                title="View task details"
+                                onclick="openTaskModal('${taskId}')">
+                            <i class="fas fa-eye mr-1"></i>
+                            <span class="hidden sm:inline">Details</span>
+                        </button>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+    }
+
+    function updateFilterLabel(filterName) {
+        const container = document.querySelector(`[data-filter="${filterName}"]`);
+        if (!container) return;
+        const label = container.querySelector('[data-filter-label]');
+        if (!label) return;
+        const selected = getSelectedValues(filterName);
+        label.textContent = selected.length ? `${selected.length} selected` : 'ALL';
+    }
+
+    function initFilterLabelSync() {
+        const filters = ['employee', 'role', 'entity', 'team', 'category', 'sgacogs'];
+        filters.forEach(f => {
+            const container = document.querySelector(`[data-filter="${f}"]`);
+            if (!container) return;
+            container.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+                cb.addEventListener('change', () => updateFilterLabel(f));
+            });
+            updateFilterLabel(f);
+        });
+    }
+
+    function applyEbcFilters() {
+        loadEbcData({});
+        document.getElementById('ebc-tasks-body').innerHTML = '<tr><td colspan="9" class="px-6 py-8 text-center text-gray-500">Select a group to view tasks</td></tr>';
+        document.getElementById('tasks-subtitle').textContent = 'Select a Quick Wins group to list tasks';
+
+        // Désactiver tous les groupes sélectionnés
+        ['top', 'middle', 'bottom'].forEach(g => {
+            const el1 = document.getElementById(`qw-${g}`);
+            const el2 = document.getElementById(`qw-${g}2`);
+            if (el1) el1.classList.remove('ring-2', 'ring-orange-400', 'rounded-lg');
+            if (el2) el2.classList.remove('ring-2', 'ring-purple-400', 'rounded-lg');
+        });
+    }
+
+    function resetEbcFilters() {
+        // Reset all checkboxes
+        document.querySelectorAll('[data-filter] input[type="checkbox"]').forEach(checkbox => {
+            checkbox.checked = false;
+        });
+
+        // Reset labels
+        initFilterLabelSync();
+
+        // Reset top roles select
+        const topRolesSelect = document.getElementById('top-roles-select');
+        if (topRolesSelect) {
+            topRolesSelect.value = '5';
+        }
+
+        // Apply filters
+        applyEbcFilters();
+    }
+
+    function setActiveQuickWinsGroup(group, timeline = 1) {
+        // Désactiver tous les groupes des deux timelines
+        ['bottom', 'middle', 'top'].forEach(g => {
+            const el1 = document.getElementById(`qw-${g}`);
+            const el2 = document.getElementById(`qw-${g}2`);
+            if (el1) el1.classList.remove('ring-2', 'ring-orange-400', 'rounded-lg');
+            if (el2) el2.classList.remove('ring-2', 'ring-purple-400', 'rounded-lg');
+        });
+
+        // Activer le groupe sélectionné
+        if (timeline === 1) {
+            const active = document.getElementById(`qw-${group}`);
+            if (active) active.classList.add('ring-2', 'ring-orange-400', 'rounded-lg');
+        } else {
+            const active = document.getElementById(`qw-${group}2`);
+            if (active) active.classList.add('ring-2', 'ring-purple-400', 'rounded-lg');
+        }
+    }
+
+    function loadQuickWinsGroup(group) {
+        setActiveQuickWinsGroup(group, 1);
+        loadEbcData({ quickwins_group: group, timeline_type: 'standard' });
+    }
+
+    function loadQuickWinsGroup2(group) {
+        setActiveQuickWinsGroup(group, 2);
+        loadEbcData({ quickwins_group: group, timeline_type: 'equitable' });
+    }
+
+    function openTaskModal(taskId) {
+        // Implement task modal opening logic here
+        console.log('Opening task modal for:', taskId);
+        // This would typically fetch task details and display them in a modal
+        alert(`Task details for ${taskId} would open in a modal.`);
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        initFilterLabelSync();
+        const topRolesSelect = document.getElementById('top-roles-select');
+        if (topRolesSelect) {
+            topRolesSelect.addEventListener('change', function () {
+                loadEbcData({});
+            });
+        }
+        loadEbcData({});
+    });
+</script>
+{% endblock %}

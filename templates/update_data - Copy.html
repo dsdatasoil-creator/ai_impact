@@ -1,0 +1,1047 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="min-h-screen">
+  <!-- Header -->
+  <header class="bg-white border-b py-4">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h1 class="text-2xl font-bold text-gray-900 font-['Inter']">Data Management</h1>
+          <div class="flex items-center gap-2 mt-1">
+            <p class="text-gray-500 text-sm font-medium">Configure and update task-level data and allocations</p>
+            <button onclick="openDataDescriptionModal()" class="text-blue-500 hover:text-blue-700 transition-colors">
+              <i class="fas fa-info-circle text-sm"></i>
+            </button>
+          </div>
+        </div>
+        <div class="flex items-center gap-3">
+          <a href="/" class="btn btn-outline-primary btn-sm px-4 font-bold text-xs shadow-sm whitespace-nowrap">
+            <i class="fas fa-chart-pie me-2"></i>Back to Analysis
+          </a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Data Description Modal -->
+  <div id="dataDescriptionModal" class="hidden fixed inset-0 z-[100] overflow-y-auto">
+    <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+      <div class="fixed inset-0 transition-opacity bg-black bg-opacity-50" aria-hidden="true" onclick="closeDataDescriptionModal()"></div>
+      <div class="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl w-full">
+        <div class="bg-white px-6 pt-6 pb-6">
+          <div class="flex items-start justify-between mb-6">
+            <div class="flex items-center gap-3">
+              <div class="h-10 w-10 bg-blue-100 rounded-xl flex items-center justify-center text-blue-600">
+                <i class="fas fa-database text-xl"></i>
+              </div>
+              <div>
+                <h3 class="text-xl font-bold text-gray-900 font-['Inter']">Required Data for Analysis</h3>
+                <p class="text-sm text-gray-500 font-medium">Input requirements for accurate ROI & Productivity metrics</p>
+              </div>
+            </div>
+            <button onclick="closeDataDescriptionModal()" class="text-gray-400 hover:text-gray-600 transition-colors">
+              <i class="fas fa-times text-xl"></i>
+            </button>
+          </div>
+          
+          <div class="space-y-5">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div class="p-4 bg-blue-50 rounded-xl border border-blue-100">
+                <h4 class="text-blue-700 font-bold text-xs uppercase tracking-wider mb-2 flex items-center gap-2">
+                  <i class="fas fa-list-check"></i> Task Inventory
+                </h4>
+                <p class="text-xs text-gray-600 leading-relaxed">
+                  <strong>Task List per Role/Employee:</strong> Detailed breakdown of specific activities performed by each role or employee in the organization.
+                </p>
+              </div>
+              <div class="p-4 bg-green-50 rounded-xl border border-green-100">
+                <h4 class="text-green-700 font-bold text-xs uppercase tracking-wider mb-2 flex items-center gap-2">
+                  <i class="fas fa-chart-pie"></i> Time Allocation
+                </h4>
+                <p class="text-xs text-gray-600 leading-relaxed">
+                  <strong>FTE per Task:</strong> Full-Time Equivalent allocation for each activity. Crucial for measuring potential productivity gains.
+                </p>
+              </div>
+              <div class="p-4 bg-purple-50 rounded-xl border border-purple-100">
+                <h4 class="text-purple-700 font-bold text-xs uppercase tracking-wider mb-2 flex items-center gap-2">
+                  <i class="fas fa-dollar-sign"></i> Labor Cost
+                </h4>
+                <p class="text-xs text-gray-600 leading-relaxed">
+                  <strong>Monthly Cost (USD):</strong> Gross monthly salary per role or employee. Used for calculating <strong>Workforce Optimization ROI</strong>.
+                </p>
+              </div>
+              <div class="p-4 bg-amber-50 rounded-xl border border-amber-100">
+                <h4 class="text-amber-700 font-bold text-xs uppercase tracking-wider mb-2 flex items-center gap-2">
+                  <i class="fas fa-gem"></i> Total Annual Revenue
+                </h4>
+                <p class="text-xs text-gray-600 leading-relaxed">
+                  <strong>Annual Financial Baseline:</strong> The total yearly revenue baseline used to calculate <strong>Productivity Growth ROI</strong>.
+                </p>
+              </div>
+            </div>
+            
+            <div class="p-4 bg-gray-50 rounded-xl border border-gray-200">
+              <h4 class="text-gray-700 font-bold text-xs uppercase tracking-wider mb-2 flex items-center gap-2">
+                <i class="fas fa-sitemap"></i> Contextual Information
+              </h4>
+              <p class="text-xs text-gray-600 leading-relaxed">
+                <strong>Structural Data:</strong> Team (supervisor), location, business unit (entity), and category. Enables segmented financial reporting and granular impact analysis across the organization.
+              </p>
+            </div>
+          </div>
+          
+          <div class="mt-8 flex justify-end">
+            <button onclick="closeDataDescriptionModal()" class="px-6 py-2.5 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-200">
+              Got it, continue
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <main class="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-6 lg:py-8">
+    <div class="flex flex-col lg:flex-row gap-4 sm:gap-6 lg:gap-8">
+      <!-- Filters Sidebar (left) -->
+      <div class="lg:w-1/4">
+        <div class="bg-white rounded-lg sm:rounded-xl shadow-sm sm:shadow-md p-4 sm:p-6 border border-gray-100 sticky top-4 sm:top-8">
+          <div class="flex justify-between items-center mb-4 sm:mb-6">
+            <h2 class="text-base sm:text-lg font-semibold text-gray-900">Filters</h2>
+            <button id="resetFiltersBtn" class="text-xs sm:text-sm text-blue-600 hover:text-blue-800 transition duration-150">
+              <i class="fas fa-redo-alt mr-1"></i> Reset
+            </button>
+          </div>
+
+          <div class="space-y-5">
+            <div class="filter-group filter-task-only">
+              <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Role</label>
+              <input type="text" id="roleFilter" list="roleOptions" value=""
+                     placeholder="All Roles"
+                     class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 filter-input bg-gray-50/50">
+              <datalist id="roleOptions">
+                <option value="">All Roles</option>
+                {% for role in roles %}
+                <option value="{{ role }}">{{ role }}</option>
+                {% endfor %}
+              </datalist>
+            </div>
+
+            <div class="filter-group filter-task-only">
+              <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Entity</label>
+              <input type="text" id="entityFilter" list="entityOptions" value=""
+                     placeholder="All Entities"
+                     class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 filter-input bg-gray-50/50">
+              <datalist id="entityOptions">
+                <option value="">All Entities</option>
+                {% for entity in entities %}
+                <option value="{{ entity }}">{{ entity }}</option>
+                {% endfor %}
+              </datalist>
+            </div>
+
+            <div class="filter-group filter-task-only">
+              <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Team (Supervisor)</label>
+              <input type="text" id="teamFilter" list="teamOptions" value=""
+                     placeholder="All Teams"
+                     class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 filter-input bg-gray-50/50">
+              <datalist id="teamOptions">
+                <option value="">All Teams</option>
+                {% for team in teams %}
+                <option value="{{ team }}">{{ team }}</option>
+                {% endfor %}
+              </datalist>
+            </div>
+
+            <div class="filter-group filter-common">
+              <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Employee</label>
+              <input type="text" id="employeeFilter" list="employeeOptions" value=""
+                     placeholder="All Employees"
+                     class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 filter-input bg-gray-50/50">
+              <datalist id="employeeOptions">
+                <option value="">All Employees</option>
+                {% for emp in employees %}
+                <option value="{{ emp }}">{{ emp }}</option>
+                {% endfor %}
+              </datalist>
+            </div>
+
+            <div class="filter-group filter-task-only">
+              <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Category</label>
+              <input type="text" id="categoryFilter" list="categoryOptions" value=""
+                     placeholder="All Categories"
+                     class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 filter-input bg-gray-50/50">
+              <datalist id="categoryOptions">
+                <option value="">All Categories</option>
+                {% for category in categories %}
+                <option value="{{ category }}">{{ category }}</option>
+                {% endfor %}
+              </datalist>
+            </div>
+
+            <div class="filter-group filter-task-only">
+              <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">SGACOGS</label>
+              <input type="text" id="sgacogsFilter" list="sgacogsOptions" value=""
+                     placeholder="All SGACOGS"
+                     class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 filter-input bg-gray-50/50">
+              <datalist id="sgacogsOptions">
+                <option value="">All SGACOGS</option>
+                {% for s in sgacogs_list %}
+                <option value="{{ s }}">{{ s }}</option>
+                {% endfor %}
+              </datalist>
+            </div>
+
+            <div class="pt-2">
+              <p class="text-xs text-gray-500">
+                <i class="fas fa-info-circle mr-1"></i>
+                Filters are applied when you click Refresh
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main column (right): Upload + Table -->
+      <div class="lg:w-3/4 flex flex-col gap-4 sm:gap-6">
+        <!-- Upload card at the top -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div class="max-w-md">
+              <h2 class="text-lg font-bold text-gray-900 font-['Inter'] flex items-center">
+                <i class="fas fa-file-import mr-3 text-blue-500"></i> Bulk Import
+              </h2>
+              <p class="text-sm text-gray-500 mt-2 font-medium">Quickly update multiple records using a CSV or Excel file.</p>
+            </div>
+            <form id="uploadForm" class="flex-1">
+              <div id="dropZone" class="relative group border-2 border-dashed border-gray-200 rounded-xl bg-gray-50/50 p-4 hover:border-blue-400 hover:bg-blue-50 transition-all cursor-pointer">
+                <div class="flex items-center gap-4">
+                  <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-100 text-blue-600 group-hover:scale-110 transition-transform">
+                    <i class="fas fa-cloud-upload-alt text-lg"></i>
+                  </div>
+                  <div class="min-w-0 flex-1">
+                    <p class="text-sm font-bold text-gray-900">Choose file or drag & drop</p>
+                    <p id="uploadFileName" class="text-xs text-gray-500 truncate font-medium">Excel (.xlsx) or CSV files supported</p>
+                  </div>
+                  <button type="submit" class="btn btn-primary btn-sm px-4 py-2 font-bold shadow-sm h-fit">
+                    Import
+                  </button>
+                </div>
+                <input id="uploadFile" type="file" accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel" class="hidden">
+              </div>
+              <div class="mt-3 flex items-center justify-between">
+                <div class="flex flex-wrap gap-2">
+                  <span class="px-2 py-0.5 rounded bg-gray-100 text-[10px] font-bold text-gray-500 uppercase tracking-tight">task_id</span>
+                  <span class="px-2 py-0.5 rounded bg-gray-100 text-[10px] font-bold text-gray-500 uppercase tracking-tight">task_l2</span>
+                  <span class="px-2 py-0.5 rounded bg-gray-100 text-[10px] font-bold text-gray-500 uppercase tracking-tight">monthly_gross_salary_usd</span>
+                  <span class="px-2 py-0.5 rounded bg-gray-100 text-[10px] font-bold text-gray-500 uppercase tracking-tight">full_time_equivalent</span>
+                </div>
+                <span id="uploadStatus" class="text-xs font-semibold"></span>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Results: tabs for Update Tasks / Update FTE -->
+        <div class="flex-1 flex flex-col">
+          <div class="bg-white rounded-lg shadow-sm border border-gray-100 flex-1 flex flex-col">
+            <!-- Tabs header -->
+            <div class="border-b border-gray-200 px-6 pt-2 bg-gray-50/50">
+              <nav class="-mb-px flex space-x-8" aria-label="Tabs">
+                <button id="updateTaskTab" type="button"
+                        class="tab-button border-b-2 border-blue-500 py-4 px-1 text-sm font-semibold text-blue-600 transition duration-150">
+                  <i class="fas fa-edit mr-2"></i>Update Task Titles
+                  <span id="taskCountLabel" class="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-blue-100 text-blue-800">0</span>
+                </button>
+                <button id="updateFteTab" type="button"
+                        class="tab-button border-b-2 border-transparent py-4 px-1 text-sm font-semibold text-gray-500 hover:text-gray-700 hover:border-gray-300 transition duration-150">
+                  <i class="fas fa-users-cog mr-2"></i>Update Cost & FTE
+                  <span id="fteTaskCountLabel" class="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-gray-100 text-gray-800">0</span>
+                </button>
+              </nav>
+            </div>
+
+            <!-- Task tab content -->
+            <div id="taskTabContent" class="flex-1 flex flex-col">
+              <!-- Alert messages -->
+              <div id="alertContainer" class="hidden mb-4 px-4 pt-4"></div>
+
+              <!-- Editable Task Table -->
+              <div class="flex-1 flex flex-col">
+                <div class="flex items-center justify-between px-4 py-3 border-b">
+                  <div class="flex items-center gap-2">
+                    <h3 class="text-base font-semibold text-gray-900">Task Assignments</h3>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <button id="refreshBtn" class="inline-flex items-center px-3 py-2 bg-gray-100 text-gray-800 text-sm rounded hover:bg-gray-200">
+                      <i class="fas fa-rotate mr-1"></i> Refresh
+                    </button>
+                    <button id="saveBtn" class="inline-flex items-center px-3 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 disabled:opacity-50" disabled>
+                      <i class="fas fa-save mr-2"></i> Save Changes
+                    </button>
+                  </div>
+                </div>
+                <div class="overflow-x-auto">
+                  <table class="w-full compact-table divide-y divide-gray-200">
+  <thead class="bg-gray-50/80">
+    <tr>
+      <th class="px-4 py-3 text-center text-[10px] font-bold text-gray-500 uppercase tracking-widest w-20">Task ID</th>
+      <th class="px-4 py-3 text-left text-[10px] font-bold text-gray-500 uppercase tracking-widest">Task Description</th>
+    </tr>
+  </thead>
+  <tbody id="dataBody" class="bg-white divide-y divide-gray-100">
+    <tr>
+      <td colspan="2" class="px-6 py-20 text-center">
+        <div class="flex flex-col items-center">
+          <div class="h-16 w-16 bg-gray-50 rounded-full flex items-center justify-center mb-4">
+            <i class="fas fa-search text-2xl text-gray-300"></i>
+          </div>
+          <p class="text-sm font-bold text-gray-500">No data to display</p>
+          <p class="text-xs text-gray-400 mt-1 font-medium">Select a role in the left sidebar to start editing tasks.</p>
+        </div>
+      </td>
+    </tr>
+  </tbody>
+</table>
+                </div>
+              </div>
+            </div>
+
+            <!-- FTE tab content -->
+            <div id="fteTabContent" class="hidden flex-1 flex flex-col">
+              <div id="fteAlertContainer" class="hidden mb-4 px-4 pt-4"></div>
+
+              <div class="flex items-center justify-between px-4 py-3 border-b">
+                <div>
+                  <h3 class="text-base font-semibold text-gray-900">FTE Allocation</h3>
+                  <p class="text-xs text-gray-500 mt-1">
+                    Selected employee: <span id="fteEmployeeLabel" class="font-medium">None</span>
+                  </p>
+                </div>
+                <div class="flex items-center gap-3">
+                  <span class="text-xs text-gray-600">
+                    Total FTE:
+                    <span id="fteTotalLabel" class="font-semibold text-gray-900">0.00</span>
+                  </span>
+                  <button id="fteRefreshBtn" type="button" class="inline-flex items-center px-3 py-2 bg-gray-100 text-gray-800 text-sm rounded hover:bg-gray-200">
+                    <i class="fas fa-rotate mr-1"></i> Refresh
+                  </button>
+                  <button id="fteSaveBtn" type="button" class="inline-flex items-center px-3 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 disabled:opacity-50" disabled>
+                    <i class="fas fa-save mr-2"></i> Save FTE
+                  </button>
+                </div>
+              </div>
+
+              <div class="overflow-x-auto">
+                <table class="w-full compact-table divide-y divide-gray-200">
+                  <thead class="bg-gray-50/80">
+                    <tr>
+                      <th class="px-4 py-3 text-center text-[10px] font-bold text-gray-500 uppercase tracking-widest w-20">Task ID</th>
+                      <th class="px-4 py-3 text-left text-[10px] font-bold text-gray-500 uppercase tracking-widest">Task Title</th>
+                      <th class="px-4 py-3 text-right text-[10px] font-bold text-gray-500 uppercase tracking-widest w-[180px]">Monthly Cost (USD)</th>
+                      <th class="px-4 py-3 text-right text-[10px] font-bold text-gray-500 uppercase tracking-widest w-[120px]">FTE Allocation</th>
+                    </tr>
+                  </thead>
+                  <tbody id="fteDataBody" class="bg-white divide-y divide-gray-100">
+                    <tr>
+                      <td colspan="4" class="px-6 py-20 text-center">
+                        <div class="flex flex-col items-center">
+                          <div class="h-16 w-16 bg-blue-50 rounded-full flex items-center justify-center mb-4">
+                            <i class="fas fa-user-plus text-2xl text-blue-300"></i>
+                          </div>
+                          <p class="text-sm font-bold text-gray-500">Select an employee</p>
+                          <p class="text-xs text-gray-400 mt-1 font-medium">Use the filter on the left to load tasks for a specific employee.</p>
+                        </div>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<style>
+  .compact-table th, .compact-table td { 
+    padding: 1rem 1.25rem !important; 
+    font-size: 0.875rem !important; 
+    vertical-align: middle;
+  }
+  .compact-table th {
+    background-color: #f8fafc;
+    border-bottom: 2px solid #e2e8f0;
+  }
+  .compact-table input,
+  .compact-table textarea { 
+    font-size: 0.875rem; 
+    border: 1.5px solid #e2e8f0;
+    border-radius: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    width: 100%;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .compact-table input:hover,
+  .compact-table textarea:hover {
+    border-color: #cbd5e1;
+  }
+  .compact-table input:focus,
+  .compact-table textarea:focus { 
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+    outline: none;
+    background-color: #fff;
+  }
+  .filter-input {
+    background-color: #f8fafc;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 0.75rem;
+    padding: 0.625rem 1rem;
+    font-size: 0.875rem;
+    width: 100%;
+    transition: all 0.2s ease;
+  }
+  .filter-input:focus {
+    background-color: #fff;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+    outline: none;
+  }
+  .filter-group label {
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.5rem;
+  }
+  .bg-white-hover:hover {
+    background-color: #f8fafc;
+  }
+  .number-input-wrapper {
+    position: relative;
+    max-width: 160px;
+    margin-left: auto;
+  }
+  .currency-symbol {
+    position: absolute;
+    left: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #94a3b8;
+    font-weight: 700;
+    font-size: 0.875rem;
+    pointer-events: none;
+  }
+  .number-input-currency {
+    padding-left: 1.75rem !important;
+    text-align: right;
+    font-weight: 700;
+    color: #2563eb;
+  }
+  .number-input-fte {
+    text-align: right;
+    font-weight: 700;
+    color: #334155;
+    max-width: 100px;
+    margin-left: auto;
+  }
+  .tab-button {
+    position: relative;
+    padding: 1rem 0;
+    font-weight: 600;
+    transition: all 0.2s ease;
+  }
+  .tab-button i {
+    font-size: 1rem;
+  }
+  .sticky-sidebar {
+    position: sticky;
+    top: 2rem;
+    max-height: calc(100vh - 4rem);
+    overflow-y: auto;
+  }
+  .task-id-badge {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    font-weight: 700;
+    color: #94a3b8;
+    background-color: #f1f5f9;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.375rem;
+  }
+</style>
+
+<script>
+  // Task tab elements
+  const taskBodyEl = document.getElementById('dataBody');
+  const taskSaveBtn = document.getElementById('saveBtn');
+  const taskRefreshBtn = document.getElementById('refreshBtn');
+  const taskAlertContainer = document.getElementById('alertContainer');
+  const taskCountLabel = document.getElementById('taskCountLabel');
+
+  // FTE tab elements
+  const fteBodyEl = document.getElementById('fteDataBody');
+  const fteSaveBtn = document.getElementById('fteSaveBtn');
+  const fteRefreshBtn = document.getElementById('fteRefreshBtn');
+  const fteAlertContainer = document.getElementById('fteAlertContainer');
+  const fteEmployeeLabel = document.getElementById('fteEmployeeLabel');
+  const fteTotalLabel = document.getElementById('fteTotalLabel');
+  const fteTaskCountLabel = document.getElementById('fteTaskCountLabel');
+
+  // Tabs
+  const updateTaskTabBtn = document.getElementById('updateTaskTab');
+  const updateFteTabBtn = document.getElementById('updateFteTab');
+  const taskTabContent = document.getElementById('taskTabContent');
+  const fteTabContent = document.getElementById('fteTabContent');
+
+  // Filters
+  const employeeFilter = document.getElementById('employeeFilter');
+  const filterTaskGroups = document.querySelectorAll('.filter-task-only');
+  const roleFilterGroup = (document.getElementById('roleFilter') || {}).closest
+    ? document.getElementById('roleFilter').closest('.filter-group')
+    : null;
+  const employeeFilterGroup = employeeFilter && employeeFilter.closest
+    ? employeeFilter.closest('.filter-group')
+    : null;
+
+  // Upload elements
+  const uploadForm = document.getElementById('uploadForm');
+  const uploadFile = document.getElementById('uploadFile');
+  const uploadStatus = document.getElementById('uploadStatus');
+  const dropZone = document.getElementById('dropZone');
+  const uploadFileName = document.getElementById('uploadFileName');
+
+  let taskChanges = new Map(); // key: task_employee_role_id
+  let fteChanges = new Map();  // key: task_employee_role_id
+  let pendingFile = null;
+  let hasTaskDataLoadedOnce = false;
+  let activeUpdateTab = 'task';
+
+  function getTaskFilters() {
+    return {
+      employee: employeeFilter ? employeeFilter.value.trim() : '',
+      role: (document.getElementById('roleFilter') || {}).value || ''.trim?.(),
+      entity: (document.getElementById('entityFilter') || {}).value || ''.trim?.(),
+      team: (document.getElementById('teamFilter') || {}).value || ''.trim?.(),
+      category: (document.getElementById('categoryFilter') || {}).value || ''.trim?.(),
+      sgacogs: (document.getElementById('sgacogsFilter') || {}).value || ''.trim?.(),
+    };
+  }
+
+  function buildQuery(params) {
+    const usp = new URLSearchParams();
+    Object.entries(params).forEach(([k, v]) => { if (v) usp.set(k, v); });
+    return usp.toString();
+  }
+
+  function debounce(fn, wait) {
+    let t; return function(...args){ clearTimeout(t); t = setTimeout(() => fn.apply(this, args), wait); };
+  }
+
+  function showAlert(container, type, message) {
+    if (!container) return;
+    const color = type === 'success' ? 'green' : 'red';
+    container.className = '';
+    container.classList.add('mb-4');
+    container.innerHTML = `
+      <div class="rounded-md bg-${color}-50 p-4 border border-${color}-200">
+        <div class="flex">
+          <div class="flex-shrink-0">
+            <i class="${type==='success'?'fas fa-check-circle text-green-400':'fas fa-exclamation-triangle text-red-400'}"></i>
+          </div>
+          <div class="ml-3">
+            <h3 class="text-sm font-medium text-${color}-800">${type==='success'?'Success':'Error'}</h3>
+            <div class="mt-2 text-sm text-${color}-700">${message}</div>
+          </div>
+        </div>
+      </div>`;
+  }
+
+  // --- Task tab logic ---
+
+  async function loadTaskList(force = false) {
+    const filters = getTaskFilters();
+    const hasAnyFilter = Object.values(filters).some(v => v);
+
+    if (!force && !hasAnyFilter && !hasTaskDataLoadedOnce) {
+      return;
+    }
+
+    if (!taskBodyEl) return;
+
+    try {
+      taskBodyEl.innerHTML = `
+        <tr>
+          <td colspan="2" class="px-6 py-12 text-center text-gray-500">
+            <i class="fas fa-spinner fa-spin text-2xl text-blue-500 mb-3"></i>
+            <p class="text-sm font-bold">Loading tasks...</p>
+          </td>
+        </tr>`;
+      const q = buildQuery(filters);
+      const resp = await fetch(`/api/update_data/list?${q}`);
+      const data = await resp.json();
+      if (!resp.ok || data.error) throw new Error(data.error || 'Failed to load data');
+      renderTaskRows(data.rows || []);
+      if (Array.isArray(data.rows) && data.rows.length > 0) {
+        hasTaskDataLoadedOnce = true;
+      }
+    } catch (e) {
+      taskBodyEl.innerHTML = `<tr><td colspan="2" class="px-6 py-8 text-center text-red-600 font-bold">${e.message}</td></tr>`;
+    }
+  }
+
+  function renderTaskRows(rows) {
+    taskChanges.clear();
+    if (taskSaveBtn) taskSaveBtn.disabled = true;
+    if (taskCountLabel) taskCountLabel.textContent = rows.length.toString();
+
+    if (!taskBodyEl) return;
+    if (!rows.length) {
+      taskBodyEl.innerHTML = `<tr><td colspan="2" class="px-6 py-8 text-center text-gray-500">No data</td></tr>`;
+      return;
+    }
+
+taskBodyEl.innerHTML = rows.map(r => {
+  const safeTask = (r.task_l2 || '').replace(/&/g, '&amp;').replace(/</g, '&lt;');
+  return `
+    <tr data-row-id="${r.task_employee_role_id}" class="bg-white-hover">
+      <td class="text-center py-4">
+        <span class="task-id-badge">${r.task_id || ''}</span>
+      </td>
+      <td class="py-4">
+        <textarea
+          rows="1"
+          class="block w-full border-2 border-gray-100 hover:border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 rounded-xl px-4 py-3 text-sm font-medium text-gray-700 transition-all resize-y overflow-hidden"
+          data-field="task_l2"
+          data-task-id="${r.task_id || ''}"
+          oninput="this.style.height = ''; this.style.height = this.scrollHeight + 'px'"
+          placeholder="Describe this task...">${safeTask}</textarea>
+      </td>
+    </tr>`;
+}).join('');
+
+    taskBodyEl.querySelectorAll('[data-field]').forEach(el => {
+      el.addEventListener('change', onTaskCellChange);
+      el.addEventListener('input', debounce(onTaskCellTyping, 300));
+    });
+  }
+
+  function onTaskCellTyping() {
+    if (taskSaveBtn) taskSaveBtn.disabled = false;
+  }
+
+  function onTaskCellChange(e) {
+    const input = e.target;
+    const tr = input.closest('tr');
+    const id = tr.getAttribute('data-row-id');
+    const field = input.getAttribute('data-field');
+    let value = input.value;
+
+    const rowChange = taskChanges.get(id) || { task_employee_role_id: parseInt(id, 10) };
+    if (field === 'task_l2') {
+      const taskId = input.getAttribute('data-task-id');
+      if (taskId) rowChange.task_id = parseInt(taskId, 10);
+      rowChange.task_l2 = value;
+    }
+    taskChanges.set(id, rowChange);
+    if (taskSaveBtn) taskSaveBtn.disabled = false;
+  }
+
+  async function saveTaskChanges() {
+    if (!taskChanges.size) return;
+    if (taskSaveBtn) taskSaveBtn.disabled = true;
+    try {
+      const payload = { changes: Array.from(taskChanges.values()) };
+      const resp = await fetch('/api/update_data/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await resp.json();
+      if (!resp.ok || data.error || data.success === false) {
+        throw new Error(data.error || data.message || 'Save failed');
+      }
+      showAlert(taskAlertContainer, 'success', `Saved successfully. TER updated: ${data.updated_task_employee_role || 0}, Task updated: ${data.updated_task || 0}`);
+      await loadTaskList();
+    } catch (e) {
+      showAlert(taskAlertContainer, 'error', e.message);
+      if (taskSaveBtn) taskSaveBtn.disabled = false;
+    }
+  }
+
+  // --- FTE tab logic ---
+
+  function getFteEmployee() {
+    return employeeFilter ? employeeFilter.value.trim() : '';
+  }
+
+  async function loadFteList(force = false) {
+    const employee = getFteEmployee();
+    if (fteEmployeeLabel) fteEmployeeLabel.textContent = employee || 'None';
+
+    if (!employee && !force) {
+      if (fteBodyEl) {
+        fteBodyEl.innerHTML = `
+          <tr>
+            <td colspan="4" class="px-6 py-20 text-center">
+              <div class="flex flex-col items-center">
+                <div class="h-16 w-16 bg-blue-50 rounded-full flex items-center justify-center mb-4">
+                  <i class="fas fa-user-plus text-2xl text-blue-300"></i>
+                </div>
+                <p class="text-sm font-bold text-gray-500">Select an employee</p>
+                <p class="text-xs text-gray-400 mt-1 font-medium">Use the filter on the left to load tasks for a specific employee.</p>
+              </div>
+            </td>
+          </tr>`;
+      }
+      if (fteTaskCountLabel) fteTaskCountLabel.textContent = '0';
+      if (fteTotalLabel) fteTotalLabel.textContent = '0.00';
+      return;
+    }
+
+    if (!fteBodyEl) return;
+
+    try {
+      fteBodyEl.innerHTML = `
+        <tr>
+          <td colspan="4" class="px-6 py-12 text-center text-gray-500">
+            <i class="fas fa-spinner fa-spin text-2xl text-blue-500 mb-3"></i>
+            <p class="text-sm font-bold">Loading allocations...</p>
+          </td>
+        </tr>`;
+      const q = buildQuery({ employee });
+      const resp = await fetch(`/api/update_data/list?${q}`);
+      const data = await resp.json();
+      if (!resp.ok || data.error) throw new Error(data.error || 'Failed to load data');
+      renderFteRows(data.rows || []);
+    } catch (e) {
+      fteBodyEl.innerHTML = `<tr><td colspan="4" class="px-6 py-8 text-center text-red-600 font-bold">${e.message}</td></tr>`;
+    }
+  }
+
+  function renderFteRows(rows) {
+    fteChanges.clear();
+    if (fteSaveBtn) fteSaveBtn.disabled = true;
+    if (fteTaskCountLabel) fteTaskCountLabel.textContent = rows.length.toString();
+
+    if (!fteBodyEl) return;
+    if (!rows.length) {
+      fteBodyEl.innerHTML = `
+        <tr>
+          <td colspan="4" class="px-6 py-20 text-center">
+            <div class="flex flex-col items-center">
+              <div class="h-16 w-16 bg-gray-50 rounded-full flex items-center justify-center mb-4">
+                <i class="fas fa-clipboard-list text-2xl text-gray-300"></i>
+              </div>
+              <p class="text-sm font-bold text-gray-500">No tasks found</p>
+              <p class="text-xs text-gray-400 mt-1 font-medium">No tasks are assigned to this employee yet.</p>
+            </div>
+          </td>
+        </tr>`;
+      if (fteTotalLabel) fteTotalLabel.textContent = '0.00';
+      return;
+    }
+
+    fteBodyEl.innerHTML = rows.map(r => {
+      const fteNum = typeof r.full_time_equivalent === 'number' ? r.full_time_equivalent : parseFloat(r.full_time_equivalent || '0') || 0;
+      const fte = fteNum.toFixed(5);
+      const salary = parseFloat(r.monthly_gross_salary_usd || '0') || 0;
+      const safeTask = (r.task_l2 || '').replace(/&/g, '&amp;').replace(/</g, '&lt;');
+      return `
+        <tr data-row-id="${r.task_employee_role_id}" data-task-id="${r.task_id}" data-employee-id="${r.employee_id}" class="bg-white-hover">
+          <td class="text-center py-4">
+            <span class="task-id-badge">${r.task_id || ''}</span>
+          </td>
+          <td class="py-4">
+            <div class="text-sm font-semibold text-gray-800 leading-snug">${safeTask}</div>
+          </td>
+          <td class="text-right py-4">
+            <div class="number-input-wrapper">
+              <span class="currency-symbol">$</span>
+              <input type="number" min="0" step="0.01" value="${salary}" 
+                     class="number-input-currency salary-input"
+                     placeholder="0.00">
+            </div>
+          </td>
+          <td class="text-right py-4">
+            <input type="number" min="0" max="1" step="0.01" value="${fte}" 
+                   class="number-input-fte fte-input"
+                   placeholder="0.00000">
+          </td>
+        </tr>`;
+    }).join('');
+
+    fteBodyEl.querySelectorAll('.fte-input').forEach(input => {
+      input.addEventListener('input', onFteInput);
+    });
+    fteBodyEl.querySelectorAll('.salary-input').forEach(input => {
+      input.addEventListener('input', onSalaryInput);
+    });
+
+    updateFteTotalFromDom();
+  }
+
+  function onFteInput(e) {
+    const input = e.target;
+    let val = input.value === '' ? 0 : parseFloat(input.value);
+    if (Number.isNaN(val) || val < 0) val = 0;
+    if (val > 1) val = 1;
+    // input.value = val.toFixed(5); // Removed to allow typing
+
+    const tr = input.closest('tr');
+    const id = tr.getAttribute('data-row-id');
+    const taskId = tr.getAttribute('data-task-id');
+    const employeeId = tr.getAttribute('data-employee-id');
+    
+    const change = fteChanges.get(id) || { 
+        task_employee_role_id: parseInt(id, 10),
+        task_id: parseInt(taskId, 10),
+        employee_id: employeeId
+    };
+    change.full_time_equivalent = val;
+    fteChanges.set(id, change);
+
+    const total = updateFteTotalFromDom();
+    if (fteSaveBtn) fteSaveBtn.disabled = fteChanges.size === 0 || Math.abs(total - 1) > 0.001;
+  }
+
+  function onSalaryInput(e) {
+    const input = e.target;
+    let val = input.value === '' ? 0 : parseFloat(input.value);
+    if (Number.isNaN(val) || val < 0) val = 0;
+
+    const tr = input.closest('tr');
+    const id = tr.getAttribute('data-row-id');
+    const taskId = tr.getAttribute('data-task-id');
+    const employeeId = tr.getAttribute('data-employee-id');
+
+    const change = fteChanges.get(id) || { 
+        task_employee_role_id: parseInt(id, 10),
+        task_id: parseInt(taskId, 10),
+        employee_id: employeeId
+    };
+    change.monthly_gross_salary_usd = val;
+    fteChanges.set(id, change);
+
+    const total = updateFteTotalFromDom();
+    if (fteSaveBtn) fteSaveBtn.disabled = fteChanges.size === 0 || Math.abs(total - 1) > 0.001;
+  }
+
+  function updateFteTotalFromDom() {
+    if (!fteBodyEl) return 0;
+    let total = 0;
+    fteBodyEl.querySelectorAll('.fte-input').forEach(input => {
+      const v = parseFloat(input.value);
+      if (!Number.isNaN(v)) total += v;
+    });
+    total = Math.round(total * 100) / 100;
+    if (fteTotalLabel) {
+      fteTotalLabel.textContent = total.toFixed(2);
+      fteTotalLabel.classList.remove('text-green-700', 'text-red-700');
+      if (Math.abs(total - 1) < 0.001) {
+        fteTotalLabel.classList.add('text-green-700');
+      } else {
+        fteTotalLabel.classList.add('text-red-700');
+      }
+    }
+    return total;
+  }
+
+  async function saveFteChanges() {
+    if (!fteChanges.size) return;
+    const total = updateFteTotalFromDom();
+    if (Math.abs(total - 1) > 0.001) {
+      showAlert(fteAlertContainer, 'error', 'Total FTE must equal 1.00 before saving.');
+      return;
+    }
+    if (fteSaveBtn) fteSaveBtn.disabled = true;
+    try {
+      const payload = { changes: Array.from(fteChanges.values()) };
+      const resp = await fetch('/api/update_data/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await resp.json();
+      if (!resp.ok || data.error || data.success === false) {
+        throw new Error(data.error || data.message || 'Save failed');
+      }
+      showAlert(fteAlertContainer, 'success', `FTE saved successfully. Updated rows: ${data.updated_task_employee_role || 0}`);
+      await loadFteList(true);
+    } catch (e) {
+      showAlert(fteAlertContainer, 'error', e.message);
+      if (fteSaveBtn) fteSaveBtn.disabled = false;
+    }
+  }
+
+  // --- Tabs and filters ---
+
+  function setActiveTab(tab) {
+    activeUpdateTab = tab;
+    if (tab === 'task') {
+      if (updateTaskTabBtn) updateTaskTabBtn.classList.replace('border-transparent', 'border-blue-500');
+      if (updateTaskTabBtn) updateTaskTabBtn.classList.add('text-blue-600');
+      if (updateFteTabBtn) updateFteTabBtn.classList.replace('border-blue-500', 'border-transparent');
+      if (updateFteTabBtn) updateFteTabBtn.classList.remove('text-blue-600');
+      if (taskTabContent) taskTabContent.classList.remove('hidden');
+      if (fteTabContent) fteTabContent.classList.add('hidden');
+      // For Update Tasks: only show Role filter, hide other task filters and employee filter
+      filterTaskGroups.forEach(el => el.classList.add('hidden'));
+      if (roleFilterGroup) {
+        roleFilterGroup.classList.remove('hidden');
+      }
+      if (employeeFilterGroup) {
+        employeeFilterGroup.classList.add('hidden');
+      }
+    } else {
+      if (updateFteTabBtn) updateFteTabBtn.classList.replace('border-transparent', 'border-blue-500');
+      if (updateFteTabBtn) updateFteTabBtn.classList.add('text-blue-600');
+      if (updateTaskTabBtn) updateTaskTabBtn.classList.replace('border-blue-500', 'border-transparent');
+      if (updateTaskTabBtn) updateTaskTabBtn.classList.remove('text-blue-600');
+      if (taskTabContent) taskTabContent.classList.add('hidden');
+      if (fteTabContent) fteTabContent.classList.remove('hidden');
+      // For Update FTE: hide task-only filters, show Employee filter
+      filterTaskGroups.forEach(el => el.classList.add('hidden'));
+      if (employeeFilterGroup) {
+        employeeFilterGroup.classList.remove('hidden');
+      }
+      // When switching to FTE, reload list for current employee
+      loadFteList();
+    }
+  }
+
+  // Upload drag & drop
+  if (dropZone) {
+    ['dragenter', 'dragover'].forEach(eventName => {
+      dropZone.addEventListener(eventName, e => {
+        e.preventDefault();
+        e.stopPropagation();
+        dropZone.classList.add('border-blue-400', 'bg-blue-50');
+      });
+    });
+    ['dragleave', 'drop'].forEach(eventName => {
+      dropZone.addEventListener(eventName, e => {
+        e.preventDefault();
+        e.stopPropagation();
+        dropZone.classList.remove('border-blue-400', 'bg-blue-50');
+      });
+    });
+    dropZone.addEventListener('click', () => {
+      if (uploadFile) uploadFile.click();
+    });
+    dropZone.addEventListener('drop', e => {
+      const file = e.dataTransfer.files && e.dataTransfer.files[0];
+      if (!file) return;
+      pendingFile = file;
+      if (uploadFileName) uploadFileName.textContent = file.name;
+      if (uploadStatus) uploadStatus.textContent = '';
+    });
+  }
+
+  if (uploadFile) {
+    uploadFile.addEventListener('change', () => {
+      pendingFile = uploadFile.files[0] || null;
+      if (uploadFileName) uploadFileName.textContent = pendingFile ? pendingFile.name : '';
+      if (uploadStatus) uploadStatus.textContent = '';
+    });
+  }
+
+  if (uploadForm) {
+    uploadForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const file = pendingFile || (uploadFile && uploadFile.files[0]);
+      if (!file) { if (uploadStatus) uploadStatus.textContent = 'Please choose a file.'; return; }
+      if (uploadStatus) uploadStatus.textContent = 'Uploading...';
+      try {
+        const fd = new FormData();
+        fd.append('file', file);
+        const resp = await fetch('/api/update_data/upload', { method: 'POST', body: fd });
+        const data = await resp.json();
+        if (!resp.ok || data.error || data.success === false) throw new Error(data.error || data.message || 'Upload failed');
+        if (uploadStatus) uploadStatus.textContent = `Done. TER updated: ${data.updated_task_employee_role || 0}, Task updated: ${data.updated_task || 0}`;
+        if (activeUpdateTab === 'task') {
+          await loadTaskList(true);
+        } else {
+          await loadFteList(true);
+        }
+      } catch (err) {
+        if (uploadStatus) uploadStatus.textContent = `Error: ${err.message}`;
+      }
+    });
+  }
+
+  // Filters actions
+  const resetFiltersBtn = document.getElementById('resetFiltersBtn');
+  if (resetFiltersBtn) {
+    resetFiltersBtn.addEventListener('click', () => {
+      ['employeeFilter','roleFilter','entityFilter','teamFilter','categoryFilter','sgacogsFilter'].forEach(id => {
+        const el = document.getElementById(id); if (el) el.value = '';
+      });
+      if (activeUpdateTab === 'task') {
+        loadTaskList();
+      } else {
+        loadFteList();
+      }
+    });
+  }
+
+  ['employeeFilter','roleFilter','entityFilter','teamFilter','categoryFilter','sgacogsFilter'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener('change', () => {
+      if (activeUpdateTab === 'task') {
+        loadTaskList();
+      } else if (activeUpdateTab === 'fte' && id === 'employeeFilter') {
+        loadFteList();
+      }
+    });
+    el.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        if (activeUpdateTab === 'task') {
+          loadTaskList();
+        } else if (activeUpdateTab === 'fte' && id === 'employeeFilter') {
+          loadFteList();
+        }
+      }
+    });
+  });
+
+  function openDataDescriptionModal() {
+    const modal = document.getElementById('dataDescriptionModal');
+    if (modal) modal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeDataDescriptionModal() {
+    const modal = document.getElementById('dataDescriptionModal');
+    if (modal) modal.classList.add('hidden');
+    document.body.style.overflow = '';
+    // Store that user has seen the modal in this session
+    sessionStorage.setItem('hasSeenDataModal', 'true');
+  }
+
+  // Buttons
+  if (taskRefreshBtn) taskRefreshBtn.addEventListener('click', () => loadTaskList());
+  if (taskSaveBtn) taskSaveBtn.addEventListener('click', saveTaskChanges);
+  if (fteRefreshBtn) fteRefreshBtn.addEventListener('click', () => loadFteList());
+  if (fteSaveBtn) fteSaveBtn.addEventListener('click', saveFteChanges);
+
+  // Tabs click handlers
+  if (updateTaskTabBtn) updateTaskTabBtn.addEventListener('click', () => setActiveTab('task'));
+  if (updateFteTabBtn) updateFteTabBtn.addEventListener('click', () => setActiveTab('fte'));
+
+  document.addEventListener('DOMContentLoaded', () => {
+    setActiveTab('task');
+    
+    // Automatically open modal if not seen in this session
+    if (!sessionStorage.getItem('hasSeenDataModal')) {
+      openDataDescriptionModal();
+    }
+  });
+</script>
+{% endblock %}

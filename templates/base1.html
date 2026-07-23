@@ -1,0 +1,1038 @@
+<!-- templates/base.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Analysis</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Base Premium Locking */
+        .premium-locked {
+            pointer-events: none !important;
+            user-select: none !important;
+            filter: blur(4px) opacity(0.4);
+            position: relative;
+        }
+
+        .premium-cta-overlay {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 60;
+            pointer-events: auto !important;
+        }
+
+        .premium-cta-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 1rem;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e2e8f0;
+            text-align: center;
+            max-width: 320px;
+            pointer-events: auto !important;
+        }
+
+        .premium-badge {
+            background: linear-gradient(135deg, #6c47ff 0%, #00d4aa 100%);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 9999px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        /* Toggle Switch Styling */
+        .premium-toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 44px;
+            height: 24px;
+        }
+
+        .premium-toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .premium-toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #cbd5e1;
+            transition: .4s;
+            border-radius: 24px;
+        }
+
+        .premium-toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 18px; width: 18px;
+            left: 3px; bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        input:checked + .premium-toggle-slider {
+            background: linear-gradient(135deg, #7c3aed 0%, #059669 100%);
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .premium-toggle-switch:hover .premium-toggle-slider {
+            filter: brightness(1.05);
+            box-shadow: 0 0 10px rgba(139, 92, 246, 0.3);
+        }
+
+        input:checked + .premium-toggle-slider:before {
+            transform: translateX(20px);
+        }
+
+        .premium-toggle-glow {
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        
+        /* Floating Premium Toggle at Bottom Right */
+        .premium-toggle-container {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            z-index: 1050;
+        }
+
+        .time-reduction-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.5rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            background-color: #dbeafe;
+            color: #1e40af;
+        }
+
+        .time-reduction-badge.high { background-color: #dcfce7; color: #166534; }
+        .time-reduction-badge.medium { background-color: #fef3c7; color: #92400e; }
+        .time-reduction-badge.low { background-color: #fee2e2; color: #991b1b; }
+
+        .score-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        .score-high { background-color: #dcfce7; color: #166534; }
+        .score-medium { background-color: #fef9c3; color: #854d0e; }
+        .score-low { background-color: #fee2e2; color: #991b1b; }
+
+        .tooltip-container {
+            position: relative;
+            display: inline-block;
+        }
+        .tooltip-content {
+            display: none;
+            max-width: 400px;
+            min-width: 300px;
+            background-color: rgba(31, 41, 55, 0.98);
+            backdrop-filter: blur(4px);
+            color: #fff;
+            text-align: left;
+            border-radius: 12px;
+            padding: 16px;
+            position: absolute;
+            z-index: 2000;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+            pointer-events: none;
+            border: 1px solid rgba(255,255,255,0.1);
+            font-size: 0.875rem;
+        }
+        .tooltip-content::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border-width: 8px;
+            border-style: solid;
+            border-color: rgba(31, 41, 55, 0.98) transparent transparent transparent;
+        }
+        .tooltip-content.tooltip-right {
+            bottom: auto;
+            top: 50%;
+            left: 105%;
+            transform: translateY(-50%);
+        }
+        .tooltip-content.tooltip-right::after {
+            top: 50%;
+            left: auto;
+            right: 100%;
+            transform: translateY(-50%);
+            border-color: transparent rgba(31, 41, 55, 0.98) transparent transparent;
+        }
+        .tooltip-content.tooltip-left {
+            bottom: auto;
+            top: 50%;
+            right: 105%;
+            left: auto;
+            transform: translateY(-50%);
+        }
+        .tooltip-content.tooltip-left::after {
+            top: 50%;
+            left: 100%;
+            right: auto;
+            transform: translateY(-50%);
+            border-color: transparent transparent transparent rgba(31, 41, 55, 0.98);
+        }
+        .tooltip-container:hover .tooltip-content {
+            display: block;
+        }
+
+        .btn-indigo {
+            background-color: #6366f1;
+            color: white;
+            border: none;
+        }
+
+        .btn-indigo:hover {
+            background-color: #4f46e5;
+            color: white;
+        }
+
+        .compact-table th, .compact-table td {
+            padding: 0.5rem 0.75rem !important;
+        }
+
+        .btn-xs {
+            padding: 0.2rem 0.4rem;
+            font-size: 0.7rem;
+            border-radius: 0.3rem;
+        }
+
+        /* Free Version specific overrides */
+        body.free-version table tbody tr:nth-child(n+4) {
+            filter: blur(4px) opacity(0.5) !important;
+            pointer-events: none !important;
+            user-select: none !important;
+        }
+
+        /* If we are in free-version, do NOT blur the containers themselves, let rows handle it */
+        body.free-version .premium-locked {
+            filter: none !important;
+            pointer-events: auto !important;
+            user-select: auto !important;
+        }
+
+        body.free-version .premium-cta-overlay {
+            background: rgba(255, 255, 255, 0.05) !important;
+            pointer-events: none !important;
+            backdrop-filter: none !important;
+        }
+
+        body.free-version .premium-cta-card {
+            pointer-events: auto !important;
+            margin-top: 150px;
+        }
+    </style>
+</head>
+<body class="bg-light">
+    {% if show_premium_toggle %}
+    <!-- Global Premium Toggle (Relocated to bottom right) -->
+    <div class="premium-toggle-container">
+        <div class="flex items-center gap-3 bg-white/95 backdrop-blur-md px-4 py-2.5 rounded-full border border-purple-200 shadow-xl premium-toggle-glow">
+            <div class="flex items-center gap-2">
+                <i class="fas fa-crown text-amber-500 animate-pulse"></i>
+                <div class="flex flex-col">
+                    <span class="text-[10px] uppercase tracking-wider font-bold text-purple-600 leading-none">Simulation</span>
+                    <span class="text-xs font-bold text-gray-800 whitespace-nowrap">Premium Mode</span>
+                </div>
+            </div>
+            <label class="premium-toggle-switch">
+                <input type="checkbox" id="globalPremiumToggle" onchange="togglePremiumMode(this.checked)">
+                <span class="premium-toggle-slider"></span>
+            </label>
+        </div>
+    </div>
+    {% endif %}
+
+    {% block content %}{% endblock %}
+
+    {% block extra_css %}{% endblock %}
+
+    <!-- Bootstrap 5 JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // ... existing code ...
+
+        // Global Premium Management
+        function togglePremiumMode(isPremium) {
+            localStorage.setItem('premiumMode', isPremium);
+            applyPremiumState(isPremium);
+        }
+
+        function applyPremiumState(isPremium) {
+            const body = document.body;
+            const restrictedPages = ['/', '/overview', '/dashboard', '/productivity_scenarios', '/expected_business_case', '/ai_tools'];
+            const isRestrictedPage = restrictedPages.includes(window.location.pathname);
+            const showPremiumToggle = {{ 'true' if show_premium_toggle else 'false' }};
+
+            // Force isPremium to true if toggle is hidden
+            const effectivePremium = showPremiumToggle ? isPremium : true;
+
+            // Reset state
+            body.classList.remove('free-version');
+
+            // Apply free-version class if NOT effectivePremium and on restricted page
+            if (!effectivePremium && isRestrictedPage) {
+                body.classList.add('free-version');
+            }
+
+            const lockedElements = document.querySelectorAll('.premium-locked-container');
+            const ctaCards = document.querySelectorAll('.premium-cta-overlay');
+            const premiumToggle = document.getElementById('globalPremiumToggle');
+            const toggleContainer = document.querySelector('.premium-toggle-glow');
+            
+            if (premiumToggle) premiumToggle.checked = effectivePremium;
+            if (toggleContainer) {
+                if (effectivePremium) {
+                    toggleContainer.style.boxShadow = '0 0 15px rgba(124, 58, 237, 0.5), 0 0 30px rgba(124, 58, 237, 0.3)';
+                    toggleContainer.style.borderColor = 'rgba(124, 58, 237, 0.5)';
+                } else {
+                    toggleContainer.style.boxShadow = '';
+                    toggleContainer.style.borderColor = '';
+                }
+            }
+
+            lockedElements.forEach(el => {
+                if (effectivePremium) {
+                    el.classList.remove('premium-locked');
+                    const buttons = el.querySelectorAll('button, a');
+                    buttons.forEach(btn => btn.style.pointerEvents = 'auto');
+                } else {
+                    el.classList.add('premium-locked');
+                }
+            });
+
+            ctaCards.forEach(card => {
+                if (effectivePremium) {
+                    card.classList.add('hidden');
+                } else {
+                    card.classList.remove('hidden');
+                }
+            });
+
+            // Disable/Enable Apply filter buttons
+            const applyButtons = document.querySelectorAll('button');
+            applyButtons.forEach(btn => {
+                if (btn.textContent.trim().toLowerCase().includes('apply')) {
+                    if (effectivePremium || !isRestrictedPage) {
+                        btn.disabled = false;
+                        btn.classList.remove('opacity-50', 'cursor-not-allowed', 'pointer-events-none');
+                        btn.setAttribute('title', 'Apply filters');
+                    } else {
+                        btn.disabled = true;
+                        btn.classList.add('opacity-50', 'cursor-not-allowed', 'pointer-events-none');
+                        btn.setAttribute('title', 'Premium Feature: Apply filters is locked in free version');
+                    }
+                }
+            });
+
+            window.isPremiumUser = effectivePremium;
+        }
+
+        // Global Table Pagination and Sorting Helper
+        window.PaginatedTable = class {
+            constructor(tableId, data, options = {}) {
+                this.tableId = tableId;
+                this.allData = data;
+                this.pageSize = options.pageSize || 20;
+                this.currentPage = 1;
+                this.sortCol = options.initialSortCol !== undefined ? options.initialSortCol : -1;
+                this.sortDir = options.initialSortDir || 'desc';
+                this.createRowFn = options.createRowFn;
+                this.onRender = options.onRender;
+                
+                // Use a standard registry to avoid hyphen issues in window keys
+                window.__tableInstances = window.__tableInstances || {};
+                window.__tableInstances[this.tableId] = this;
+                
+                this.init();
+            }
+            init() { this.render(); this.setupHeaders(); }
+            setupHeaders() {
+                const table = document.getElementById(this.tableId);
+                if (!table) return;
+                const headers = table.querySelectorAll('thead th.sortable');
+                headers.forEach(th => {
+                    const newTh = th.cloneNode(true);
+                    th.replaceWith(newTh);
+                    newTh.style.cursor = 'pointer';
+                    newTh.addEventListener('click', () => {
+                        const colIndex = parseInt(newTh.getAttribute('data-column'));
+                        if (this.sortCol === colIndex) this.sortDir = this.sortDir === 'asc' ? 'desc' : 'asc';
+                        else { this.sortCol = colIndex; this.sortDir = 'desc'; }
+                        this.currentPage = 1;
+                        this.render();
+                        this.updateSortIcons();
+                    });
+                });
+            }
+            updateSortIcons() {
+                const table = document.getElementById(this.tableId);
+                if (!table) return;
+                table.querySelectorAll('thead th i.fas').forEach(i => i.className = 'fas fa-sort ml-1 opacity-30');
+                if (this.sortCol !== -1) {
+                    const th = table.querySelector(`thead th[data-column="${this.sortCol}"]`);
+                    if (th) {
+                        const icon = th.querySelector('i.fas');
+                        if (icon) icon.className = `fas fa-sort-${this.sortDir === 'asc' ? 'up' : 'down'} ml-1 text-blue-600 opacity-100`;
+                    }
+                }
+            }
+            sort() {
+                if (this.sortCol === -1) return;
+                const table = document.getElementById(this.tableId);
+                if (!table) return;
+                const th = table.querySelector(`thead th[data-column="${this.sortCol}"]`);
+                const sortKey = th ? th.getAttribute('data-sort-key') : null;
+                
+                this.allData.sort((a, b) => {
+                    const keys = Object.keys(a);
+                    const key = sortKey || (a.hasOwnProperty('task_id') && this.sortCol === 0 ? 'task_id' : keys[this.sortCol]);
+                    let valA = a[key], valB = b[key];
+                    if (typeof valA === 'string') valA = valA.toLowerCase();
+                    if (typeof valB === 'string') valB = valB.toLowerCase();
+                    if (valA === undefined || valA === null) valA = '';
+                    if (valB === undefined || valB === null) valB = '';
+                    if (valA === valB) return 0;
+                    if (this.sortDir === 'asc') return valA > valB ? 1 : -1;
+                    return valA < valB ? 1 : -1;
+                });
+            }
+            render() {
+                this.sort();
+                const totalPages = Math.ceil(this.allData.length / this.pageSize);
+                this.currentPage = Math.max(1, Math.min(this.currentPage, totalPages || 1));
+                const pageData = this.allData.slice((this.currentPage - 1) * this.pageSize, this.currentPage * this.pageSize);
+                const tbody = document.querySelector(`#${this.tableId} tbody`);
+                if (!tbody) return;
+                if (pageData.length === 0) {
+                    const colCount = document.querySelectorAll(`#${this.tableId} thead th`).length;
+                    tbody.innerHTML = `<tr><td colspan="${colCount || 10}" class="px-6 py-8 text-center text-gray-500">No data found</td></tr>`;
+                } else tbody.innerHTML = pageData.map(row => this.createRowFn(row)).join('');
+                this.renderPagination(totalPages);
+                if (this.onRender) this.onRender();
+            }
+            renderPagination(totalPages) {
+                let navId = `${this.tableId}-pagination`;
+                let nav = document.getElementById(navId);
+                if (!nav) {
+                    nav = document.createElement('div'); nav.id = navId;
+                    nav.className = 'flex items-center justify-between px-4 py-3 bg-white border-t border-gray-200 sm:px-6 mt-4';
+                    const table = document.getElementById(this.tableId);
+                    if (table && table.parentElement) table.parentElement.appendChild(nav);
+                }
+                if (totalPages <= 1) { nav.innerHTML = ''; nav.classList.add('hidden'); return; }
+                nav.classList.remove('hidden');
+                let pages = [];
+                for (let i = 1; i <= totalPages; i++) {
+                    if (i === 1 || i === totalPages || (i >= this.currentPage - 2 && i <= this.currentPage + 2)) pages.push(i);
+                    else if (pages[pages.length - 1] !== '...') pages.push('...');
+                }
+                nav.innerHTML = `
+                    <div class="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
+                        <div><p class="text-sm text-gray-700 font-['Inter']">Showing page <span class="font-medium">${this.currentPage}</span> of <span class="font-medium">${totalPages}</span></p></div>
+                        <div>
+                            <nav class="isolate inline-flex -space-x-px rounded-md shadow-sm">
+                                <button onclick="window.__tableInstances['${this.tableId}'].goToPage(${this.currentPage - 1})" ${this.currentPage === 1 ? 'disabled' : ''} class="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 disabled:opacity-50"><i class="fas fa-chevron-left"></i></button>
+                                ${pages.map(p => p === '...' ? `<span class="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-700 ring-1 ring-inset ring-gray-300">...</span>` : `<button onclick="window.__tableInstances['${this.tableId}'].goToPage(${p})" class="relative inline-flex items-center px-4 py-2 text-sm font-semibold ${p === this.currentPage ? 'z-10 bg-blue-600 text-white' : 'text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50'}">${p}</button>`).join('')}
+                                <button onclick="window.__tableInstances['${this.tableId}'].goToPage(${this.currentPage + 1})" ${this.currentPage === totalPages ? 'disabled' : ''} class="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 disabled:opacity-50"><i class="fas fa-chevron-right"></i></button>
+                            </nav>
+                        </div>
+                    </div>`;
+            }
+            goToPage(p) { this.currentPage = p; this.render(); }
+        };
+
+        // Helper to paginate an existing table in the DOM
+        window.paginateExistingTable = function(tableId, pageSize = 20) {
+            const table = document.getElementById(tableId);
+            if (!table) return;
+            
+            // Store instance for refreshing
+            window.__pge_instances = window.__pge_instances || {};
+            
+            function init() {
+                const tbody = table.querySelector('tbody');
+                if (!tbody) return;
+                const rows = Array.from(tbody.querySelectorAll('tr:not(.no-data)'));
+                if (rows.length === 0) return;
+
+                let currentPage = 1;
+                const totalPages = Math.ceil(rows.length / pageSize);
+
+                function showPage(p) {
+                    if (p < 1 || p > totalPages) return;
+                    currentPage = p;
+                    const start = (p - 1) * pageSize;
+                    const end = p * pageSize;
+                    rows.forEach((row, i) => {
+                        row.style.display = (i >= start && i < end) ? '' : 'none';
+                    });
+                    renderControls();
+                }
+
+                function renderControls() {
+                    let navId = `${tableId}-pagination`;
+                    let nav = document.getElementById(navId);
+                    if (!nav) {
+                        nav = document.createElement('div');
+                        nav.id = navId;
+                        nav.className = 'flex items-center justify-between px-4 py-3 bg-white border-t border-gray-200 sm:px-6 mt-4';
+                        table.parentElement.appendChild(nav);
+                    }
+                    
+                    if (totalPages <= 1) { nav.innerHTML = ''; nav.classList.add('hidden'); return; }
+                    nav.classList.remove('hidden');
+
+                    let pages = [];
+                    for (let i = 1; i <= totalPages; i++) {
+                        if (i === 1 || i === totalPages || (i >= currentPage - 2 && i <= currentPage + 2)) pages.push(i);
+                        else if (pages[pages.length - 1] !== '...') pages.push('...');
+                    }
+
+                    nav.innerHTML = `
+                        <div class="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
+                            <div><p class="text-sm text-gray-700 font-['Inter']">Showing page <span class="font-medium">${currentPage}</span> of <span class="font-medium">${totalPages}</span></p></div>
+                            <div>
+                                <nav class="isolate inline-flex -space-x-px rounded-md shadow-sm">
+                                    <button onclick="window.__pge_instances['${tableId}'].showPage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''} class="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 disabled:opacity-50"><i class="fas fa-chevron-left"></i></button>
+                                    ${pages.map(p => p === '...' ? `<span class="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-700 ring-1 ring-inset ring-gray-300">...</span>` : `<button onclick="window.__pge_instances['${tableId}'].showPage(${p})" class="relative inline-flex items-center px-4 py-2 text-sm font-semibold ${p === currentPage ? 'z-10 bg-blue-600 text-white' : 'text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50'}">${p}</button>`).join('')}
+                                    <button onclick="window.__pge_instances['${tableId}'].showPage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''} class="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 disabled:opacity-50"><i class="fas fa-chevron-right"></i></button>
+                                </nav>
+                            </div>
+                        </div>`;
+                }
+
+                showPage(1);
+                return { showPage, refresh: init };
+            }
+
+            window.__pge_instances[tableId] = init();
+        };
+
+        // Initialize premium state
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedState = localStorage.getItem('premiumMode') === 'true';
+            applyPremiumState(savedState);
+        });
+    </script>
+
+    <script>
+        let dashboardFilterTimeout;
+
+        function getSelectedValues(filterName) {
+            return Array.from(document.querySelectorAll(`[data-filter="${filterName}"] input[type="checkbox"]:checked`))
+                .map(el => el.value)
+                .filter(v => v);
+        }
+
+        function setFilterLabel(filterName) {
+            const values = getSelectedValues(filterName);
+            const labelEl = document.querySelector(`[data-filter="${filterName}"] [data-filter-label]`);
+            if (!labelEl) return;
+            labelEl.textContent = values.length ? `${values.length} selected` : 'All';
+        }
+
+        function toggleDropdown(filterName) {
+            const menu = document.querySelector(`[data-filter="${filterName}"] [data-filter-menu]`);
+            if (!menu) return;
+            menu.classList.toggle('hidden');
+        }
+
+        function closeAllDropdowns() {
+            document.querySelectorAll('[data-filter] [data-filter-menu]').forEach(el => el.classList.add('hidden'));
+        }
+
+        function updateFilters(excludeFilter = null) {
+            clearTimeout(dashboardFilterTimeout);
+            dashboardFilterTimeout = setTimeout(() => {
+                const employee = getSelectedValues('employee');
+                const role = getSelectedValues('role');
+                const entity = getSelectedValues('entity');
+                const team = getSelectedValues('team');
+                const category = getSelectedValues('category');
+                const sgacogs = getSelectedValues('sgacogs');
+
+                ['employee', 'role', 'entity', 'team', 'category', 'sgacogs'].forEach(setFilterLabel);
+
+                // Refresh other filters' option lists based on current selection,
+                // but do NOT constrain the filter currently being edited.
+                updateFilterOptions(employee, role, entity, team, category, sgacogs, excludeFilter);
+            }, 300);
+        }
+
+        function updateFilterOptions(employee, role, entity, team, category, sgacogs, excludeFilter = null) {
+            const params = new URLSearchParams();
+
+            if (excludeFilter !== 'employee') (employee || []).forEach(v => params.append('employee', v));
+            if (excludeFilter !== 'role') (role || []).forEach(v => params.append('role', v));
+            if (excludeFilter !== 'entity') (entity || []).forEach(v => params.append('entity', v));
+            if (excludeFilter !== 'team') (team || []).forEach(v => params.append('team', v));
+            if (excludeFilter !== 'category') (category || []).forEach(v => params.append('category', v));
+            if (excludeFilter !== 'sgacogs') (sgacogs || []).forEach(v => params.append('sgacogs', v));
+
+            fetch(`/get_filter_options?${params.toString()}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        console.error('Error updating filter options:', data.error);
+                        return;
+                    }
+
+                    function renderFilter(filterName, items) {
+                        if (excludeFilter && filterName === excludeFilter) {
+                            setFilterLabel(filterName);
+                            return;
+                        }
+                        const container = document.querySelector(`[data-filter="${filterName}"] [data-filter-options]`);
+                        if (!container) return;
+                        const selected = new Set(getSelectedValues(filterName));
+                        container.innerHTML = '';
+                        (items || []).forEach((v, idx) => {
+                            const id = `${filterName}-${idx}`;
+                            const wrapper = document.createElement('div');
+                            wrapper.className = 'flex items-center gap-2 px-2 py-1';
+                            wrapper.innerHTML = `
+                                <input type="checkbox" id="${id}" value="${String(v).replace(/"/g, '&quot;')}" class="h-4 w-4" ${selected.has(String(v)) ? 'checked' : ''}>
+                                <label for="${id}" class="text-sm text-gray-700">${v}</label>
+                            `;
+                            wrapper.querySelector('input')?.addEventListener('change', () => updateFilters(filterName));
+                            container.appendChild(wrapper);
+                        });
+                        setFilterLabel(filterName);
+                    }
+
+                    renderFilter('employee', data.employees || []);
+                    renderFilter('role', data.roles || []);
+                    renderFilter('entity', data.entities || []);
+                    renderFilter('team', data.teams || []);
+                    renderFilter('category', data.categories || []);
+                    renderFilter('sgacogs', data.sgacogs || []);
+                })
+                .catch(error => {
+                    console.error('Error updating filter options:', error);
+                });
+        }
+
+        function applyFilters() {
+            const employee = getSelectedValues('employee');
+            const role = getSelectedValues('role');
+            const entity = getSelectedValues('entity');
+            const team = getSelectedValues('team');
+            const category = getSelectedValues('category');
+            const sgacogs = getSelectedValues('sgacogs');
+
+            let url = '/dashboard?';
+            employee.forEach(v => url += `employee=${encodeURIComponent(v)}&`);
+            role.forEach(v => url += `role=${encodeURIComponent(v)}&`);
+            entity.forEach(v => url += `entity=${encodeURIComponent(v)}&`);
+            team.forEach(v => url += `team=${encodeURIComponent(v)}&`);
+            category.forEach(v => url += `category=${encodeURIComponent(v)}&`);
+            sgacogs.forEach(v => url += `sgacogs=${encodeURIComponent(v)}&`);
+
+            url = url.replace(/[&?]$/, '');
+            window.location.href = url;
+        }
+
+        function resetFilters() {
+            window.location.href = '/dashboard';
+        }
+
+        document.addEventListener('click', function(e) {
+            const target = e.target;
+            if (!(target instanceof Element)) return;
+            if (target.closest('[data-filter]')) return;
+            closeAllDropdowns();
+        });
+
+        // Fonction pour masquer/afficher les sections dans les AI Approaches
+        function toggleSection(sectionId) {
+            const section = document.getElementById(sectionId);
+            const icon = document.getElementById(sectionId + '-icon');
+
+            if (section && icon) {
+                if (section.classList.contains('hidden')) {
+                    section.classList.remove('hidden');
+                    icon.classList.remove('fa-plus');
+                    icon.classList.add('fa-minus');
+                } else {
+                    section.classList.add('hidden');
+                    icon.classList.remove('fa-minus');
+                    icon.classList.add('fa-plus');
+                }
+            }
+        }
+
+        window.openTaskModal = function(taskId, roleTitle) {
+            console.log('Opening task modal for:', taskId, roleTitle, 'Premium:', window.isPremiumUser);
+            
+            if (window.isPremiumUser === false) {
+                const premiumPages = ['/dashboard', '/ai_tools', '/process', '/overview', '/expected_business_case', '/productivity_scenarios'];
+                if (premiumPages.includes(window.location.pathname)) {
+                    alert("🔒 Premium Feature. Toggle the payment simulation switch at the top of the page to unlock this strategic data.");
+                    return;
+                }
+            }
+
+            if (!taskId) {
+                console.error('openTaskModal: missing taskId');
+                return;
+            }
+
+            const modalEl = document.getElementById('taskModal');
+            const titleEl = document.getElementById('modalTaskTitle');
+            if (!modalEl || !titleEl) {
+                console.error('openTaskModal: modal DOM not found (taskModal/modalTaskTitle).');
+                return;
+            }
+
+            modalEl.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+            titleEl.textContent = 'Loading...';
+
+            const url = `/task/${taskId}`;
+            const params = new URLSearchParams();
+            if (roleTitle) params.append('role_title', roleTitle);
+            const qs = params.toString();
+            const fetchUrl = qs ? `${url}?${qs}` : url;
+
+            fetch(fetchUrl)
+                .then(response => {
+                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.error) {
+                        alert(data.error);
+                        closeTaskModal();
+                        return;
+                    }
+
+                    titleEl.textContent = data.task_title;
+                    const updateEl = (id, val) => {
+                        const el = document.getElementById(id);
+                        if (el) el.textContent = val;
+                    };
+
+                    updateEl('modalCategory', data.task_category || 'N/A');
+                    updateEl('modalEntityCount', data.entity_count || 0);
+                    updateEl('modalRoleCount', data.role_count || 0);
+                    updateEl('modalTeamCount', data.team_count || 0);
+                    updateEl('modalEmployeeCount', data.employee_count || 0);
+                    updateEl('modalFteSaving', `${(data.fte_saving || 0).toFixed(2)} FTE`);
+                    updateEl('modalGlobalProdGain', `${(data.prod_gain_global || 0).toFixed(3)}%`);
+                    
+                    const costContainer = document.querySelector('#taskModal .border-t.border-gray-100');
+                    if (costContainer) costContainer.classList.add('hidden');
+
+                    const automationContainer = document.getElementById('modalAutomationTypeContainer');
+                    const aiTaskNatureEl = document.getElementById('modalAiTaskNature');
+                    if (automationContainer && aiTaskNatureEl) {
+                        if (data.ai_task_nature) {
+                            aiTaskNatureEl.textContent = data.ai_task_nature;
+                            if (data.automation_justification) aiTaskNatureEl.title = data.automation_justification;
+                            automationContainer.classList.remove('hidden');
+                        } else {
+                            automationContainer.classList.add('hidden');
+                        }
+                    }
+
+                    updateEl('modalStrategicReason', data.strategic_reason || 'No reasoning provided.');
+
+                    const enhancedContainer = document.getElementById('modalEnhancedTaskContainer');
+                    const enhancedText = document.getElementById('modalEnhancedTask');
+                    if (enhancedContainer && enhancedText) {
+                        if (data.enhanced_task) {
+                            enhancedText.textContent = data.enhanced_task;
+                            enhancedContainer.classList.remove('hidden');
+                        } else {
+                            enhancedContainer.classList.add('hidden');
+                        }
+                    }
+
+                    const approachesContainer = document.getElementById('modalAiApproaches');
+                    if (approachesContainer) {
+                        approachesContainer.innerHTML = '';
+                        if (data.ai_approaches && data.ai_approaches.length > 0) {
+                            data.ai_approaches.forEach((approach) => {
+                                const card = document.createElement('div');
+                                card.className = 'bg-blue-50 p-4 rounded-lg border border-blue-100';
+                                const appTitle = approach.ai_approach_name || 'AI Approach';
+                                const appDesc = approach.description || approach;
+                                card.innerHTML = `<h4 class="font-semibold text-blue-800 mb-2">${appTitle}</h4><p class="text-blue-600 text-sm">${appDesc}</p>`;
+                                approachesContainer.appendChild(card);
+                            });
+                        } else {
+                            approachesContainer.innerHTML = '<p class="text-gray-500">No AI approaches defined</p>';
+                        }
+                    }
+
+                    const skillsContainer = document.getElementById('modalSkills');
+                    if (skillsContainer) {
+                        skillsContainer.innerHTML = '';
+                        if (data.required_skills && data.required_skills.length > 0) {
+                            data.required_skills.forEach(skill => {
+                                const badge = document.createElement('span');
+                                badge.className = 'bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm mr-2 mb-2 inline-block';
+                                badge.textContent = skill;
+                                skillsContainer.appendChild(badge);
+                            });
+                        } else {
+                            skillsContainer.innerHTML = '<p class="text-gray-500">No skills defined</p>';
+                        }
+                    }
+
+                    const competenciesContainer = document.getElementById('modalCompetencies');
+                    if (competenciesContainer) {
+                        competenciesContainer.innerHTML = '';
+                        if (data.competency_requirements && data.competency_requirements.length > 0) {
+                            data.competency_requirements.forEach(comp => {
+                                const li = document.createElement('li');
+                                li.className = 'flex items-start mb-2';
+                                li.innerHTML = `<i class="fas fa-check text-green-500 mt-1 mr-2"></i><span>${comp}</span>`;
+                                competenciesContainer.appendChild(li);
+                            });
+                        } else {
+                            competenciesContainer.innerHTML = '<p class="text-gray-500">No competency requirements defined</p>';
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('openTaskModal error:', error);
+                    alert('Error loading task details');
+                    closeTaskModal();
+                });
+        };
+
+        window.closeTaskModal = function() {
+            const modal = document.getElementById('taskModal');
+            if (modal) modal.classList.add('hidden');
+            document.body.style.overflow = '';
+        };
+
+    window.openTimeSavingModal = function(taskId) {
+        if (window.isPremiumUser === false) {
+            alert("🔒 Premium Feature. Toggle the payment simulation switch at the top of the page to unlock this strategic data.");
+            return;
+        }
+        // If defined elsewhere, it will be handled. Dashboard has its own implementation.
+        if (typeof window.originalOpenTimeSavingModal === 'function') {
+            window.originalOpenTimeSavingModal(taskId);
+        } else if (typeof openTimeSavingModal === 'function') {
+            openTimeSavingModal(taskId);
+        }
+    };
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const modal = document.getElementById('taskModal');
+            if (modal) {
+                modal.addEventListener('click', function(e) {
+                    if (e.target === modal) closeTaskModal();
+                });
+            }
+            adjustFirstRowTooltips();
+            
+            const relevantTab = document.getElementById('relevant-tab');
+            const unchangedTab = document.getElementById('unchanged-tab');
+            if (relevantTab) relevantTab.addEventListener('click', () => switchTab('relevant'));
+            if (unchangedTab) unchangedTab.addEventListener('click', () => switchTab('unchanged'));
+        });
+
+        function adjustFirstRowTooltips() {
+            const tables = document.querySelectorAll('table');
+            tables.forEach(table => {
+                const firstRow = table.querySelector('tbody tr:first-child');
+                if (firstRow) {
+                    const tooltipContainers = firstRow.querySelectorAll('.tooltip-container');
+                    tooltipContainers.forEach(container => {
+                        container.classList.add('tooltip-container-first-row');
+                    });
+                }
+            });
+        }
+
+        function switchTab(tabName) {
+            const relevantTab = document.getElementById('relevant-tab');
+            const unchangedTab = document.getElementById('unchanged-tab');
+            if (relevantTab && unchangedTab) {
+                relevantTab.classList.remove('active-tab');
+                unchangedTab.classList.remove('active-tab');
+                const relevantContent = document.getElementById('relevant-content');
+                const unchangedContent = document.getElementById('unchanged-content');
+                if (relevantContent) relevantContent.classList.add('hidden');
+                if (unchangedContent) unchangedContent.classList.add('hidden');
+                const activeContent = document.getElementById(tabName + '-content');
+                const activeTab = document.getElementById(tabName + '-tab');
+                if (activeContent) activeContent.classList.remove('hidden');
+                if (activeTab) activeTab.classList.add('active-tab');
+            }
+        }
+
+        function openRiskModal(taskId) {
+            const modal = document.getElementById('riskModal');
+            const taskIdEl = document.getElementById('riskModalTaskId');
+            const bodyEl = document.getElementById('riskModalBody');
+            const dataEl = document.getElementById(`risk-data-${taskId}`);
+
+            if (!modal || !dataEl) return;
+
+        taskIdEl.textContent = `Task ID: ${taskId}`;
+        let riskInfo = null;
+        try {
+            riskInfo = JSON.parse(dataEl.textContent);
+        } catch (e) {
+            console.error('Error parsing risk data:', e);
+            return;
+        }
+
+        const risks = riskInfo.risks || [];
+        const originalTask = riskInfo.original_task || 'N/A';
+        const enhancedTask = riskInfo.enhanced_task || 'N/A';
+
+        let bodyHtml = `
+            <div class="mb-6 p-4 rounded-xl bg-gray-50 border border-gray-100">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Original Task</p>
+                        <p class="text-sm text-gray-700 font-medium">${originalTask}</p>
+                    </div>
+                    <div>
+                        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">AI Enhanced Task</p>
+                        <p class="text-sm text-blue-700 font-bold">${enhancedTask}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="space-y-4">
+        `;
+
+        bodyHtml += risks.map((risk, idx) => {
+            const levelClass = risk.risk_level === 'High' ? 'text-red-600 bg-red-50 border-red-100' :
+                             risk.risk_level === 'Medium' ? 'text-orange-600 bg-orange-50 border-orange-100' :
+                             'text-green-600 bg-green-50 border-green-100';
+            
+            const validationBadge = risk.human_validation_required ? 
+                `<span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-blue-100 text-blue-700 border border-blue-200 uppercase">
+                    <i class="fas fa-user-check mr-1"></i> Human Validation Required
+                </span>` : '';
+
+            return `
+                <div class="p-4 rounded-xl border border-gray-100 bg-white shadow-sm">
+                    <div class="flex items-start justify-between mb-3">
+                        <div class="flex flex-col gap-1">
+                            <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Risk Category</span>
+                            <span class="text-sm font-bold text-gray-900">${risk.risk_category || 'General'}</span>
+                        </div>
+                        <div class="flex flex-col items-end gap-2">
+                            <span class="px-2.5 py-1 rounded-lg text-xs font-bold border ${levelClass}">
+                                ${risk.risk_level || 'Low'} Risk
+                            </span>
+                            ${validationBadge}
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-3">
+                        <div>
+                            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Description</p>
+                            <p class="text-sm text-gray-700 leading-relaxed">${risk.risk_description || 'No description provided.'}</p>
+                        </div>
+                        ${risk.explanation ? `
+                        <div class="pt-3 border-t border-gray-50">
+                            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Mitigation / Explanation</p>
+                            <p class="text-sm text-gray-600 italic leading-relaxed">${risk.explanation}</p>
+                        </div>` : ''}
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        bodyHtml += '</div>';
+        bodyEl.innerHTML = bodyHtml;
+
+            modal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeRiskModal() {
+            const modal = document.getElementById('riskModal');
+            if (modal) modal.classList.add('hidden');
+            document.body.style.overflow = 'auto';
+        }
+    </script>
+
+    <!-- Risk Assessment Modal -->
+    <div id="riskModal" class="hidden fixed inset-0 z-[60] overflow-y-auto">
+        <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 transition-opacity bg-black bg-opacity-40" aria-hidden="true" onclick="closeRiskModal()"></div>
+            <div class="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl w-full mx-4 sm:mx-0">
+                <div class="bg-white">
+                    <!-- Modal Header -->
+                    <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center">
+                                <i class="fas fa-shield-virus text-red-500 text-xl"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-xl font-bold text-gray-900 font-['Inter']">Risk Assessment</h3>
+                                <p class="text-xs text-gray-500" id="riskModalTaskId">Task ID: N/A</p>
+                            </div>
+                        </div>
+                        <button onclick="closeRiskModal()" class="text-gray-400 hover:text-gray-600 transition-colors">
+                            <i class="fas fa-times text-xl"></i>
+                        </button>
+                    </div>
+
+                    <!-- Modal Body -->
+                    <div class="px-6 py-6 max-h-[60vh] overflow-y-auto" id="riskModalBody">
+                        <!-- Content will be injected here -->
+                    </div>
+
+                    <!-- Modal Footer -->
+                    <div class="px-6 py-4 border-t border-gray-100 bg-gray-50/50 flex justify-end">
+                        <button onclick="closeRiskModal()" class="px-5 py-2 bg-white border border-gray-200 text-gray-700 text-sm font-semibold rounded-xl hover:bg-gray-50 transition-colors shadow-sm font-['Inter']">
+                            Close
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% include 'task_modal.html' %}
+
+<script src="https://unpkg.com/@popperjs/core@2"></script>
+<script src="https://unpkg.com/tippy.js@6"></script>
+<link rel="stylesheet" href="https://unpkg.com/tippy.js@6/themes/light.css">
+
+
+</body>
+</html>

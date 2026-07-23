@@ -1,0 +1,1004 @@
+<!-- templates/overview.html -->
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="min-h-screen">
+    <!-- Header -->
+    <header class="bg-white shadow-sm border-b">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-2 sm:space-y-0">
+                <div>
+
+                    <h1 class="text-xl sm:text-2xl font-bold text-gray-900">AI Augmentation Analysis</h1>
+                    <p class="text-gray-600 text-sm">FTE Savings Analysis Dashboard</p>
+                </div>
+                <div class="flex items-center space-x-4">
+
+                    <a href="/dashboard" class="text-blue-600 hover:text-blue-800 text-sm font-medium px-3 py-1.5 rounded-md hover:bg-blue-50 transition duration-150">
+                        <i class="fas fa-tasks mr-1"></i> Task-level AI Analysis
+                    </a>
+                    {% if last_update %}
+                    <span class="text-xs sm:text-sm text-gray-500">Last updated: {{ last_update }}</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-6 lg:py-8">
+        <!-- KPI Cards -->
+        <div class="grid mobile-kpi-grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6 sm:mb-8" id="overview-kpis">
+            <!-- Les KPI seront chargés dynamiquement -->
+            <div class="kpi-card bg-white rounded-lg sm:rounded-xl shadow-sm sm:shadow-md p-4 sm:p-6 border border-gray-100">
+                <div class="flex items-center justify-between">
+                    <div>
+
+                        <p class="text-gray-500 text-xs sm:text-sm font-medium">Overall Task Volume</p>
+                        <p class="text-2xl sm:text-3xl font-bold text-gray-900 mt-1 sm:mt-2">0</p>
+                    </div>
+                    <div class="bg-blue-100 p-2 sm:p-3 rounded-lg">
+                        <i class="fas fa-users text-blue-600 text-lg sm:text-xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="kpi-card bg-white rounded-lg sm:rounded-xl shadow-sm sm:shadow-md p-4 sm:p-6 border border-gray-100">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-500 text-xs sm:text-sm font-medium">Current FTE</p>
+                        <p class="text-2xl sm:text-3xl font-bold text-gray-900 mt-1 sm:mt-2">0.0</p>
+                    </div>
+                    <div class="bg-green-100 p-2 sm:p-3 rounded-lg">
+                        <i class="fas fa-chart-line text-green-600 text-lg sm:text-xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="kpi-card bg-white rounded-lg sm:rounded-xl shadow-sm sm:shadow-md p-4 sm:p-6 border border-gray-100">
+                <div class="flex items-center justify-between">
+                    <div>
+
+                        <p class="text-gray-500 text-xs sm:text-sm font-medium">Total FTE Saving</p>
+                        <p class="text-2xl sm:text-3xl font-bold text-gray-900 mt-1 sm:mt-2">0.000</p>
+                    </div>
+                    <div class="bg-yellow-100 p-2 sm:p-3 rounded-lg">
+                        <i class="fas fa-coins text-yellow-600 text-lg sm:text-xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="kpi-card bg-white rounded-lg sm:rounded-xl shadow-sm sm:shadow-md p-4 sm:p-6 border border-gray-100">
+                <div class="flex items-center justify-between">
+                    <div>
+
+                        <p class="text-gray-500 text-xs sm:text-sm font-medium">FTE Saving %</p>
+                        <p class="text-2xl sm:text-3xl font-bold text-gray-900 mt-1 sm:mt-2">0.0%</p>
+                    </div>
+                    <div class="bg-purple-100 p-2 sm:p-3 rounded-lg">
+                        <i class="fas fa-percentage text-purple-600 text-lg sm:text-xl"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <div class="flex flex-col lg:flex-row gap-4 sm:gap-6 lg:gap-8">
+            <!-- Filters Sidebar -->
+            <div class="lg:w-1/4">
+                <div class="bg-white rounded-lg sm:rounded-xl shadow-sm sm:shadow-md p-4 sm:p-6 border border-gray-100 sticky top-4 sm:top-8">
+                    <div class="flex justify-between items-center mb-4 sm:mb-6">
+                        <h2 class="text-base sm:text-lg font-semibold text-gray-900">Filters</h2>
+                        <button onclick="resetOverviewFilters()" class="text-xs sm:text-sm text-blue-600 hover:text-blue-800 transition duration-150">
+                            <i class="fas fa-redo-alt mr-1"></i> Reset
+                        </button>
+                    </div>
+
+                    <div class="space-y-4 sm:space-y-6">
+                        <div>
+                            <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">Role</label>
+                            <input type="text" id="roleFilter" list="roleOptions" 
+                                   value="{{ current_role }}" 
+                                   placeholder="Type or select a role..."
+                                   class="w-full border border-gray-300 rounded-lg px-3 sm:px-4 py-2 text-sm sm:text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500 filter-input">
+                            <datalist id="roleOptions">
+                                <option value="">All Roles</option>
+                                {% for role in roles %}
+                                <option value="{{ role }}">{{ role }}</option>
+                                {% endfor %}
+                            </datalist>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">Entity</label>
+                            <input type="text" id="entityFilter" list="entityOptions" 
+                                   value="{{ current_entity }}" 
+                                   placeholder="Type or select an entity..."
+                                   class="w-full border border-gray-300 rounded-lg px-3 sm:px-4 py-2 text-sm sm:text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500 filter-input">
+                            <datalist id="entityOptions">
+                                <option value="">All Entities</option>
+                                {% for entity in entities %}
+                                <option value="{{ entity }}">{{ entity }}</option>
+                                {% endfor %}
+                            </datalist>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">Team (Supervisor)</label>
+                            <input type="text" id="teamFilter" list="teamOptions" 
+                                   value="{{ current_team }}" 
+                                   placeholder="Type or select a team..."
+                                   class="w-full border border-gray-300 rounded-lg px-3 sm:px-4 py-2 text-sm sm:text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500 filter-input">
+                            <datalist id="teamOptions">
+                                <option value="">All Teams</option>
+                                {% for team in teams %}
+                                <option value="{{ team }}">{{ team }}</option>
+                                {% endfor %}
+                            </datalist>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">Employee</label>
+                            <input type="text" id="employeeFilter" list="employeeOptions" 
+                                   value="{{ current_employee }}" 
+                                   placeholder="Type or select an employee..."
+                                   class="w-full border border-gray-300 rounded-lg px-3 sm:px-4 py-2 text-sm sm:text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500 filter-input">
+                            <datalist id="employeeOptions">
+                                <option value="">All Employees</option>
+                                {% for emp in employees %}
+                                <option value="{{ emp }}">{{ emp }}</option>
+                                {% endfor %}
+                            </datalist>
+                </div>
+
+
+                        <div>
+                            <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">Category</label>
+                            <input type="text" id="categoryFilter" list="categoryOptions" 
+                                   value="{{ current_category }}" 
+                                   placeholder="Type or select a category..."
+                                   class="w-full border border-gray-300 rounded-lg px-3 sm:px-4 py-2 text-sm sm:text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500 filter-input">
+                            <datalist id="categoryOptions">
+                                <option value="">All Categories</option>
+                                {% for category in categories %}
+                                <option value="{{ category }}">{{ category }}</option>
+                                {% endfor %}
+                            </datalist>
+            </div>
+
+
+                        <div class="pt-2">
+                            <p class="text-xs text-gray-500">
+                                <i class="fas fa-info-circle mr-1"></i>
+                                Filters are applied automatically when you make a selection
+                            </p>
+                        </div>
+                </div>
+            </div>
+        </div>
+
+
+            <!-- Main Content -->
+            <div class="lg:w-3/4">
+                <!-- Pie Charts Grid -->
+                <div id="pieChartsGrid" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                                        <!-- Category Pie Chart -->
+                    <div id="categoryChartContainer" class="bg-white rounded-lg shadow-sm p-4 border border-gray-100 chart-container">
+                        <h3 class="text-base font-semibold text-gray-900 mb-3">FTE Saving by Task Category</h3>
+                        <div class="h-64">
+                            <canvas id="categoryPieChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Tasks by Type Pie Chart -->
+                    <div id="tasksTypeChartContainer" class="bg-white rounded-lg shadow-sm p-4 border border-gray-100 chart-container">
+                        <h3 class="text-base font-semibold text-gray-900 mb-3">FTE Saving by AI-Task Type</h3>
+                        <div class="h-64">
+                            <canvas id="tasksTypePieChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Entities Pie Chart -->
+                    <div id="entitiesChartContainer" class="bg-white rounded-lg shadow-sm p-4 border border-gray-100 chart-container">
+                        <h3 class="text-base font-semibold text-gray-900 mb-3">Top 10 FTE Saving by Entity</h3>
+                        <div class="h-64">
+                            <canvas id="entitiesPieChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Teams Pie Chart -->
+                    <div id="teamsChartContainer" class="bg-white rounded-lg shadow-sm p-4 border border-gray-100 chart-container">
+                        <h3 class="text-base font-semibold text-gray-900 mb-3">Top 10 FTE Saving by Team</h3>
+                        <div class="h-64">
+                            <canvas id="teamsPieChart"></canvas>
+                        </div>
+                    </div>
+                    <div id="rolesChartContainer" class="bg-white rounded-lg shadow-sm p-4 border border-gray-100 chart-container">
+                        <h3 class="text-base font-semibold text-gray-900 mb-3">Top 10 FTE Saving by Role</h3>
+                        <div class="h-64">
+                            <canvas id="rolesPieChart"></canvas>
+                        </div>
+                    </div>
+
+
+                </div>
+
+                <!-- Tables with Tabs -->
+            <div class="bg-white rounded-lg shadow-sm border border-gray-100">
+
+                    <!-- Tabs Navigation -->
+                    <div class="border-b border-gray-200">
+                        <nav class="-mb-px flex space-x-8 px-6" aria-label="Tabs">
+                            <button id="tasks-tab" onclick="switchTableTab('tasks')"
+                                    class="tab-button border-b-2 border-blue-500 py-4 px-1 text-sm font-medium text-blue-600 flex items-center transition duration-150">
+                                <i class="fas fa-tasks mr-2"></i>
+                                Tasks
+                                <span id="tasks-count" class="ml-2 bg-blue-100 text-blue-800 text-xs font-semibold px-2 py-0.5 rounded-full">0</span>
+                            </button>
+                            <button id="roles-tab" onclick="switchTableTab('roles')"
+                                    class="tab-button border-b-2 border-transparent py-4 px-1 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300 flex items-center transition duration-150">
+                                <i class="fas fa-user-tie mr-2"></i>
+                                Roles
+                                <span id="roles-count" class="ml-2 bg-gray-100 text-gray-800 text-xs font-semibold px-2 py-0.5 rounded-full">0</span>
+                            </button>
+                            <button id="entities-tab" onclick="switchTableTab('entities')"
+                                    class="tab-button border-b-2 border-transparent py-4 px-1 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300 flex items-center transition duration-150">
+                                <i class="fas fa-building mr-2"></i>
+                                Entities
+                                <span id="entities-count" class="ml-2 bg-gray-100 text-gray-800 text-xs font-semibold px-2 py-0.5 rounded-full">0</span>
+                            </button>
+                            <button id="teams-tab" onclick="switchTableTab('teams')"
+                                    class="tab-button border-b-2 border-transparent py-4 px-1 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300 flex items-center transition duration-150">
+                                <i class="fas fa-users-cog mr-2"></i>
+                                Teams
+                                <span id="teams-count" class="ml-2 bg-gray-100 text-gray-800 text-xs font-semibold px-2 py-0.5 rounded-full">0</span>
+                            </button>
+                            <button id="categories-tab" onclick="switchTableTab('categories')"
+                                    class="tab-button border-b-2 border-transparent py-4 px-1 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300 flex items-center transition duration-150">
+                                <i class="fas fa-tags mr-2"></i>
+                                Categories
+                                <span id="categories-count" class="ml-2 bg-gray-100 text-gray-800 text-xs font-semibold px-2 py-0.5 rounded-full">0</span>
+                            </button>
+                        </nav>
+                    </div>
+
+                    <!-- Tab Content -->
+                    <div class="p-6">
+                        <!-- Tasks Table -->
+                        <div id="tasks-table-content" class="table-content">
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full divide-y divide-gray-200">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rank</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Task</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Employees</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Current FTE</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">New FTE</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">FTE Saving</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="bg-white divide-y divide-gray-200" id="tasks-table-body">
+                                        <tr>
+                                            <td colspan="6" class="px-6 py-8 text-center text-gray-500">
+                                                <i class="fas fa-spinner fa-spin text-2xl text-gray-300 mb-2"></i>
+                                                <p class="text-sm">Loading data...</p>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Roles Table -->
+                        <div id="roles-table-content" class="table-content hidden">
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full divide-y divide-gray-200">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Employees</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Current FTE</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">New FTE</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">FTE Saving</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="bg-white divide-y divide-gray-200" id="roles-table-body">
+                                        <tr>
+                                            <td colspan="5" class="px-6 py-8 text-center text-gray-500">
+                                                <i class="fas fa-spinner fa-spin text-2xl text-gray-300 mb-2"></i>
+                                                <p class="text-sm">Loading data...</p>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                </div>
+
+
+                        <!-- Entities Table -->
+                        <div id="entities-table-content" class="table-content hidden">
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Entity</th>
+
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Employees</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Current FTE</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">New FTE</th>
+
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">FTE Saving</th>
+                            </tr>
+                        </thead>
+
+                                    <tbody class="bg-white divide-y divide-gray-200" id="entities-table-body">
+                            <tr>
+
+                                            <td colspan="5" class="px-6 py-8 text-center text-gray-500">
+                                    <i class="fas fa-spinner fa-spin text-2xl text-gray-300 mb-2"></i>
+                                    <p class="text-sm">Loading data...</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Teams Table -->
+
+                        <div id="teams-table-content" class="table-content hidden">
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Team ID</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Employees</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Current FTE</th>
+
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">New FTE</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">FTE Saving</th>
+                            </tr>
+                        </thead>
+                                    <tbody class="bg-white divide-y divide-gray-200" id="teams-table-body">
+                            <tr>
+                                            <td colspan="5" class="px-6 py-8 text-center text-gray-500">
+                                    <i class="fas fa-spinner fa-spin text-2xl text-gray-300 mb-2"></i>
+                                    <p class="text-sm">Loading data...</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                            </div>
+                        </div>
+
+                        <!-- Categories Table -->
+                        <div id="categories-table-content" class="table-content hidden">
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full divide-y divide-gray-200">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Employees</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Current FTE</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">New FTE</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">FTE Saving</th>
+                            </tr>
+                        </thead>
+
+                                    <tbody class="bg-white divide-y divide-gray-200" id="categories-table-body">
+                            <tr>
+
+                                            <td colspan="5" class="px-6 py-8 text-center text-gray-500">
+                                    <i class="fas fa-spinner fa-spin text-2xl text-gray-300 mb-2"></i>
+                                    <p class="text-sm">Loading data...</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- JavaScript -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+
+    let rolesPieChart, tasksTypePieChart, entitiesPieChart, teamsPieChart, categoryPieChart;
+    let filterTimeout;
+
+function loadOverviewData() {
+    const employee = document.getElementById('employeeFilter').value;
+    const role = document.getElementById('roleFilter').value;
+    const entity = document.getElementById('entityFilter').value;
+    const team = document.getElementById('teamFilter').value;
+
+        const category = document.getElementById('categoryFilter').value;
+
+    let url = '/api/overview_data?';
+    if (employee) url += `employee=${encodeURIComponent(employee)}&`;
+    if (role) url += `role=${encodeURIComponent(role)}&`;
+    if (entity) url += `entity=${encodeURIComponent(entity)}&`;
+
+        if (team) url += `team=${encodeURIComponent(team)}&`;
+        if (category) url += `category=${encodeURIComponent(category)}`;
+
+    fetch(url)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.error) {
+                alert('Error loading data: ' + data.error);
+                return;
+            }
+            updateKPIs(data.stats);
+
+                updatePieCharts(data);
+            updateTables(data);
+        })
+        .catch(error => {
+            console.error('Error loading overview data:', error);
+            document.getElementById('overview-kpis').innerHTML = `
+                <div class="col-span-4 bg-red-50 border border-red-200 rounded-lg p-4">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-exclamation-triangle text-red-400"></i>
+                        </div>
+                        <div class="ml-3">
+                            <h3 class="text-sm font-medium text-red-800">Error loading data</h3>
+                            <div class="mt-2 text-sm text-red-700">
+                                <p>${error.message}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+}
+
+    function updateKPIs(stats) {
+        const kpiContainer = document.getElementById('overview-kpis');
+        if (!stats || Object.keys(stats).length === 0) {
+            kpiContainer.innerHTML = `
+                <div class="col-span-4 text-center py-8">
+                    <i class="fas fa-database text-3xl text-gray-300 mb-2"></i>
+                    <p class="text-gray-500">No data available</p>
+                </div>
+            `;
+            return;
+        }
+
+        kpiContainer.innerHTML = `
+            <div class="kpi-card bg-white rounded-lg sm:rounded-xl shadow-sm sm:shadow-md p-4 sm:p-6 border border-gray-100">
+                <div class="flex items-center justify-between">
+
+                    <div class="flex-1">
+                        <p class="text-gray-500 text-xs sm:text-sm font-medium">Overall Task Volume</p>
+                        <p class="text-2xl sm:text-3xl font-bold text-gray-900 mt-1 sm:mt-2">${stats.total_employees || 0}</p>
+
+                        <p class="text-xs text-gray-400 mt-1">Distinct tasks: ${stats.distinct_tasks || 0}</p>
+                        <p class="text-xs text-gray-400 mt-2">Distinct employees: ${stats.distinct_employees || 0}</p>
+                    </div>
+                    <div class="bg-blue-100 p-2 sm:p-3 rounded-lg">
+                        <i class="fas fa-users text-blue-600 text-lg sm:text-xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="kpi-card bg-white rounded-lg sm:rounded-xl shadow-sm sm:shadow-md p-4 sm:p-6 border border-gray-100">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-500 text-xs sm:text-sm font-medium">Current FTE</p>
+                        <p class="text-2xl sm:text-3xl font-bold text-gray-900 mt-1 sm:mt-2">${(stats.current_fte || 0).toFixed(1)}</p>
+                    </div>
+                    <div class="bg-green-100 p-2 sm:p-3 rounded-lg">
+                        <i class="fas fa-chart-line text-green-600 text-lg sm:text-xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="kpi-card bg-white rounded-lg sm:rounded-xl shadow-sm sm:shadow-md p-4 sm:p-6 border border-gray-100">
+                <div class="flex items-center justify-between">
+
+                    <div class="flex-1">
+                        <p class="text-gray-500 text-xs sm:text-sm font-medium">New FTE</p>
+                        <p class="text-2xl sm:text-3xl font-bold text-gray-900 mt-1 sm:mt-2">${(stats.new_fte || 0).toFixed(3)}</p>
+                        <p class="text-xs text-gray-400 mt-2">Total Saving: ${(stats.total_saving || 0).toFixed(3)}</p>
+                    </div>
+                    <div class="bg-yellow-100 p-2 sm:p-3 rounded-lg">
+                        <i class="fas fa-coins text-yellow-600 text-lg sm:text-xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="kpi-card bg-white rounded-lg sm:rounded-xl shadow-sm sm:shadow-md p-4 sm:p-6 border border-gray-100">
+                <div class="flex items-center justify-between">
+
+                    <div class="flex-1">
+                        <p class="text-gray-500 text-xs sm:text-sm font-medium">Saving %</p>
+                        <p class="text-2xl sm:text-3xl font-bold text-gray-900 mt-1 sm:mt-2">${(stats.saving_percent || 0).toFixed(1)}%</p>
+
+                        ${(() => {
+                            const currentFte = stats.current_fte || 0;
+                            const newFte = stats.new_fte || 0;
+                            const productivityGain = newFte > 0 ? parseFloat(Math.abs(100 - (100 * currentFte / newFte)).toFixed(1)) : 0.0;
+                            return `<p class="text-xs text-gray-400 mt-2">Productivity Gain: ${productivityGain}%</p>`;
+                        })()}
+                    </div>
+                    <div class="bg-purple-100 p-2 sm:p-3 rounded-lg">
+                        <i class="fas fa-percentage text-purple-600 text-lg sm:text-xl"></i>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+
+    function createPieChart(canvasId, data, totalSaving, title) {
+        const container = document.getElementById(canvasId).parentNode.parentNode;
+        
+        if (data.length === 0 || totalSaving === 0) {
+            container.style.display = 'none';
+            return null;
+        }
+
+        const chartData = data.map(item => ({
+            label: item.label || 'Unknown',
+            saving: item.saving || 0,
+            percent: totalSaving > 0 ? ((item.saving || 0) / totalSaving * 100) : 0
+        })).sort((a, b) => b.saving - a.saving).slice(0, 10); // Top 10 only
+
+        // Masquer le chart s'il n'y a qu'une seule valeur unique
+        if (chartData.length === 1) {
+            container.style.display = 'none';
+            return null;
+        }
+
+        // Afficher le conteneur s'il était masqué
+        container.style.display = 'block';
+
+        const colors = [
+            'rgba(59, 130, 246, 0.8)', 'rgba(16, 185, 129, 0.8)', 'rgba(245, 158, 11, 0.8)',
+            'rgba(239, 68, 68, 0.8)', 'rgba(139, 92, 246, 0.8)', 'rgba(236, 72, 153, 0.8)',
+            'rgba(14, 165, 233, 0.8)', 'rgba(34, 197, 94, 0.8)', 'rgba(251, 146, 60, 0.8)',
+            'rgba(168, 85, 247, 0.8)', 'rgba(99, 102, 241, 0.8)', 'rgba(20, 184, 166, 0.8)'
+        ];
+
+        const ctx = document.getElementById(canvasId).getContext('2d');
+        return new Chart(ctx, {
+            type: 'pie',
+                data: {
+
+                labels: chartData.map(r => `${r.label} (${r.percent.toFixed(1)}%)`),
+                    datasets: [{
+
+                    data: chartData.map(r => r.saving),
+                    backgroundColor: colors.slice(0, chartData.length),
+                    borderColor: '#fff',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            padding: 8,
+                            font: { size: 10 },
+                            boxWidth: 12
+                        }
+                    },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+
+                                const item = chartData[context.dataIndex];
+                                    return [
+
+                                    `${item.label}`,
+                                    `Saving: ${item.saving.toFixed(2)} FTE`,
+                                    `Percentage: ${item.percent.toFixed(1)}%`
+                                    ];
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+    }
+
+    function repositionPieCharts() {
+        const grid = document.getElementById('pieChartsGrid');
+        if (!grid) return;
+        
+        const allContainers = grid.querySelectorAll('.chart-container');
+        const visibleCharts = Array.from(allContainers).filter(
+            container => {
+                const style = window.getComputedStyle(container);
+                return style.display !== 'none' && container.style.display !== 'none';
+            }
+        );
+
+        const visibleCount = visibleCharts.length;
+        
+        // Réinitialiser tous les styles de grille et conteneurs
+        grid.style.maxWidth = '';
+        grid.style.margin = '';
+        allContainers.forEach(chart => {
+            chart.style.gridColumn = '';
+            chart.style.maxWidth = '';
+            chart.style.margin = '';
+        });
+        
+        if (visibleCount === 0) {
+            grid.style.display = 'none';
+            return;
+        }
+        
+        grid.style.display = 'grid';
+        
+        // Ajuster la grille selon le nombre de charts visibles
+        if (visibleCount === 1) {
+            // Un seul chart : centrer avec max-width
+            grid.className = 'grid grid-cols-1 gap-4 mb-6';
+            grid.style.maxWidth = '600px';
+            grid.style.margin = '0 auto';
+        } else if (visibleCount === 2) {
+            // Deux charts : 2 colonnes
+            grid.className = 'grid grid-cols-1 md:grid-cols-2 gap-4 mb-6';
+            grid.style.maxWidth = 'none';
+            grid.style.margin = '0';
+        } else if (visibleCount === 3) {
+            // Trois charts : 2 colonnes avec le troisième centré
+            grid.className = 'grid grid-cols-1 md:grid-cols-2 gap-4 mb-6';
+            grid.style.maxWidth = 'none';
+            grid.style.margin = '0';
+            // Le troisième chart sera sur une nouvelle ligne centrée
+            if (visibleCharts[2]) {
+                visibleCharts[2].style.gridColumn = '1 / -1';
+                visibleCharts[2].style.maxWidth = '600px';
+                visibleCharts[2].style.margin = '0 auto';
+            }
+        } else if (visibleCount === 4) {
+            // Quatre charts : grille 2x2 normale
+            grid.className = 'grid grid-cols-1 md:grid-cols-2 gap-4 mb-6';
+            grid.style.maxWidth = 'none';
+            grid.style.margin = '0';
+        } else if (visibleCount === 5) {
+            // Cinq charts : grille 2x3 avec le cinquième centré
+            grid.className = 'grid grid-cols-1 md:grid-cols-2 gap-4 mb-6';
+            grid.style.maxWidth = 'none';
+            grid.style.margin = '0';
+            // Le cinquième chart sera sur une nouvelle ligne centrée
+            if (visibleCharts[4]) {
+                visibleCharts[4].style.gridColumn = '1 / -1';
+                visibleCharts[4].style.maxWidth = '600px';
+                visibleCharts[4].style.margin = '0 auto';
+            }
+        } else {
+            // Six charts ou plus : grille 2x3 normale
+            grid.className = 'grid grid-cols-1 md:grid-cols-2 gap-4 mb-6';
+            grid.style.maxWidth = 'none';
+            grid.style.margin = '0';
+        }
+    }
+
+    function updatePieCharts(data) {
+        const totalSaving = data.stats ? data.stats.total_saving : 0;
+
+        // Destroy existing charts
+        if (rolesPieChart) {
+            rolesPieChart.destroy();
+            rolesPieChart = null;
+        }
+        if (tasksTypePieChart) {
+            tasksTypePieChart.destroy();
+            tasksTypePieChart = null;
+        }
+        if (entitiesPieChart) {
+            entitiesPieChart.destroy();
+            entitiesPieChart = null;
+        }
+        if (teamsPieChart) {
+            teamsPieChart.destroy();
+            teamsPieChart = null;
+        }
+        if (categoryPieChart) {
+            categoryPieChart.destroy();
+            categoryPieChart = null;
+        }
+
+        // Réinitialiser l'affichage de tous les conteneurs
+        document.getElementById('rolesChartContainer').style.display = 'block';
+        document.getElementById('tasksTypeChartContainer').style.display = 'block';
+        document.getElementById('entitiesChartContainer').style.display = 'block';
+        document.getElementById('teamsChartContainer').style.display = 'block';
+        document.getElementById('categoryChartContainer').style.display = 'block';
+
+        // Roles Pie Chart
+        const roles = (data.role_saving || []).map(r => ({
+            label: r.emp_role || 'Unknown Role',
+            saving: r.saving || 0
+        }));
+        rolesPieChart = createPieChart('rolesPieChart', roles, totalSaving, 'Roles');
+
+        // Tasks by Type Pie Chart
+        const taskTypes = (data.task_type_saving || []).map(t => ({
+            label: t.task_type || 'Unknown Type',
+            saving: t.saving || 0
+        }));
+        tasksTypePieChart = createPieChart('tasksTypePieChart', taskTypes, totalSaving, 'Task Types');
+
+        // Entities Pie Chart
+        const entities = (data.entity_saving || []).map(e => ({
+            label: e.entity || 'Unknown Entity',
+            saving: e.saving || 0
+        }));
+        entitiesPieChart = createPieChart('entitiesPieChart', entities, totalSaving, 'Entities');
+
+        // Teams Pie Chart
+        const teams = (data.team_saving || []).map(t => ({
+            label: t.supervisor_id || 'Unknown Team',
+            saving: t.saving || 0
+        }));
+        teamsPieChart = createPieChart('teamsPieChart', teams, totalSaving, 'Teams');
+
+        // Category Pie Chart
+        const categories = (data.category_saving || []).map(c => ({
+            label: c.category || 'Unknown Category',
+            saving: c.saving || 0
+        }));
+        categoryPieChart = createPieChart('categoryPieChart', categories, totalSaving, 'Categories');
+
+        // Repositionner les charts après les avoir créés
+        repositionPieCharts();
+    }
+
+    function switchTableTab(tabName) {
+        // Hide all table contents
+        document.querySelectorAll('.table-content').forEach(content => {
+            content.classList.add('hidden');
+        });
+
+        // Remove active state from all tabs
+        document.querySelectorAll('.tab-button').forEach(button => {
+            button.classList.remove('border-blue-500', 'text-blue-600');
+            button.classList.add('border-transparent', 'text-gray-500');
+        });
+
+        // Show selected table
+        document.getElementById(`${tabName}-table-content`).classList.remove('hidden');
+
+        // Activate selected tab
+        const activeTab = document.getElementById(`${tabName}-tab`);
+        activeTab.classList.remove('border-transparent', 'text-gray-500');
+        activeTab.classList.add('border-blue-500', 'text-blue-600');
+    }
+
+    function updateTables(data) {
+
+        // Update counts
+        document.getElementById('tasks-count').textContent = (data.task_saving || []).length;
+        document.getElementById('roles-count').textContent = (data.role_saving || []).length;
+        document.getElementById('entities-count').textContent = (data.entity_saving || []).length;
+        document.getElementById('teams-count').textContent = (data.team_saving || []).length;
+        document.getElementById('categories-count').textContent = (data.category_saving || []).length;
+
+        // Tasks Table
+        const tasksTable = document.getElementById('tasks-table-body');
+        const tasks = data.task_saving || [];
+        if (tasks.length > 0) {
+            tasksTable.innerHTML = tasks.map((task, index) => {
+                const rank = index + 1;
+                const saving = task.saving || 0;
+                const savingClass = saving > 0 ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-600';
+                return `
+                <tr class="hover:bg-gray-50">
+
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${rank}</td>
+                    <td class="px-6 py-4 text-sm font-medium text-gray-900">
+                        ${(task.task_l2 || `Task ${task.task_id}`).length > 50 ? 
+                            (task.task_l2 || `Task ${task.task_id}`).substring(0, 47) + '...' : 
+                            (task.task_l2 || `Task ${task.task_id}`)}
+                    </td>
+
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${task.employee_id || 0}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${(task.full_time_equivalent || 0).toFixed(2)}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${(task.new_fte || 0).toFixed(2)}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${savingClass}">
+                            ${saving.toFixed(2)} FTE ${saving > 0 ? `(${(task.saving_percent || 0).toFixed(1)}%)` : '(Unchanged)'}
+                        </span>
+                    </td>
+
+                </tr>
+            `;
+            }).join('');
+        } else {
+            tasksTable.innerHTML = `<tr><td colspan="6" class="px-6 py-8 text-center text-gray-500">No task data available</td></tr>`;
+        }
+
+        // Roles Table
+        const rolesTable = document.getElementById('roles-table-body');
+        const roles = data.role_saving || [];
+        if (roles.length > 0) {
+            rolesTable.innerHTML = roles.map(role => `
+                <tr class="hover:bg-gray-50">
+                    <td class="px-6 py-4 text-sm font-medium text-gray-900">${(role.emp_role || 'Unknown Role').length > 40 ? (role.emp_role || 'Unknown Role').substring(0, 37) + '...' : (role.emp_role || 'Unknown Role')}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${role.employee_id || 0}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${(role.full_time_equivalent || 0).toFixed(2)}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${(role.new_fte || 0).toFixed(2)}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                            ${(role.saving || 0).toFixed(2)} FTE (${(role.saving_percent || 0).toFixed(1)}%)
+                        </span>
+                    </td>
+
+                </tr>
+            `).join('');
+        } else {
+            rolesTable.innerHTML = `<tr><td colspan="5" class="px-6 py-8 text-center text-gray-500">No role data available</td></tr>`;
+        }
+
+        // Entities Table
+        const entitiesTable = document.getElementById('entities-table-body');
+        const entities = data.entity_saving || [];
+        if (entities.length > 0) {
+            entitiesTable.innerHTML = entities.map(entity => `
+                <tr class="hover:bg-gray-50">
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${entity.entity || 'N/A'}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${entity.employee_id || 0}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${(entity.full_time_equivalent || 0).toFixed(2)}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${(entity.new_fte || 0).toFixed(2)}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                            ${(entity.saving || 0).toFixed(2)} FTE (${(entity.saving_percent || 0).toFixed(1)}%)
+                        </span>
+                    </td>
+                </tr>
+            `).join('');
+        } else {
+
+            entitiesTable.innerHTML = `<tr><td colspan="5" class="px-6 py-8 text-center text-gray-500">No entity data available</td></tr>`;
+        }
+
+        // Teams Table
+
+        const teamsTable = document.getElementById('teams-table-body');
+        const teams = data.team_saving || [];
+        if (teams.length > 0) {
+            teamsTable.innerHTML = teams.map(team => `
+                <tr class="hover:bg-gray-50">
+
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${team.supervisor_id || 'N/A'}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${team.employee_id || 0}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${(team.full_time_equivalent || 0).toFixed(2)}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${(team.new_fte || 0).toFixed(2)}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                            ${(team.saving || 0).toFixed(2)} FTE (${(team.saving_percent || 0).toFixed(1)}%)
+                        </span>
+                    </td>
+                </tr>
+            `).join('');
+        } else {
+
+            teamsTable.innerHTML = `<tr><td colspan="5" class="px-6 py-8 text-center text-gray-500">No team data available</td></tr>`;
+        }
+
+        // Categories Table
+        const categoriesTable = document.getElementById('categories-table-body');
+        const categories = data.category_saving || [];
+        if (categories.length > 0) {
+            categoriesTable.innerHTML = categories.map(category => `
+                <tr class="hover:bg-gray-50">
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${category.category || 'N/A'}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${category.employee_id || 0}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${(category.full_time_equivalent || 0).toFixed(2)}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${(category.new_fte || 0).toFixed(2)}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                            ${(category.saving || 0).toFixed(2)} FTE (${(category.saving_percent || 0).toFixed(1)}%)
+                        </span>
+                    </td>
+                </tr>
+
+            `).join('');
+        } else {
+            categoriesTable.innerHTML = `<tr><td colspan="5" class="px-6 py-8 text-center text-gray-500">No category data available</td></tr>`;
+        }
+    }
+
+    function updateOverviewFilters() {
+        clearTimeout(filterTimeout);
+        filterTimeout = setTimeout(() => {
+            const employee = document.getElementById('employeeFilter').value;
+            const role = document.getElementById('roleFilter').value;
+            const entity = document.getElementById('entityFilter').value;
+            const team = document.getElementById('teamFilter').value;
+
+            const category = document.getElementById('categoryFilter').value;
+
+
+            updateOverviewFilterOptions(role, entity, team, category);
+
+
+            let url = '/?';
+            if (employee) url += `employee=${encodeURIComponent(employee)}&`;
+            if (role) url += `role=${encodeURIComponent(role)}&`;
+            if (entity) url += `entity=${encodeURIComponent(entity)}&`;
+
+            if (team) url += `team=${encodeURIComponent(team)}&`;
+            if (category) url += `category=${encodeURIComponent(category)}`;
+
+            url = url.replace(/[&?]$/, '');
+            window.location.href = url;
+        }, 300);
+    }
+
+
+    function updateOverviewFilterOptions(role, entity, team, category) {
+        fetch(`/get_filter_options?role=${encodeURIComponent(role)}&entity=${encodeURIComponent(entity)}&team=${encodeURIComponent(team)}&category=${encodeURIComponent(category || '')}`)
+            .then(response => response.json())
+            .then(data => {
+
+                if (data.error) return;
+
+                ['employee', 'role', 'entity', 'team', 'category'].forEach(type => {
+                    const input = document.getElementById(`${type}Filter`);
+                    const datalist = document.getElementById(`${type}Options`);
+                    const currentValue = input.value;
+                    
+                    if (datalist) {
+                        datalist.innerHTML = `<option value="">All ${type.charAt(0).toUpperCase() + type.slice(1)}s</option>`;
+                    const items = data[`${type}s`] || [];
+                    items.forEach(item => {
+                        const option = document.createElement('option');
+                        option.value = item;
+                        option.textContent = item;
+
+                            datalist.appendChild(option);
+                        });
+                        }
+                });
+            })
+
+            .catch(error => console.error('Error updating filter options:', error));
+    }
+
+    function resetOverviewFilters() {
+
+        window.location.href = '/';
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        loadOverviewData();
+
+
+        const filters = ['employeeFilter', 'roleFilter', 'entityFilter', 'teamFilter', 'categoryFilter'];
+        filters.forEach(filterId => {
+            const element = document.getElementById(filterId);
+            if (element) {
+
+                element.addEventListener('input', updateOverviewFilters);
+                element.addEventListener('change', updateOverviewFilters);
+            }
+        });
+    });
+</script>
+
+{% endblock %}

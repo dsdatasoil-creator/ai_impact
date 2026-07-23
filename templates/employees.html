@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+
+{% block title %}Employees - AI Impact{% endblock %}
+
+{% block content %}
+<!-- Filter Section -->
+<div class="card mb-4">
+    <div class="card-header bg-dark text-white">
+        <h5><i class="fas fa-filter me-2"></i>Employee Filters</h5>
+    </div>
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <input type="hidden" name="skip" value="0">
+            <input type="hidden" name="limit" value="{{ limit }}">
+            
+            <div class="col-md-3">
+                <label class="form-label">Country</label>
+                <select name="country" class="form-select">
+                    <option value="">All Countries</option>
+                    {% for c in countries %}
+                    <option value="{{ c }}" {% if country == c %}selected{% endif %}>{{ c }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="col-md-3">
+                <label class="form-label">Role Title</label>
+                <select name="role_title" class="form-select">
+                    <option value="">All Roles</option>
+                    {% for r in roles %}
+                    <option value="{{ r }}" {% if role_title == r %}selected{% endif %}>{{ r }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="col-md-3">
+                <label class="form-label">Employee Type</label>
+                <select name="employee_type" class="form-select">
+                    <option value="">All Types</option>
+                    {% for et in employee_types %}
+                    <option value="{{ et }}" {% if employee_type == et %}selected{% endif %}>{{ et }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="col-md-3 d-flex align-items-end">
+                <div class="d-flex gap-2 w-100">
+                    <button type="submit" class="btn btn-primary flex-grow-1">
+                        <i class="fas fa-search me-2"></i>Filter
+                    </button>
+                    {% if country or role_title or employee_type %}
+                    <a href="/employees" class="btn btn-outline-secondary">
+                        <i class="fas fa-times"></i>
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Results Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2><i class="fas fa-users me-2"></i>Employees</h2>
+        <p class="text-muted mb-0">
+            Showing {{ skip + 1 }} to {{ skip + employees|length }} of {{ total_count }} employees
+        </p>
+    </div>
+    
+    <div class="btn-group">
+        <a href="/employees?{% if country %}country={{ country }}&{% endif %}{% if role_title %}role_title={{ role_title }}&{% endif %}{% if employee_type %}employee_type={{ employee_type }}&{% endif %}skip={{ skip - limit if skip >= limit else 0 }}&limit={{ limit }}"
+           class="btn btn-outline-primary {{ 'disabled' if skip == 0 }}">
+            <i class="fas fa-chevron-left"></i> Previous
+        </a>
+        <a href="/employees?{% if country %}country={{ country }}&{% endif %}{% if role_title %}role_title={{ role_title }}&{% endif %}{% if employee_type %}employee_type={{ employee_type }}&{% endif %}skip={{ skip + limit }}&limit={{ limit }}"
+           class="btn btn-outline-primary {{ 'disabled' if skip + limit >= total_count }}">
+            Next <i class="fas fa-chevron-right"></i>
+        </a>
+    </div>
+</div>
+
+<!-- Employees Table -->
+<div class="card">
+    <div class="card-body">
+        {% if employees %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Employee ID</th>
+                        <th>Role Title</th>
+                        <th>Country</th>
+                        <th>Employee Type</th>
+                        <th>Supervisor ID</th>
+                        <th>FTE</th>
+                        <th>Task ID</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for emp in employees %}
+                    <tr>
+                        <td><strong>{{ emp.employee_id }}</strong></td>
+                        <td>{{ emp.role_title or 'N/A' }}</td>
+                        <td>
+                            {% if emp.country %}
+                            <span class="badge bg-info">{{ emp.country }}</span>
+                            {% else %}
+                            <span class="badge bg-secondary">N/A</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if emp.employee_type %}
+                            <span class="badge bg-primary">{{ emp.employee_type }}</span>
+                            {% else %}
+                            <span class="badge bg-secondary">N/A</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if emp.supervisor_id %}
+                            <span class="badge bg-light text-dark">{{ emp.supervisor_id }}</span>
+                            {% else %}
+                            <span class="badge bg-secondary">N/A</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if emp.full_time_equivalent %}
+                            <span class="badge bg-{{ 'success' if emp.full_time_equivalent == 1 else 'warning' }}">
+                                {{ emp.full_time_equivalent }}
+                            </span>
+                            {% else %}
+                            <span class="badge bg-secondary">N/A</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if emp.task_id %}
+                            <a href="/tasks?employee={{ emp.employee_id }}" class="badge bg-danger">
+                                {{ emp.task_id }}
+                            </a>
+                            {% else %}
+                            <span class="badge bg-secondary">N/A</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="/tasks?employee={{ emp.employee_id }}" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-tasks"></i> View Tasks
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-users fa-3x text-muted mb-3"></i>
+            <h4>No employees found</h4>
+            <p class="text-muted">Try adjusting your filters</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
