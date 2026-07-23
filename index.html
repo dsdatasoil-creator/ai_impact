@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Impact Dashboard - Lite</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        .kpi-card { transition: transform 0.2s, box-shadow 0.2s; }
+        .kpi-card:hover { transform: translateY(-2px); box-shadow: 0 4px 15px -1px rgba(0, 0, 0, 0.08); }
+    </style>
+</head>
+<body>
+
+<div class="min-h-screen">
+    <!-- Header -->
+    <header class="bg-white border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 flex items-center bg-blue-600 text-white p-2 rounded-lg">
+                        <i class="fas fa-chart-line text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <h1 class="text-xl font-bold text-gray-900">Task-level AI Analysis (Lite Version)</h1>
+                        <p class="text-xs text-gray-500">Monitor and analyze AI impact on tasks from CSV data</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        <!-- Loading Indicator -->
+        <div id="loading" class="text-center py-10">
+            <i class="fas fa-spinner fa-spin text-4xl text-blue-500"></i>
+            <p class="mt-4 text-gray-600">Loading data from CSV...</p>
+        </div>
+
+        <div id="dashboard-content" class="hidden">
+            <!-- KPI Cards -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+                
+                <!-- Overall Task Volume -->
+                <div class="kpi-card bg-white rounded-xl shadow-sm p-4 border border-gray-100">
+                    <div class="flex items-center justify-between">
+                        <div class="flex-1">
+                            <p class="text-gray-500 text-xs font-medium uppercase tracking-wider">Task Volume</p>
+                            <p class="text-3xl font-bold text-gray-900 mt-2" id="kpi-total-tasks">0</p>
+                            <p class="text-xs text-gray-400 mt-1">Unique Roles: <span id="kpi-unique-roles">0</span></p>
+                        </div>
+                        <div class="bg-blue-50 p-3 rounded-xl">
+                            <i class="fas fa-layer-group text-blue-500 text-xl"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AI Relevant -->
+                <div class="kpi-card bg-white rounded-xl shadow-sm p-4 border border-gray-100">
+                    <div class="flex items-center justify-between">
+                        <div class="flex-1">
+                            <p class="text-gray-500 text-xs font-medium uppercase tracking-wider">AI Relevant</p>
+                            <p class="text-3xl font-bold text-gray-900 mt-2" id="kpi-ai-relevant">0</p>
+                            <p class="text-xs text-gray-400 mt-1">Exposure: <span id="kpi-ai-exposure">0%</span></p>
+                        </div>
+                        <div class="bg-green-50 p-3 rounded-xl">
+                            <i class="fas fa-robot text-green-500 text-xl"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Unchanged Tasks -->
+                <div class="kpi-card bg-white rounded-xl shadow-sm p-4 border border-gray-100">
+                    <div class="flex items-center justify-between">
+                        <div class="flex-1">
+                            <p class="text-gray-500 text-xs font-medium uppercase tracking-wider">Unchanged</p>
+                            <p class="text-3xl font-bold text-gray-900 mt-2" id="kpi-unchanged">0</p>
+                            <p class="text-xs text-gray-400 mt-1">Manual review needed</p>
+                        </div>
+                        <div class="bg-yellow-50 p-3 rounded-xl">
+                            <i class="fas fa-pause-circle text-yellow-500 text-xl"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tasks Table -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                    <h2 class="text-lg font-bold text-gray-900">Task Details</h2>
+                    <input type="text" id="searchInput" placeholder="Search tasks..." class="border border-gray-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead class="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider">
+                            <tr>
+                                <th class="px-6 py-3 font-medium">Task Name</th>
+                                <th class="px-6 py-3 font-medium">Role</th>
+                                <th class="px-6 py-3 font-medium">Department</th>
+                                <th class="px-6 py-3 font-medium">AI Relevance Score</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tasks-tbody" class="text-sm divide-y divide-gray-100">
+                            <!-- Populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+                <div class="px-6 py-4 border-t border-gray-200 text-sm text-gray-500 flex justify-between items-center">
+                    <span id="showing-text">Showing 0 tasks</span>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script>
+    let allTasks = [];
+
+    document.addEventListener("DOMContentLoaded", () => {
+        // Parse the CSV
+        Papa.parse('static/dashboard_data.csv', {
+            download: true,
+            header: true,
+            skipEmptyLines: true,
+            complete: function(results) {
+                allTasks = results.data;
+                document.getElementById('loading').classList.add('hidden');
+                document.getElementById('dashboard-content').classList.remove('hidden');
+                
+                calculateKPIs(allTasks);
+                renderTable(allTasks.slice(0, 50)); // Render first 50 rows for performance
+            },
+            error: function(err) {
+                console.error("Error loading CSV:", err);
+                document.getElementById('loading').innerHTML = `<p class="text-red-500">Error loading data: ${err.message}</p>`;
+            }
+        });
+
+        document.getElementById('searchInput').addEventListener('input', (e) => {
+            const term = e.target.value.toLowerCase();
+            const filtered = allTasks.filter(t => 
+                (t.task_name && t.task_name.toLowerCase().includes(term)) ||
+                (t.role_title && t.role_title.toLowerCase().includes(term)) ||
+                (t.entity && t.entity.toLowerCase().includes(term))
+            );
+            renderTable(filtered.slice(0, 50));
+            document.getElementById('showing-text').textContent = `Showing ${Math.min(filtered.length, 50)} of ${filtered.length} matching tasks`;
+        });
+    });
+
+    function calculateKPIs(tasks) {
+        let total = tasks.length;
+        let roles = new Set();
+        let aiRelevant = 0;
+        let unchanged = 0;
+
+        tasks.forEach(t => {
+            if (t.role_title) roles.add(t.role_title);
+            
+            // True logic based on Postgres data
+            if (t.ai_relevance && t.ai_relevance.toLowerCase() === 'true') {
+                aiRelevant++;
+            } else {
+                unchanged++;
+            }
+        });
+
+        const exposure = total > 0 ? Math.round((aiRelevant / total) * 100) : 0;
+
+        document.getElementById('kpi-total-tasks').textContent = total;
+        document.getElementById('kpi-unique-roles').textContent = roles.size;
+        document.getElementById('kpi-ai-relevant').textContent = aiRelevant;
+        document.getElementById('kpi-ai-exposure').textContent = exposure + '%';
+        document.getElementById('kpi-unchanged').textContent = unchanged;
+        
+        document.getElementById('showing-text').textContent = `Showing ${Math.min(total, 50)} of ${total} tasks`;
+    }
+
+    function renderTable(tasks) {
+        const tbody = document.getElementById('tasks-tbody');
+        tbody.innerHTML = '';
+        
+        tasks.forEach(t => {
+            const tr = document.createElement('tr');
+            tr.className = 'hover:bg-gray-50 transition-colors';
+            
+            const nameTd = document.createElement('td');
+            nameTd.className = 'px-6 py-4 border-b border-gray-100 font-medium text-gray-900';
+            nameTd.textContent = t.task_name || '-';
+            
+            const roleTd = document.createElement('td');
+            roleTd.className = 'px-6 py-4 border-b border-gray-100 text-gray-600';
+            roleTd.textContent = t.role_title || '-';
+            
+            const deptTd = document.createElement('td');
+            deptTd.className = 'px-6 py-4 border-b border-gray-100 text-gray-600';
+            deptTd.textContent = t.entity || '-';
+            
+            const scoreTd = document.createElement('td');
+            scoreTd.className = 'px-6 py-4 border-b border-gray-100 text-gray-600';
+            
+            if (t.ai_relevance && t.ai_relevance.toLowerCase() === 'true') {
+                scoreTd.innerHTML = `<span class="bg-green-100 text-green-800 text-xs font-semibold px-2.5 py-0.5 rounded-full">${parseFloat(t.ai_relevance_score || 0).toFixed(1)}</span>`;
+            } else {
+                scoreTd.innerHTML = `<span class="bg-gray-100 text-gray-800 text-xs font-semibold px-2.5 py-0.5 rounded-full">Not Relevant</span>`;
+            }
+            
+            tr.appendChild(nameTd);
+            tr.appendChild(roleTd);
+            tr.appendChild(deptTd);
+            tr.appendChild(scoreTd);
+            
+            tbody.appendChild(tr);
+        });
+    }
+</script>
+
+</body>
+</html>
